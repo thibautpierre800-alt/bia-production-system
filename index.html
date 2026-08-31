@@ -1,92 +1,25 @@
 <!doctype html>
 <html lang="fr"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#17365D"><link rel="manifest" href="manifest.json">
-<title>BIA Production System</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#123b45"><link rel="manifest" href="manifest.json"><title>BIA Production System V2</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#243447}
-.app{max-width:520px;margin:auto;background:#fff;min-height:100vh}
-header{background:#17365D;color:#fff;padding:18px;position:sticky;top:0;z-index:5}
-h1{font-size:20px;margin:0 0 5px}small{opacity:.85}
-main{padding:16px 16px 88px}.screen{display:none}.active{display:block}
-.card{border:1px solid #dfe5ec;border-radius:12px;padding:14px;margin-bottom:10px;background:#fff}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.big{font-size:25px;font-weight:700}.muted{font-size:12px;color:#6b7280}
-.badge{display:inline-block;padding:4px 8px;border-radius:20px;font-size:11px;font-weight:700}
-.ok{background:#e2f0d9}.warn{background:#fce4d6}.crit{background:#f4cccc}
-button,select,input,textarea{font:inherit}select,input,textarea{width:100%;padding:11px;border:1px solid #ccd5df;border-radius:9px;background:#fff}
-button{border:0;border-radius:9px;padding:11px}.primary{background:#2F75B5;color:#fff;font-weight:700;width:100%}
-nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:auto;display:grid;grid-template-columns:repeat(5,1fr);background:#fff;border-top:1px solid #dfe5ec}
-nav button{background:#fff;font-size:11px;padding:12px 3px}.sel{color:#2F75B5;font-weight:700}
-.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
-label{display:block;font-size:12px;font-weight:700;margin:10px 0 5px}
-</style></head>
-<body><div class="app">
-<header><h1>BIA PRODUCTION SYSTEM</h1><small>Pilotage 7 sites</small></header>
-<main>
-<section id="home" class="screen active">
-<label>Site</label><select id="site"></select>
-<div class="grid" style="margin-top:12px">
-<div class="card"><div class="muted">TRS</div><div id="trs" class="big">—</div><span id="trsS" class="badge">—</span></div>
-<div class="card"><div class="muted">Rebuts</div><div id="reb" class="big">—</div><span id="rebS" class="badge">—</span></div>
-<div class="card"><div class="muted">OTIF</div><div id="otif" class="big">—</div><span id="otifS" class="badge">—</span></div>
-<div class="card"><div class="muted">Maturité</div><div id="mat" class="big">—</div><span class="badge ok">Site</span></div>
-</div>
-<h3>À traiter</h3><div id="alerts"></div>
-</section>
-
-<section id="pilotage" class="screen"><h3>Pilotage</h3><div id="pilot"></div></section>
-<section id="actions" class="screen"><div class="row"><h3>Actions</h3><button onclick="newAction()">+ Action</button></div><div id="actions"></div></section>
-
-<section id="gemba" class="screen"><h3>Nouveau Gemba</h3>
-<form id="gf">
-<label>Atelier</label><input id="ga" required>
-<label>Constat</label><textarea id="gc" rows="4" required></textarea>
-<label>Catégorie</label><select id="gcat"><option>Sécurité</option><option>Qualité</option><option>Flux</option><option>5S</option><option>Performance</option><option>RSE</option></select>
-<label>Priorité</label><select id="gpri"><option>Haute</option><option>Moyenne</option><option>Basse</option><option>Critique</option></select>
-<label>Responsable</label><input id="go">
-<button class="primary" style="margin-top:12px">Enregistrer</button>
-</form><h3>Derniers constats</h3><div id="glist"></div></section>
-
-<section id="more" class="screen"><h3>Améliorer</h3>
-<div class="card"><b>Lean</b><div class="muted">A3, Kaizen, standards</div></div>
-<div class="card"><b>Industrialisation</b><div class="muted">Projets, ramp-up</div></div>
-<div class="card"><b>RSE</b><div class="muted">Environnement, social, gouvernance</div></div>
-<div class="card"><b>Bonnes pratiques</b><div class="muted">Valider, standardiser, déployer</div></div>
-<div class="card"><b>Hoshin</b><div class="muted">Objectifs, KPI, actions</div></div>
-</section>
-</main>
-<nav>
-<button data-s="home">Accueil</button><button data-s="pilotage">Pilotage</button><button data-s="actions">Actions</button><button data-s="gemba">Gemba</button><button data-s="more">Améliorer</button>
-</nav>
-</div>
-<script>
-const sites=[
-{id:"S01",name:"Site A",trs:.78,reb:.05,otif:.91,mat:3.0},{id:"S02",name:"Site B",trs:.88,reb:.025,otif:.96,mat:3.6},
-{id:"S03",name:"Site C",trs:.92,reb:.018,otif:.97,mat:4.3},{id:"S04",name:"Site D",trs:.74,reb:.048,otif:.89,mat:2.0},
-{id:"S05",name:"Site E",trs:.83,reb:.031,otif:.94,mat:3.0},{id:"S06",name:"Site F",trs:.86,reb:.022,otif:.95,mat:3.8},
-{id:"S07",name:"Site G",trs:.81,reb:.028,otif:.93,mat:2.9}];
-let actions=JSON.parse(localStorage.bia_actions||"[]"), gembas=JSON.parse(localStorage.bia_gembas||"[]");
-const siteSel=document.getElementById("site");sites.forEach(s=>{let o=document.createElement("option");o.value=s.id;o.textContent=s.name;siteSel.appendChild(o)});
-siteSel.value=localStorage.bia_site||"S01";siteSel.onchange=()=>{localStorage.bia_site=siteSel.value;render()};
-function cur(){return sites.find(x=>x.id===siteSel.value)}
-function cls(v,t,hi){return hi?(v>=t?"ok":v>=t*.95?"warn":"crit"):(v<=t?"ok":v<=t*1.15?"warn":"crit")}
-function st(c){return c==="ok"?"OK":c==="warn"?"À surveiller":"Critique"}
-function setBadge(id,c){let e=document.getElementById(id);e.className="badge "+c;e.textContent=st(c)}
-function render(){
-let s=cur();document.getElementById("trs").textContent=(s.trs*100).toFixed(0)+"%";setBadge("trsS",cls(s.trs,.85,true));
-document.getElementById("reb").textContent=(s.reb*100).toFixed(1)+"%";setBadge("rebS",cls(s.reb,.03,false));
-document.getElementById("otif").textContent=(s.otif*100).toFixed(0)+"%";setBadge("otifS",cls(s.otif,.95,true));document.getElementById("mat").textContent=s.mat.toFixed(1)+"/5";
-let a=[];if(s.trs<.85)a.push(["Performance","TRS sous cible",cls(s.trs,.85,true)]);if(s.reb>.03)a.push(["Qualité","Rebuts au-dessus de la cible","crit"]);if(s.otif<.95)a.push(["Délai","OTIF sous cible",cls(s.otif,.95,true)]);
-let siteA=actions.filter(x=>x.site===s.id&&x.status!=="Terminé");siteA.slice(0,3).forEach(x=>a.push(["Action",x.text,x.priority==="Critique"?"crit":"warn"]));
-document.getElementById("alerts").innerHTML=a.length?a.map(x=>`<div class="card ${x[2]}"><b>${x[0]}</b><div>${x[1]}</div></div>`).join(""):'<div class="card ok">Aucune alerte critique.</div>';
-document.getElementById("pilot").innerHTML=[["Sécurité","0 accident","0","OK","ok"],["Qualité","≤3%",(s.reb*100).toFixed(1)+"%","",cls(s.reb,.03,false)],["TRS","≥85%",(s.trs*100).toFixed(0)+"%","",cls(s.trs,.85,true)],["OTIF","≥95%",(s.otif*100).toFixed(0)+"%","",cls(s.otif,.95,true)]].map(r=>`<div class="card ${r[4]}"><div class="row"><b>${r[0]}</b><span class="badge ${r[4]}">${r[3]||st(r[4])}</span></div><div class="muted">Cible ${r[1]} · Réel ${r[2]}</div></div>`).join("");
-let ar=siteA;document.getElementById("actions").innerHTML=ar.length?ar.map(x=>`<div class="card ${x.priority==="Critique"?"crit":"warn"}"><div class="row"><b>${x.priority}</b><button onclick="finish('${x.id}')">Clôturer</button></div><div>${x.text}</div><div class="muted">${x.owner||"Responsable à définir"} · ${x.due||"Échéance à définir"}</div></div>`).join(""):'<div class="card ok">Aucune action ouverte.</div>';
-let gr=gembas.filter(x=>x.site===s.id).slice(-5).reverse();document.getElementById("glist").innerHTML=gr.length?gr.map(x=>`<div class="card"><b>${x.category}</b><div>${x.finding}</div><div class="muted">${x.atelier} · ${x.owner||""}</div></div>`).join(""):'<div class="card">Aucun constat.</div>';
-}
-function newAction(){let t=prompt("Action à créer");if(!t)return;actions.push({id:Date.now().toString(),site:cur().id,text:t,priority:"Haute",status:"À faire"});localStorage.bia_actions=JSON.stringify(actions);render()}
-function finish(id){actions=actions.map(x=>x.id===id?{...x,status:"Terminé"}:x);localStorage.bia_actions=JSON.stringify(actions);render()}
-document.getElementById("gf").onsubmit=e=>{e.preventDefault();let s=cur();gembas.push({id:Date.now(),site:s.id,atelier:ga.value,finding:gc.value,category:gcat.value,priority:gpri.value,owner:go.value});localStorage.bia_gembas=JSON.stringify(gembas);e.target.reset();render()}
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.s).classList.add("active");document.querySelectorAll("nav button").forEach(x=>x.classList.remove("sel"));b.classList.add("sel")});
-document.querySelector("nav button").classList.add("sel");render();
+:root{--navy:#123b45;--teal:#147a79;--mint:#e5f4ef;--ink:#142127;--muted:#64737a;--line:#dbe3e4;--amber:#f4aa2a;--red:#d65745;--bg:#f5f7f6}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.42 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{max-width:620px;margin:auto;min-height:100vh;padding-bottom:80px}header{background:var(--navy);color:#fff;padding:calc(16px + env(safe-area-inset-top)) 20px 18px}.brand{font-weight:800;font-size:12px;letter-spacing:.1em;opacity:.8}h1{font-size:22px;margin:4px 0 16px}label{display:block;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-top:12px}select,input,textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:white;color:var(--ink);font:inherit;padding:12px;margin-top:6px}header select{border:0;font-weight:700}main{padding:16px}.screen{display:none}.screen.active{display:block}.eyebrow{color:var(--teal);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin:0 0 4px}h2{font-size:22px;margin:0 0 14px}h3{font-size:16px;margin:0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card,.row{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 1px 1px #1131}.kpi-label,.row-meta{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase}.kpi-value{font-size:25px;line-height:1.1;font-weight:800;margin:7px 0 2px}.status{font-size:12px;font-weight:700}.good{color:#287a5b}.watch{color:#a56800}.bad{color:#b43d32}.alert{margin-top:16px;padding:14px;background:#fff5df;border-left:4px solid var(--amber);border-radius:10px}.alert strong{display:block;margin-bottom:4px}.section{margin-top:20px}.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.badge{background:var(--mint);color:var(--teal);padding:3px 8px;border-radius:99px;font-size:12px;font-weight:800}.list{display:grid;gap:9px}.row-title{font-weight:750}.row-meta{font-weight:400;text-transform:none;margin-top:3px}.priority{float:right;font-size:12px;padding:3px 7px;border-radius:99px;font-weight:800}.high{background:#fde8e5;color:#b43d32}.medium{background:#fff3d9;color:#916000}.low{background:#e5f4ef;color:#287a5b}button{border:0;border-radius:10px;background:var(--teal);color:#fff;font:inherit;font-weight:800;padding:12px 15px;width:100%;margin-top:12px}.secondary{background:#fff;color:var(--teal);border:1px solid var(--teal)}.hint,.empty{color:var(--muted)}.empty{text-align:center;padding:22px}.bottom{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;bottom:0;left:0;right:0;max-width:620px;margin:auto;background:#fff;border-top:1px solid var(--line);padding:8px 4px calc(8px + env(safe-area-inset-bottom))}.bottom button{background:transparent;color:var(--muted);margin:0;padding:7px 2px;font-size:11px}.bottom button.active{color:var(--teal)}#connection{font-size:12px;color:#d7f0eb;margin-top:8px}
+</style></head><body><div class="app"><header><div class="brand">BIA · V2 PARTAGÉE</div><h1>Production System</h1><label for="site">Site actif</label><select id="site"></select><div id="connection">Mode démo local</div></header><main>
+<section id="home" class="screen active"><p class="eyebrow">Vue d'ensemble</p><h2 id="siteTitle"></h2><div class="grid" id="kpis"></div><div class="alert" id="notice"></div><div class="section"><div class="section-head"><h3>Actions prioritaires</h3><span class="badge" id="count"></span></div><div class="list" id="homeActions"></div></div></section>
+<section id="actions" class="screen"><p class="eyebrow">Partagé entre sites</p><h2>Actions</h2><p class="hint">Les nouvelles actions sont synchronisées dès que Supabase est connecté.</p><div class="list" id="actionList"></div><button id="openAction">+ Ajouter une action</button><form id="actionForm" hidden><label>Action<input id="actionTitle" required placeholder="Ex. Réduire les rebuts ligne 2"></label><label>Responsable<input id="actionOwner" required placeholder="Nom ou équipe"></label><label>Priorité<select id="actionPriority"><option>Haute</option><option selected>Moyenne</option><option>Basse</option></select></label><button>Enregistrer l'action</button></form></section>
+<section id="gemba" class="screen"><p class="eyebrow">Saisie courte</p><h2>Gemba</h2><form id="gembaForm"><label>Atelier<input id="workshop" required placeholder="Ex. Montage"></label><label>Constat<textarea id="finding" required rows="4" placeholder="Décrivez le constat terrain"></textarea></label><label>Catégorie<select id="category"><option>Qualité</option><option>Performance</option><option>Délai</option><option>Sécurité</option></select></label><label>Priorité<select id="gembaPriority"><option>Haute</option><option selected>Moyenne</option><option>Basse</option></select></label><button>Enregistrer le Gemba</button></form><div class="section"><h3>Derniers constats</h3><div class="list" id="gembaList"></div></div></section>
+<section id="account" class="screen"><p class="eyebrow">Accès sécurisé</p><h2>Compte</h2><p class="hint" id="accountState">Connectez Supabase pour activer les comptes utilisateurs et le partage réel.</p><form id="login"><label>E-mail<input id="email" type="email" required placeholder="vous@entreprise.fr"></label><label>Mot de passe<input id="password" type="password" required></label><button>Connexion</button><button type="button" id="signup" class="secondary">Créer un compte</button></form><button id="logout" class="secondary" hidden>Déconnexion</button></section>
+</main><nav class="bottom"><button class="active" data-go="home">Accueil</button><button data-go="actions">Actions</button><button data-go="gemba">Gemba</button><button data-go="account">Compte</button></nav></div>
+<script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+const sites=[['marzin','Marzin','78 %','5,0 %','91 %','2,4 / 5'],['europlacage','Europlacage','84 %','3,1 %','95 %','2,8 / 5'],['sodeplax','Sodeplax','81 %','4,2 %','93 %','2,6 / 5'],['oraison-menuiserie','Oraison Menuiserie','86 %','2,8 %','96 %','3,0 / 5'],['profiline','Profiline','79 %','4,7 %','92 %','2,5 / 5'],['marquoplac','Marquoplac','88 %','2,4 %','97 %','3,2 / 5'],['lmdp','LMDP','82 %','3,8 %','94 %','2,7 / 5']];let siteId=localStorage.biaV2Site||'marzin',actions=JSON.parse(localStorage.biaV2Actions||'{}'),gembas=JSON.parse(localStorage.biaV2Gembas||'[]'),db=null;const $=x=>document.getElementById(x),current=()=>sites.find(s=>s[0]===siteId),name=()=>current()[1],pc=p=>p==='Haute'?'high':p==='Moyenne'?'medium':'low';function persist(){localStorage.biaV2Site=siteId;localStorage.biaV2Actions=JSON.stringify(actions);localStorage.biaV2Gembas=JSON.stringify(gembas)}function row(a){return `<div class="row"><span class="priority ${pc(a.priority)}">${a.priority}</span><div class="row-title">${a.title}</div><div class="row-meta">${a.owner} · ${name()}</div></div>`}function render(){let s=current(),a=actions[siteId]||[],g=gembas.filter(x=>x.site_id===siteId);$('siteTitle').textContent=s[1];$('kpis').innerHTML=[['TRS',s[2],'watch'],['Rebuts',s[3],'bad'],['OTIF',s[4],'good'],['Maturité',s[5],'good']].map(x=>`<div class="card"><div class="kpi-label">${x[0]}</div><div class="kpi-value">${x[1]}</div><div class="status ${x[2]}">${x[2]==='good'?'Dans la cible':'À suivre'}</div></div>`).join('');$('notice').innerHTML=`<strong>Point d’attention · ${s[1]}</strong>Suivi V2 prêt pour la synchronisation multisite.`;$('count').textContent=`${a.length} ouverte${a.length>1?'s':''}`;let html=a.length?a.map(row).join(''):`<div class="empty">Aucune action ouverte pour ${name()}.</div>`;$('homeActions').innerHTML=html;$('actionList').innerHTML=html;$('gembaList').innerHTML=g.length?g.map(x=>`<div class="row"><span class="priority ${pc(x.priority)}">${x.priority}</span><div class="row-title">${x.finding}</div><div class="row-meta">${x.workshop} · ${x.category} · ${name()}</div></div>`).join(''):`<div class="empty">Aucun constat enregistré pour ${name()}.</div>`}async function sync(){if(!db)return;let[{data:a},{data:g}]=await Promise.all([db.from('actions').select('*').order('created_at',{ascending:false}),db.from('gembas').select('*').order('created_at',{ascending:false})]);if(a){actions={};a.forEach(x=>(actions[x.site_id]??=[]).push(x))}if(g)gembas=g;persist();render()}async function remote(table,payload){if(!db)return;let{error}=await db.from(table).insert(payload);if(error)alert('Synchronisation impossible : '+error.message);else await sync()}function setup(){if(window.BIA_SUPABASE?.url&&window.BIA_SUPABASE?.anonKey){db=window.supabase.createClient(BIA_SUPABASE.url,BIA_SUPABASE.anonKey);$('connection').textContent='Connexion cloud en cours…';db.auth.onAuthStateChange((_e,session)=>account(session));db.auth.getSession().then(({data})=>account(data.session));}else render()}function account(session){$('connection').textContent=session?'Connecté · synchronisation partagée':'Cloud configuré · connexion requise';$('login').hidden=!!session;$('logout').hidden=!session;$('accountState').textContent=session?'Votre compte est connecté. Les actions et Gemba sont partagés entre les sites.':'Connectez-vous pour accéder aux données partagées.';if(session)sync()}$('site').innerHTML=sites.map(s=>`<option value="${s[0]}" ${s[0]===siteId?'selected':''}>${s[1]}</option>`).join('');$('site').onchange=e=>{siteId=e.target.value;persist();render()};document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.querySelectorAll('[data-go]').forEach(x=>x.classList.remove('active'));$(b.dataset.go).classList.add('active');b.classList.add('active')});$('openAction').onclick=()=>{$('actionForm').hidden=false};$('actionForm').onsubmit=async e=>{e.preventDefault();let a={site_id:siteId,title:$('actionTitle').value,owner:$('actionOwner').value,priority:$('actionPriority').value};(actions[siteId]??=[]).unshift(a);persist();render();e.target.reset();e.target.hidden=true;await remote('actions',a)};$('gembaForm').onsubmit=async e=>{e.preventDefault();let g={site_id:siteId,workshop:$('workshop').value,finding:$('finding').value,category:$('category').value,priority:$('gembaPriority').value};gembas.unshift(g);persist();render();e.target.reset();alert('Constat Gemba enregistré pour '+name()+'.');await remote('gembas',g)};$('login').onsubmit=async e=>{e.preventDefault();if(!db)return alert('Ajoutez les identifiants Supabase dans config.js.');let{error}=await db.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)alert(error.message)};$('signup').onclick=async()=>{if(!db)return alert('Ajoutez les identifiants Supabase dans config.js.');let{error}=await db.auth.signUp({email:$('email').value,password:$('password').value});if(error)alert(error.message);else alert('Compte créé. Vérifiez votre e-mail pour confirmer l’accès.')};$('logout').onclick=()=>db.auth.signOut();setup();
+</script><script>
+  // Les écritures cloud portent toujours l'identifiant de l'utilisateur connecté.
+  async function remote(table,payload) {
+    if (!db) return;
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) { alert('Connectez-vous pour synchroniser les données.'); return; }
+    payload.created_by = user.id;
+    const { error } = await db.from(table).insert(payload);
+    if (error) alert('Synchronisation impossible : ' + error.message);
+    else await sync();
+  }
 </script></body></html>
