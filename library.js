@@ -1,4 +1,4 @@
-/* BIA Operating System V4 — bibliothèque métier opérationnelle.
+/* BIA Operating System V5 — bibliothèque métier opérationnelle.
    Les contenus sont volontairement courts, orientés terrain et indépendants
    de toute donnée BIA non vérifiée. */
 
@@ -154,15 +154,14 @@ const ROADMAP_YEARS = [
 
 let toolkitState = {module:null,problem:null,category:"Tous",questionRole:"DG Groupe"};
 
-function toolkitJson(key,fallback){try{return JSON.parse(localStorage.getItem(key))||fallback}catch(_e){return fallback}}
-function toolkitSave(key,value){localStorage.setItem(key,JSON.stringify(value))}
+function toolkitJson(key,fallback){return data.toolState?.[siteId]?.[key]??fallback}
+function toolkitSave(key,value){data.toolState??={};data.toolState[siteId]??={};data.toolState[siteId][key]=value;saveLocal()}
 function toolkitModule(id){return TOOL_MODULES.find(x=>x.id===id)}
 function toolkitProblem(id){return TOOL_PROBLEMS.find(x=>x.id===id)}
 
 function renderToolkit(){
   const root=$("toolsView");
   if(!root)return;
-  if(!(data.toolkitRuns||[]).length)data.toolkitRuns=toolkitJson("biaV4ToolkitRuns",[]);
   if(toolkitState.module){root.innerHTML=renderToolDetail(toolkitModule(toolkitState.module));return}
   if(toolkitState.problem){root.innerHTML=renderProblemDetail(toolkitProblem(toolkitState.problem));return}
   const categories=["Tous",...new Set(TOOL_MODULES.map(x=>x.category))];
@@ -183,7 +182,7 @@ function renderProblemDetail(route){
 
 function renderToolDetail(module){
   if(!module)return `<div class="empty">Module introuvable.</div>`;
-  const progress=toolkitJson("biaV4ToolProgress",{}), done=progress[module.id]||[], pct=Math.round(done.length/Math.max(module.checklist.length,1)*100);
+  const progress=toolkitJson("biaV5ToolProgress",{}), done=progress[module.id]||[], pct=Math.round(done.length/Math.max(module.checklist.length,1)*100);
   return `<div class="tool-detail"><button class="btn secondary" data-back-tools>← Bibliothèque</button><div class="tool-head section"><span class="tool-no">${esc(module.no)} · ${esc(module.category)}</span><h1>${esc(module.title)}</h1><p class="intro">${esc(module.objective)}</p><div class="fact-note"><b>Quand l’utiliser :</b> ${esc(module.use)}</div><div class="tool-actions"><button class="btn" data-start-tool="${module.id}">Démarrer sur ${esc(current().name)}</button><button class="btn secondary" data-tool-action="${module.id}">Créer une action</button><button class="btn secondary" data-print-tool>Imprimer / PDF</button></div></div><div class="tool-detail-grid"><div class="tool-block"><h2>Séquence terrain</h2>${module.steps.map((x,i)=>`<div class="tool-step"><span>${i+1}</span><div>${esc(x)}</div></div>`).join("")}</div><div class="tool-block"><div class="section-title"><h2>Checklist de lancement</h2><span class="badge" id="toolProgressText">${pct} %</span></div><div class="tool-progress"><span id="toolProgressBar" style="width:${pct}%"></span></div>${module.checklist.map((x,i)=>`<label class="tool-check"><input type="checkbox" data-tool-check="${i}" data-module="${module.id}" ${done.includes(i)?"checked":""}><span>${esc(x)}</span></label>`).join("")}</div><div class="tool-block"><h2>KPI utiles</h2><ul>${module.kpis.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div><div class="tool-block"><h2>Livrables attendus</h2><ul>${module.deliverables.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></div><div class="tool-block"><h2>Pièges à éviter</h2><div class="tag-list">${module.pitfalls.map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</div></div>${renderToolSpecial(module)}</div>`;
 }
 
@@ -206,7 +205,7 @@ function renderToolSpecial(module){
 }
 
 function renderDiagnosticSpecial(){
-  const scores=toolkitJson("biaV4Diagnostic",{}), vals=Object.values(scores).map(Number), avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+  const scores=toolkitJson("biaV5Diagnostic",{}), vals=Object.values(scores).map(Number), avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
   const ranked=DIAGNOSTIC_DOMAINS.filter(x=>Object.hasOwn(scores,x)).map(x=>[x,Number(scores[x])]).sort((a,b)=>a[1]-b[1]), risks=ranked.filter(x=>x[1]<2).slice(0,5), opportunities=ranked.filter(x=>x[1]>=2&&x[1]<4).slice(0,5), strengths=[...ranked].reverse().slice(0,5);
   const text=list=>list.length?list.map(x=>x[0]).join(" · "):"À renseigner";
   return `<div class="tool-block"><div class="section-title"><div><h2>Scoring terrain 0 à 5</h2><p class="hint">0 Inexistant · 1 Très faible · 2 Insuffisant · 3 Acceptable · 4 Maîtrisé · 5 Excellence</p></div><div class="diag-score" id="diagScore">${avg.toFixed(1)} / 5</div></div><div class="diag-radar" id="diagRadar">${renderDiagRadar(scores)}</div><p class="hint">Axes 1 à 26 dans l’ordre de la grille ci-dessous.</p><div class="diag-list">${DIAGNOSTIC_DOMAINS.map(x=>`<label class="diag-row"><span>${esc(x)}</span><select data-diag-domain="${esc(x)}"><option value="">—</option>${[0,1,2,3,4,5].map(n=>`<option value="${n}" ${String(scores[x])===String(n)?"selected":""}>${n} / 5</option>`).join("")}</select></label>`).join("")}</div><div class="section grid"><div class="fact-note"><b>Top risques :</b><br><span id="diagRisks">${esc(text(risks))}</span></div><div class="fact-note"><b>Top opportunités :</b><br><span id="diagOpportunities">${esc(text(opportunities))}</span></div><div class="fact-note"><b>Forces observées :</b><br><span id="diagStrengths">${esc(text(strengths))}</span></div><div class="fact-note"><b>Candidats quick wins :</b><br><span id="diagQuickWins">${esc(text(ranked.filter(x=>x[1]>=1&&x[1]<=2).slice(0,5)))}</span><br><small>À confirmer par impact / effort.</small></div></div></div><div class="tool-block"><h2>Diagnostic usine en 2 heures</h2><ol><li>00:00 — Direction site : attentes, risques, engagements client</li><li>00:15 — KPI : définitions, tendances, écarts majeurs</li><li>00:30 — Gemba : flux complet et files</li><li>01:30 — Synthèse factuelle et recoupement</li><li>01:50 — Top 3 problèmes et prochaines mesures</li></ol></div><div class="tool-block"><h2>Diagnostic d’un site en 1 journée</h2><ol><li>08h00 Direction site</li><li>08h30 KPI</li><li>09h00 Gemba</li><li>11h00 Production</li><li>12h00 Synthèse intermédiaire</li><li>13h00 Maintenance / Qualité / Supply</li><li>15h00 Analyse flux</li><li>16h00 Restitution provisoire</li><li>17h00 Top 5 problèmes / Top 5 actions</li></ol></div>`;
@@ -228,7 +227,6 @@ function renderQuestionsSpecial(){
 }
 
 function renderEvidenceSpecial(){
-  if(!(data.knowledgeSources||[]).length)data.knowledgeSources=toolkitJson("biaV4KnowledgeSources",[]);
   const items=data.knowledgeSources||[], label={fait_verifie:"A · Fait vérifié",hypothese_probable:"B · Hypothèse probable",point_a_confirmer:"C · Point à confirmer"}, tone={fait_verifie:"verified",hypothese_probable:"hypothesis",point_a_confirmer:"confirm"};
   return `<div class="tool-block"><h2>Règle absolue sur les informations BIA</h2><div class="source-class"><div class="verified"><b>A · Fait vérifié</b><br>Source publique identifiable, lien fonctionnel et date de consultation.</div><div class="hypothesis"><b>B · Hypothèse probable</b><br>Déduction raisonnable explicitement présentée comme hypothèse.</div><div class="confirm"><b>C · Point à confirmer</b><br>Information à vérifier lors d’un entretien, d’une visite ou dans les systèmes.</div></div></div><form class="form tool-block" id="knowledgeForm"><h2>Ajouter une information</h2><div class="form-grid"><label>Classement<select id="knowledgeClass"><option value="point_a_confirmer">C · Point à confirmer</option><option value="hypothese_probable">B · Hypothèse probable</option><option value="fait_verifie">A · Fait vérifié</option></select></label><label>Titre<input id="knowledgeTitle" required placeholder="Ex. Périmètre d’un site"></label><label class="wide">Information<textarea id="knowledgeStatement" required rows="3" placeholder="Formulation précise, sans transformer une hypothèse en fait"></textarea></label><label>Source publique<input id="knowledgeUrl" type="url" placeholder="https://…"></label><label>Date de consultation<input id="knowledgeDate" type="date"></label><label>Validation terrain par<input id="knowledgeOwner" placeholder="Rôle ou personne"></label></div><div class="form-footer"><button class="btn">Enregistrer dans le registre</button></div></form><div class="tool-block"><div class="section-title"><h2>Registre</h2><span class="badge">${items.length}</span></div><div class="list">${items.map(x=>`<article class="row source-row ${tone[x.classification]||"confirm"}"><div class="card-top"><span class="pill open">${esc(label[x.classification]||x.classification)}</span><span class="row-meta">${x.consulted_at?new Date(x.consulted_at).toLocaleDateString("fr-FR"):"Sans date"}</span></div><div class="row-title">${esc(x.title)}</div><p class="hint">${esc(x.statement)}</p><div class="row-meta">${x.source_url?esc(x.source_url):"Source non requise / à compléter"}${x.validation_owner?" · Validation : "+esc(x.validation_owner):""}</div></article>`).join("")||empty("Aucune information enregistrée.")}</div></div>`;
 }
@@ -257,27 +255,27 @@ function filterToolkit(value){
 }
 
 function updateToolProgress(e){
-  const module=e.target.dataset.module,index=Number(e.target.dataset.toolCheck),all=toolkitJson("biaV4ToolProgress",{}),done=new Set(all[module]||[]);
-  e.target.checked?done.add(index):done.delete(index);all[module]=[...done].sort((a,b)=>a-b);toolkitSave("biaV4ToolProgress",all);
+  const module=e.target.dataset.module,index=Number(e.target.dataset.toolCheck),all=toolkitJson("biaV5ToolProgress",{}),done=new Set(all[module]||[]);
+  e.target.checked?done.add(index):done.delete(index);all[module]=[...done].sort((a,b)=>a-b);toolkitSave("biaV5ToolProgress",all);
   const total=toolkitModule(module)?.checklist.length||1,pct=Math.round(done.size/total*100);if($("toolProgressText"))$("toolProgressText").textContent=pct+" %";if($("toolProgressBar"))$("toolProgressBar").style.width=pct+"%";
 }
 
 function updateDiagnostic(e){
-  const scores=toolkitJson("biaV4Diagnostic",{});if(e.target.value==="")delete scores[e.target.dataset.diagDomain];else scores[e.target.dataset.diagDomain]=Number(e.target.value);toolkitSave("biaV4Diagnostic",scores);
+  const scores=toolkitJson("biaV5Diagnostic",{});if(e.target.value==="")delete scores[e.target.dataset.diagDomain];else scores[e.target.dataset.diagDomain]=Number(e.target.value);toolkitSave("biaV5Diagnostic",scores);
   const vals=Object.values(scores).map(Number),avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0,ranked=DIAGNOSTIC_DOMAINS.filter(x=>Object.hasOwn(scores,x)).map(x=>[x,Number(scores[x])]).sort((a,b)=>a[1]-b[1]), text=list=>list.length?list.map(x=>x[0]).join(" · "):"À renseigner";
   if($("diagScore"))$("diagScore").textContent=avg.toFixed(1)+" / 5";if($("diagRadar"))$("diagRadar").innerHTML=renderDiagRadar(scores);if($("diagRisks"))$("diagRisks").textContent=text(ranked.filter(x=>x[1]<2).slice(0,5));if($("diagOpportunities"))$("diagOpportunities").textContent=text(ranked.filter(x=>x[1]>=2&&x[1]<4).slice(0,5));if($("diagStrengths"))$("diagStrengths").textContent=text([...ranked].reverse().slice(0,5));if($("diagQuickWins"))$("diagQuickWins").textContent=text(ranked.filter(x=>x[1]>=1&&x[1]<=2).slice(0,5));
 }
 
 async function createKnowledgeSource(e){
   e.preventDefault();const classification=$("knowledgeClass").value, source_url=$("knowledgeUrl").value||null, consulted_at=$("knowledgeDate").value||null;if(classification==="fait_verifie"&&(!source_url||!consulted_at))return toast("Un fait vérifié exige une source et une date de consultation.");
-  const item={id:"local-knowledge-"+Date.now(),classification,title:$("knowledgeTitle").value,statement:$("knowledgeStatement").value,source_url,consulted_at,validation_owner:$("knowledgeOwner").value||null,status:"ouvert",created_at:new Date().toISOString()};data.knowledgeSources??=[];data.knowledgeSources.unshift(item);toolkitSave("biaV4KnowledgeSources",data.knowledgeSources.filter(x=>String(x.id).startsWith("local-")));
-  const saved=await write("knowledge_sources",{classification:item.classification,title:item.title,statement:item.statement,source_url:item.source_url,consulted_at:item.consulted_at,validation_owner:item.validation_owner,status:item.status});if(saved)Object.assign(item,saved);toast(saved?"Information classée et synchronisée.":"Information classée sur cet appareil.");renderToolkit();bindToolkit();
+  const item={id:"local-knowledge-"+Date.now(),site_id:siteId,classification,title:$("knowledgeTitle").value,statement:$("knowledgeStatement").value,source_url,consulted_at,validation_owner:$("knowledgeOwner").value||null,status:"ouvert",created_at:new Date().toISOString()};data.knowledgeSources??=[];data.knowledgeSources.unshift(item);toolkitSave("biaV5KnowledgeSources",data.knowledgeSources.filter(x=>String(x.id).startsWith("local-")));
+  const saved=await write("knowledge_sources",{site_id:item.site_id,classification:item.classification,title:item.title,statement:item.statement,source_url:item.source_url,consulted_at:item.consulted_at,validation_owner:item.validation_owner,status:item.status});if(saved)Object.assign(item,saved);saveLocal();toast(saved?"Information classée et synchronisée.":"Information classée sur cet appareil.");renderToolkit();bindToolkit();
 }
 
 async function startToolkitRun(moduleId){
   const module=toolkitModule(moduleId);if(!module)return;
   const run={id:"local-tool-"+Date.now(),site_id:siteId,module_id:module.id,title:module.title,status:"en_cours",progress:{},started_at:new Date().toISOString(),created_at:new Date().toISOString()};
-  data.toolkitRuns??=[];data.toolkitRuns.unshift(run);toolkitSave("biaV4ToolkitRuns",data.toolkitRuns.filter(x=>String(x.id).startsWith("local-")));
+  data.toolkitRuns??=[];data.toolkitRuns.unshift(run);toolkitSave("biaV5ToolkitRuns",data.toolkitRuns.filter(x=>String(x.id).startsWith("local-")));saveLocal();
   const saved=await write("toolkit_runs",{site_id:siteId,module_id:module.id,title:module.title,status:"en_cours",progress:{},started_at:run.started_at});if(saved)Object.assign(run,saved);
   toast(saved?"Parcours démarré et synchronisé.":"Parcours démarré sur cet appareil.");
 }
@@ -285,10 +283,10 @@ async function startToolkitRun(moduleId){
 async function createToolkitAction(moduleId){
   const module=toolkitModule(moduleId);if(!module)return;const title=module.title+" · "+module.steps[0];
   const action={id:"local-tool-action-"+Date.now(),site_id:siteId,title,owner:"À attribuer",priority:"Moyenne",status:"Ouverte",origin_type:"Bibliothèque",description:module.objective};data.actions.unshift(action);
-  const saved=await write("actions",{site_id:siteId,title,owner:action.owner,priority:action.priority,status:action.status,origin_type:action.origin_type,description:action.description});if(saved)Object.assign(action,saved);toast("Action créée depuis la bibliothèque.");
+  const saved=await write("actions",{site_id:siteId,title,owner:action.owner,priority:action.priority,status:action.status,origin_type:action.origin_type,description:action.description});if(saved)Object.assign(action,saved);saveLocal();toast("Action créée depuis la bibliothèque.");
 }
 
 async function createProblemAction(problemId){
   const route=toolkitProblem(problemId);if(!route)return;const action={id:"local-problem-action-"+Date.now(),site_id:siteId,title:route.first,owner:"À attribuer",priority:"Moyenne",status:"Ouverte",origin_type:"Arbre de décision",description:route.problem+" · Mesure : "+route.measure};data.actions.unshift(action);
-  const saved=await write("actions",{site_id:siteId,title:action.title,owner:action.owner,priority:action.priority,status:action.status,origin_type:action.origin_type,description:action.description});if(saved)Object.assign(action,saved);toast("Première action créée.");
+  const saved=await write("actions",{site_id:siteId,title:action.title,owner:action.owner,priority:action.priority,status:action.status,origin_type:action.origin_type,description:action.description});if(saved)Object.assign(action,saved);saveLocal();toast("Première action créée.");
 }

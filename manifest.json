@@ -1,1 +1,14 @@
-{"name":"BIA Operating System V4","short_name":"BIA OS","start_url":"./","display":"standalone","background_color":"#f2f6f7","theme_color":"#102f3c","lang":"fr","description":"Pilotage industriel multisite et bibliothèque opérationnelle"}
+{
+  "name":"BIA Operating System V5",
+  "short_name":"BIA OS",
+  "id":"./",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "orientation":"any",
+  "background_color":"#f3f6f7",
+  "theme_color":"#0b3440",
+  "lang":"fr",
+  "icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}],
+  "description":"Système d'excellence opérationnelle et de pilotage industriel multisite"
+}
