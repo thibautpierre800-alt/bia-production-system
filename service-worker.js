@@ -1,7 +1,7 @@
-const CACHE="bia-os-v5-2";
-const ASSETS=["./","./index.html","./styles.css","./app.js","./library.js","./config.js","./manifest.json","./icon.svg"];
+const CACHE="bia-production-system-v5-3";
+const ASSETS=["./","./index.html","./v5.css","./v5.js","./manifest.json","./icon.svg"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
-self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith("bia-os-")&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>(key.startsWith("bia-os-")||key.startsWith("bia-production-system-"))&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",event=>{
   const url=new URL(event.request.url);
   if(event.request.method!=="GET"||url.origin!==self.location.origin||!ASSETS.some(path=>new URL(path,self.registration.scope).pathname===url.pathname))return;

@@ -1,5 +1,8 @@
--- BIA Operating System V5 — schéma initial Supabase
--- À exécuter une fois dans l'éditeur SQL du projet Supabase.
+-- ARCHIVE TECHNIQUE DE LA V5 LOCALE PRÉCÉDENTE — NE PAS EXÉCUTER.
+-- Ce schéma ne couvre ni le référentiel BIA V5 cible, ni les quatre profils,
+-- ni les ateliers, ni le cycle Signal → Problème → Action → Vérification.
+-- Une migration versionnée et testée sur une base isolée devra le remplacer
+-- après inventaire du backend réel. L'application V5 actuelle ne le charge pas.
 
 create extension if not exists pgcrypto;
 
