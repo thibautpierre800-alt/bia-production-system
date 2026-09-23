@@ -14,6 +14,7 @@ const context=vm.createContext({console,Date,Math,JSON,Number,String,Set,Object,
   document:{getElementById:fakeNode,querySelectorAll:()=>[],querySelector:()=>null,addEventListener(){}},
   setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){},Blob,URL});
 const run=code=>vm.runInContext(code,context);
+run(fs.readFileSync("lean-library.js","utf8"));
 run(fs.readFileSync("v5.js","utf8"));
 
 assert.match(fakeNode("appView").innerHTML,/Aujourd’hui à Marzin/);
@@ -21,6 +22,11 @@ assert.deepEqual(Array.from(run("OPERATIONAL_SITES.map(s=>s.name)")),["Ag Déco"
 assert.equal(run('SITES.some(s=>/^Site [1-9]/.test(s.name))'),false);
 assert.equal(run('NAV.some(n=>n.label==="Indicateurs")'),false);
 assert.equal(run('NAV.some(n=>/100 premiers jours/i.test(n.label))'),false);
+assert.equal(run("LEAN_MODULES.length"),30);
+assert.equal(run('LEAN_MODULES.some(x=>/100 premiers jours/i.test(x.title))'),false);
+assert.equal(run('Object.values(AUDIT_CRITERIA).flat().length'),50);
+assert.ok(run('NAV.some(n=>n.id==="projects")'));
+assert.ok(run('NAV.some(n=>n.id==="tools")'));
 
 for(const id of Array.from(run('ROLES.lean.nav'))){
   run(`state.view="${id}";render()`);
@@ -52,5 +58,6 @@ assert.equal(run('scoped(data.signals).every(s=>s.site_id==="marzin")'),true);
 assert.doesNotMatch(fakeNode("siteSelect").innerHTML,/Europlacage/);
 
 assert.match(fs.readFileSync("service-worker.js","utf8"),/v5\.js/);
-assert.doesNotMatch(fs.readFileSync("index.html","utf8"),/library\.js|app\.js|styles\.css/);
-console.log("PASS: référentiel BIA, 10 écrans, droits, persistance, cycle Signal, traçabilité problème/document, SQCDP et cache V5.");
+assert.match(fs.readFileSync("service-worker.js","utf8"),/lean-library\.js/);
+assert.doesNotMatch(fs.readFileSync("index.html","utf8"),/src="(?:library|app)\.js"|href="styles\.css"/);
+console.log("PASS: référentiel BIA, 30 outils, audit 50 critères, 13 écrans, droits, persistance, cycle Signal, chantiers, A3/8D et cache V5.1.");

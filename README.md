@@ -16,8 +16,13 @@ Application web progressive de management visuel, de pilotage de la performance 
 - Signal Terrain rapide avec cycle Nouveau → Pris en compte → Action en cours → Résolu → Vérifié → Clos
 - Registre et statistiques Signal Terrain
 - Gemba, audits et bonnes pratiques
+- Audit Terrain BIA détaillé : 10 domaines, 50 critères, preuve obligatoire et génération d’actions
 - Plan d’actions unique avec origine, responsable, échéance et preuve d’efficacité avant clôture
 - Transformation sans ressaisie d’un Signal en problème / A3
+- Dossiers A3 en 11 étapes et 8D de D0 à D8, remplissables et versionnés
+- Portefeuille de chantiers SMED, VSM, DMAIC, Kaizen, PDCA, TPM et industrialisation
+- Bibliothèque de 30 outils Lean et industriels avec recherche, checklist et création d’action
+- Benchmark contextualisé des six sites sans classement trompeur
 - Dossiers A3, 8D, QRQC et bibliothèque de documents opérationnels
 - Navigation et périmètres adaptés aux quatre profils
 - Export/import JSON avec sauvegarde préalable
@@ -51,6 +56,7 @@ Le test contrôle le référentiel des six sites, les écrans, les droits, la pe
 
 - `index.html` : coque de l’application
 - `v5.css` : identité et responsive PC / tablette / mobile / écran atelier
+- `lean-library.js` : bibliothèque métier de 30 outils, sans Plan des 100 premiers jours
 - `v5.js` : modèle local et fonctionnalités V5
 - `service-worker.js` : cache hors connexion des ressources statiques
 - `manifest.json` : installation PWA
