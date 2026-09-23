@@ -52,10 +52,12 @@ assert.equal(run('measureStatus({code:"trs",value:80,target:85}).tone'),"open");
 assert.equal(run('measureStatus({code:"scrap",value:2,target:3}).tone'),"done");
 
 run('state.role="terrain";state.site="marzin";state.view="home";render()');
-assert.deepEqual(Array.from(run("visibleNav().map(n=>n.id)")),["home","sqcdp","actions","terrain","documents","account"]);
+assert.deepEqual(Array.from(run("visibleNav().map(n=>n.id)")),["home","sqcdp","actions","terrain","audits","documents","account"]);
 run('state.role="director";state.site="marzin";render()');
 assert.equal(run('scoped(data.signals).every(s=>s.site_id==="marzin")'),true);
 assert.doesNotMatch(fakeNode("siteSelect").innerHTML,/Europlacage/);
+run('state.view="pilotage";render()');assert.match(fakeNode("appView").innerHTML,/Tendance TRS|TRS/);assert.match(fakeNode("appView").innerHTML,/Rebut/);assert.match(fakeNode("appView").innerHTML,/Service client/);
+run('state.view="audits";render()');assert.match(fakeNode("appView").innerHTML,/50 critères/);assert.match(fakeNode("appView").innerHTML,/Audit Terrain/i);
 
 assert.match(fs.readFileSync("service-worker.js","utf8"),/v5\.js/);
 assert.match(fs.readFileSync("service-worker.js","utf8"),/lean-library\.js/);
