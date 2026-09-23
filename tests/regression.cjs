@@ -56,6 +56,7 @@ assert.equal(run('isLate({due_date:"2020-01-01",status:"Ouverte"})'),true);
 assert.equal(run('isLate({due_date:"2020-01-01",status:"Clôturée"})'),false);
 assert.equal(run('measureStatus({code:"trs",value:80,target:85}).tone'),"open");
 assert.equal(run('measureStatus({code:"scrap",value:2,target:3}).tone'),"done");
+assert.equal(run('measureStatus({code:"safety_signal",value:1,target:0}).tone'),"open");
 
 run('state.role="terrain";state.site="marzin";state.view="home";render()');
 assert.deepEqual(Array.from(run("visibleNav().map(n=>n.id)")),["home","sqcdp","actions","terrain","audits","documents","account"]);
@@ -77,7 +78,7 @@ run('startTool("smed")');assert.ok(run('data.toolRuns.some(r=>r.module_id==="sme
 
 assert.match(fs.readFileSync("service-worker.js","utf8"),/v5\.js/);
 assert.match(fs.readFileSync("service-worker.js","utf8"),/lean-library\.js/);
-assert.match(fs.readFileSync("service-worker.js","utf8"),/v5-7/);
+assert.match(fs.readFileSync("service-worker.js","utf8"),/v5-8/);
 assert.doesNotMatch(fs.readFileSync("index.html","utf8"),/src="(?:library|app)\.js"|href="styles\.css"/);
 for(const file of ["v5.js","lean-library.js","README.md"])assert.doesNotMatch(fs.readFileSync(file,"utf8"),/\bSite [1-9]\b/);
 console.log("PASS: référentiel BIA, 30 outils, audit 50 critères, 13 écrans, droits, persistance, cycle Signal, chantiers, A3/8D et cache V5.1.");

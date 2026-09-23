@@ -309,7 +309,7 @@ function renderPilotage(){
 function measureFor(axis){return scoped(data.measures,{groupAllowed:false}).find(m=>m.axis===axis)}
 function measureStatus(m){
   if(!m||m.value==null||m.target==null)return {text:"Non disponible",tone:"neutral"};
-  const bad=m.code==="scrap"?m.value>m.target:m.value<m.target;
+  const bad=["scrap","safety_signal"].includes(m.code)?m.value>m.target:m.value<m.target;
   return bad?{text:"Écart",tone:"open"}:{text:"Conforme",tone:"done"};
 }
 function topSubjects(){
