@@ -19,11 +19,12 @@ Application web progressive de management visuel, de pilotage de la performance 
 - Audit Terrain BIA détaillé : 10 domaines, 50 critères, brouillon reprenable, preuve obligatoire et génération d’actions
 - Plan d’actions unique avec origine, responsable, échéance et preuve d’efficacité avant clôture
 - Transformation sans ressaisie d’un Signal en problème / A3
-- Dossiers A3 en 11 étapes et 8D de D0 à D8, remplissables et versionnés
+- Dossiers A3 en 11 étapes, 8D de D0 à D8, QRQC, 5 Pourquoi et Ishikawa : trames guidées, schémas visuels, progression, version et impression
 - Portefeuille de chantiers SMED, VSM, DMAIC, Kaizen, PDCA, TPM et industrialisation
 - Bibliothèque de 30 outils Lean et industriels avec « Mes démarches », prochaine étape, recherche, checklist et création d’action
 - Benchmark contextualisé des six sites sans classement trompeur
 - Dossiers A3, 8D et QRQC sélectionnables, plus documents opérationnels ouvrables et versionnés
+- Espace Formation : catalogue structuré, programmes, matrice nominative de compétences, niveaux 0 à 5, preuves et fiches individuelles imprimables pour validation RH
 - Navigation et périmètres adaptés aux quatre profils
 - Export/import JSON avec sauvegarde préalable
 
@@ -50,7 +51,7 @@ node --check v5.js
 node tests/regression.cjs
 ```
 
-Le test contrôle le référentiel des six sites, les écrans, les droits, la persistance locale, le cycle du Signal Terrain, la traçabilité vers problème/document, le SQCDP et le cache PWA.
+Le test contrôle le référentiel des six sites, les écrans, les droits, la persistance locale, le cycle du Signal Terrain, la traçabilité vers problème/document, les trames méthodologiques, la formation, le SQCDP et le cache PWA.
 
 ## Fichiers actifs
 

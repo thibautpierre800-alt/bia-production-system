@@ -59,7 +59,7 @@ assert.equal(run('measureStatus({code:"scrap",value:2,target:3}).tone'),"done");
 assert.equal(run('measureStatus({code:"safety_signal",value:1,target:0}).tone'),"open");
 
 run('state.role="terrain";state.site="marzin";state.view="home";render()');
-assert.deepEqual(Array.from(run("visibleNav().map(n=>n.id)")),["home","sqcdp","actions","terrain","audits","documents","account"]);
+assert.deepEqual(Array.from(run("visibleNav().map(n=>n.id)")),["home","sqcdp","actions","terrain","audits","documents","training","account"]);
 run('state.role="director";state.site="marzin";render()');
 assert.equal(run('scoped(data.signals).every(s=>s.site_id==="marzin")'),true);
 assert.doesNotMatch(fakeNode("siteSelect").innerHTML,/Europlacage/);
@@ -72,14 +72,20 @@ fakeNode("saveAuditDraft").onclick();assert.equal(run('data.audits.length'),audi
 run('data.audits.unshift({id:"AUD-999",site_id:"marzin",type:"Audit Terrain BIA",scope:"Test",score:null,status:"Brouillon",performed_at:"2026-09-23",owner:"Test",updated_at:new Date().toISOString(),audit_data:{criteria:[],proof_count:0}});render()');assert.match(fakeNode("appView").innerHTML,/audit\(s\) à reprendre/);assert.match(fakeNode("appView").innerHTML,/Continuer AUD-999/);
 run('state.view="resolution";state.selectedProblemId="P-999";data.problems.push({id:"P-999",site_id:"marzin",title:"Second problème",method:"8D",status:"Cadrage",owner:"Test",signal_ids:[],action_ids:[],content:{}});render()');assert.match(fakeNode("appView").innerHTML,/Second problème/);assert.match(fakeNode("appView").innerHTML,/data-select-problem="P-012"/);
 run('state.view="documents";render()');assert.match(fakeNode("appView").innerHTML,/data-open-document="DOC-001"/);assert.match(fakeNode("appView").innerHTML,/Choisir un modèle/);
+assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
+assert.equal(run('DOCUMENT_SCHEMAS.A3.fields.length'),11);assert.equal(run('DOCUMENT_SCHEMAS["8D"].fields.length'),10);assert.equal(run('DOCUMENT_SCHEMAS.ISHIKAWA.fields.length'),10);
+run('editDocument("DOC-001")');assert.match(fakeNode("modalContent").innerHTML,/A3 de résolution de problème/);assert.match(fakeNode("modalContent").innerHTML,/Cause racine prouvée/);assert.match(fakeNode("modalContent").innerHTML,/data-doc-field="effectiveness"/);
+run('closeModal();state.role="lean";state.site="group";state.view="training";state.trainingTab="catalog";render()');assert.match(fakeNode("appView").innerHTML,/Formation et qualification/);assert.match(fakeNode("appView").innerHTML,/Fondamentaux Lean/);assert.equal(run('data.trainingCatalog.length'),15);
+run('state.site="marzin";state.trainingTab="matrix";render()');assert.match(fakeNode("appView").innerHTML,/Matrice de compétences/);assert.match(fakeNode("appView").innerHTML,/BIA-0001/);
+run('openTrainingPerson("PER-001")');assert.match(fakeNode("modalContent").innerHTML,/Fiche individuelle de formation et qualification/);assert.match(fakeNode("modalContent").innerHTML,/Validation RH/);
 run('state.view="sqcdp";render()');assert.match(fakeNode("appView").innerHTML,/data-open-subject=/);
 run('state.role="lean";state.site="marzin";state.view="tools";state.toolId=null;render()');assert.match(fakeNode("appView").innerHTML,/Mes démarches/);
 run('startTool("smed")');assert.ok(run('data.toolRuns.some(r=>r.module_id==="smed"&&r.site_id==="marzin")'));assert.match(fakeNode("appView").innerHTML,/À faire maintenant/);assert.match(fakeNode("appView").innerHTML,/Bibliothèque → Mes démarches/);
 
 assert.match(fs.readFileSync("service-worker.js","utf8"),/v5\.js/);
 assert.match(fs.readFileSync("service-worker.js","utf8"),/lean-library\.js/);
-assert.match(fs.readFileSync("service-worker.js","utf8"),/v5-9/);
-assert.match(fs.readFileSync("index.html","utf8"),/v5\.js\?v=5\.9/);
+assert.match(fs.readFileSync("service-worker.js","utf8"),/v6-0/);
+assert.match(fs.readFileSync("index.html","utf8"),/v5\.js\?v=6\.0/);
 assert.doesNotMatch(fs.readFileSync("index.html","utf8"),/src="(?:library|app)\.js"|href="styles\.css"/);
 for(const file of ["v5.js","lean-library.js","README.md"])assert.doesNotMatch(fs.readFileSync(file,"utf8"),/\bSite [1-9]\b/);
-console.log("PASS: référentiel BIA, 30 outils, audit 50 critères, 13 écrans, droits, persistance, cycle Signal, chantiers, A3/8D et cache V5.1.");
+console.log("PASS: référentiel BIA, 30 outils, documents méthodologiques, formation RH, audit 50 critères, droits, persistance, cycle Signal, chantiers, A3/8D et cache.");
