@@ -75,8 +75,11 @@ run('state.view="documents";render()');assert.match(fakeNode("appView").innerHTM
 assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
 assert.equal(run('DOCUMENT_SCHEMAS.A3.fields.length'),11);assert.equal(run('DOCUMENT_SCHEMAS["8D"].fields.length'),10);assert.equal(run('DOCUMENT_SCHEMAS.ISHIKAWA.fields.length'),10);
 run('editDocument("DOC-001")');assert.match(fakeNode("modalContent").innerHTML,/A3 de résolution de problème/);assert.match(fakeNode("modalContent").innerHTML,/Votre parcours/);assert.match(fakeNode("modalContent").innerHTML,/Enregistrer et continuer/);assert.match(fakeNode("modalContent").innerHTML,/data-print-field="effectiveness"/);assert.equal(run('documentExample("A3","problem").includes("Exemple")'),true);
-run('closeModal();state.role="lean";state.site="group";state.view="training";state.trainingTab="catalog";render()');assert.match(fakeNode("appView").innerHTML,/Formation et qualification/);assert.match(fakeNode("appView").innerHTML,/Fondamentaux Lean/);assert.equal(run('data.trainingCatalog.length'),15);
-run('state.site="marzin";state.trainingTab="matrix";render()');assert.match(fakeNode("appView").innerHTML,/Matrice de compétences/);assert.match(fakeNode("appView").innerHTML,/BIA-0001/);
+run('closeModal();state.role="lean";state.site="group";state.view="training";state.trainingTab="catalog";render()');assert.match(fakeNode("appView").innerHTML,/Formation et qualification/);assert.match(fakeNode("appView").innerHTML,/Fondamentaux Lean/);assert.equal(run('data.trainingCatalog.length'),17);assert.match(fakeNode("appView").innerHTML,/VSL · Piloter une chaîne de valeur/);
+run('openTraining("FOR-016")');assert.match(fakeNode("modalContent").innerHTML,/Mandat du VSL/);assert.match(fakeNode("modalContent").innerHTML,/Déroulé pédagogique complet/);assert.match(fakeNode("modalContent").innerHTML,/CAS PRATIQUE FIL ROUGE/);
+run('closeModal();state.view="roadmap";render()');assert.match(fakeNode("appView").innerHTML,/Roadmap de transformation/);assert.match(fakeNode("appView").innerHTML,/0-30 jours/);assert.match(fakeNode("appView").innerHTML,/VSL mandatés/);
+assert.ok(run('TEMPLATES.some(t=>t.type==="BEFORE_AFTER")'));assert.equal(run('DOCUMENT_SCHEMAS.BEFORE_AFTER.fields.length'),8);
+run('state.site="marzin";state.view="training";state.trainingTab="matrix";render()');assert.match(fakeNode("appView").innerHTML,/Matrice de compétences/);assert.match(fakeNode("appView").innerHTML,/BIA-0001/);
 run('openTrainingPerson("PER-001")');assert.match(fakeNode("modalContent").innerHTML,/Fiche individuelle de formation et qualification/);assert.match(fakeNode("modalContent").innerHTML,/Validation RH/);
 run('state.view="sqcdp";render()');assert.match(fakeNode("appView").innerHTML,/data-open-subject=/);
 run('state.role="lean";state.site="marzin";state.view="tools";state.toolId=null;render()');assert.match(fakeNode("appView").innerHTML,/Mes démarches/);
@@ -84,8 +87,8 @@ run('startTool("smed")');assert.ok(run('data.toolRuns.some(r=>r.module_id==="sme
 
 assert.match(fs.readFileSync("service-worker.js","utf8"),/v5\.js/);
 assert.match(fs.readFileSync("service-worker.js","utf8"),/lean-library\.js/);
-assert.match(fs.readFileSync("service-worker.js","utf8"),/v6-1/);
-assert.match(fs.readFileSync("index.html","utf8"),/v5\.js\?v=6\.1/);
+assert.match(fs.readFileSync("service-worker.js","utf8"),/v6-2/);
+assert.match(fs.readFileSync("index.html","utf8"),/v5\.js\?v=6\.2/);
 assert.doesNotMatch(fs.readFileSync("index.html","utf8"),/src="(?:library|app)\.js"|href="styles\.css"/);
 for(const file of ["v5.js","lean-library.js","README.md"])assert.doesNotMatch(fs.readFileSync(file,"utf8"),/\bSite [1-9]\b/);
 console.log("PASS: référentiel BIA, 30 outils, documents méthodologiques, formation RH, audit 50 critères, droits, persistance, cycle Signal, chantiers, A3/8D et cache.");

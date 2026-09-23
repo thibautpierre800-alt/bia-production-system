@@ -25,6 +25,9 @@ Application web progressive de management visuel, de pilotage de la performance 
 - Benchmark contextualisé des six sites sans classement trompeur
 - Dossiers A3, 8D et QRQC sélectionnables, plus documents opérationnels ouvrables et versionnés
 - Espace Formation : catalogue structuré, programmes, matrice nominative de compétences, niveaux 0 à 5, preuves et fiches individuelles imprimables pour validation RH
+- Supports pédagogiques détaillés, parcours VSL, formation Roadmap, cas pratiques et questions de validation
+- Roadmap Groupe/Site par horizons 30/60/90 jours et 3-12 mois, avec résultat, KPI, propriétaire et arbitrage
+- Fiche d’amélioration Avant/Après remplissable et imprimable
 - Navigation et périmètres adaptés aux quatre profils
 - Export/import JSON avec sauvegarde préalable
 
