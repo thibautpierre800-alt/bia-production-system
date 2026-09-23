@@ -78,7 +78,7 @@ run('editDocument("DOC-001")');assert.match(fakeNode("modalContent").innerHTML,/
 run('closeModal();state.role="lean";state.site="group";state.view="training";state.trainingTab="catalog";render()');assert.match(fakeNode("appView").innerHTML,/Formation et qualification/);assert.match(fakeNode("appView").innerHTML,/Fondamentaux Lean/);assert.equal(run('data.trainingCatalog.length'),17);assert.match(fakeNode("appView").innerHTML,/VSL · Piloter une chaîne de valeur/);
 run('openTraining("FOR-016")');assert.match(fakeNode("modalContent").innerHTML,/Mandat du VSL/);assert.match(fakeNode("modalContent").innerHTML,/Déroulé pédagogique complet/);assert.match(fakeNode("modalContent").innerHTML,/CAS PRATIQUE FIL ROUGE/);
 run('closeModal();state.view="roadmap";render()');assert.match(fakeNode("appView").innerHTML,/Roadmap de transformation/);assert.match(fakeNode("appView").innerHTML,/0-30 jours/);assert.match(fakeNode("appView").innerHTML,/VSL mandatés/);
-assert.ok(run('TEMPLATES.some(t=>t.type==="BEFORE_AFTER")'));assert.equal(run('DOCUMENT_SCHEMAS.BEFORE_AFTER.fields.length'),8);
+assert.ok(run('TEMPLATES.some(t=>t.type==="BEFORE_AFTER")'));assert.equal(run('DOCUMENT_SCHEMAS.BEFORE_AFTER.fields.length'),1);assert.match(run('documentVisual("BEFORE_AFTER",{before_photo:"data:image/jpeg;base64,a",after_photo:"data:image/jpeg;base64,b",description:"Gain de place"})'),/PHOTO|AVANT/);assert.match(fs.readFileSync("v5.js","utf8"),/accept="image\/\*" capture="environment"/);
 run('state.site="marzin";state.view="training";state.trainingTab="matrix";render()');assert.match(fakeNode("appView").innerHTML,/Matrice de compétences/);assert.match(fakeNode("appView").innerHTML,/BIA-0001/);
 run('openTrainingPerson("PER-001")');assert.match(fakeNode("modalContent").innerHTML,/Fiche individuelle de formation et qualification/);assert.match(fakeNode("modalContent").innerHTML,/Validation RH/);
 run('state.view="sqcdp";render()');assert.match(fakeNode("appView").innerHTML,/data-open-subject=/);
@@ -87,8 +87,8 @@ run('startTool("smed")');assert.ok(run('data.toolRuns.some(r=>r.module_id==="sme
 
 assert.match(fs.readFileSync("service-worker.js","utf8"),/v5\.js/);
 assert.match(fs.readFileSync("service-worker.js","utf8"),/lean-library\.js/);
-assert.match(fs.readFileSync("service-worker.js","utf8"),/v6-2/);
-assert.match(fs.readFileSync("index.html","utf8"),/v5\.js\?v=6\.2/);
+assert.match(fs.readFileSync("service-worker.js","utf8"),/v6-3/);
+assert.match(fs.readFileSync("index.html","utf8"),/v5\.js\?v=6\.3/);
 assert.doesNotMatch(fs.readFileSync("index.html","utf8"),/src="(?:library|app)\.js"|href="styles\.css"/);
 for(const file of ["v5.js","lean-library.js","README.md"])assert.doesNotMatch(fs.readFileSync(file,"utf8"),/\bSite [1-9]\b/);
 console.log("PASS: référentiel BIA, 30 outils, documents méthodologiques, formation RH, audit 50 critères, droits, persistance, cycle Signal, chantiers, A3/8D et cache.");
