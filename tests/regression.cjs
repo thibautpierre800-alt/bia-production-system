@@ -32,6 +32,12 @@ for(const id of Array.from(run('ROLES.lean.nav'))){
   run(`state.view="${id}";render()`);
   assert.ok(fakeNode("appView").innerHTML.length>80,`écran ${id}`);
 }
+for(const roleId of ["dg","director","terrain"]){
+  run(`state.role="${roleId}";state.site=${roleId==="dg"?'"group"':'"marzin"'}`);
+  for(const id of Array.from(run('visibleNav().map(n=>n.id)'))){run(`state.view="${id}";render()`);assert.ok(fakeNode("appView").innerHTML.length>50,`${roleId} · ${id}`)}
+}
+assert.equal(run('ROLES.dg.nav.includes("terrain")'),false);
+assert.equal(run('ROLES.terrain.nav.includes("settings")'),false);
 
 const beforeSignals=run("data.signals.length");
 run('data.signals.unshift({id:"S-999",site_id:"marzin",workshop_id:"marzin-pilot",type:"Sécurité",description:"Test",severity:"Haute",state:"Nouveau",created_at:new Date().toISOString(),updated_at:new Date().toISOString()});save()');
@@ -58,10 +64,20 @@ assert.equal(run('scoped(data.signals).every(s=>s.site_id==="marzin")'),true);
 assert.doesNotMatch(fakeNode("siteSelect").innerHTML,/Europlacage/);
 run('state.view="pilotage";render()');assert.match(fakeNode("appView").innerHTML,/Tendance TRS|TRS/);assert.match(fakeNode("appView").innerHTML,/Rebut/);assert.match(fakeNode("appView").innerHTML,/Service client/);
 run('state.view="audits";render()');assert.match(fakeNode("appView").innerHTML,/50 critères/);assert.match(fakeNode("appView").innerHTML,/Audit Terrain/i);
+const auditCount=run('data.audits.length');
+run('state.role="lean";state.site="marzin";auditForm()');
+fakeNode("auditScope").value="Atelier test";fakeNode("auditOwner").value="Responsable test";fakeNode("auditAuditor").value="Auditeur test";fakeNode("auditDate").value="2026-09-23";fakeNode("auditType").value="Audit Terrain BIA";fakeNode("auditSite").value="marzin";fakeNode("auditSummary").value="Brouillon test";
+fakeNode("saveAuditDraft").onclick();assert.equal(run('data.audits.length'),auditCount+1);assert.equal(run('data.audits[0].status'),"Brouillon");
+run('data.audits.unshift({id:"AUD-999",site_id:"marzin",type:"Audit Terrain BIA",scope:"Test",score:null,status:"Brouillon",performed_at:"2026-09-23",owner:"Test",updated_at:new Date().toISOString(),audit_data:{criteria:[],proof_count:0}});render()');assert.match(fakeNode("appView").innerHTML,/audit\(s\) à reprendre/);assert.match(fakeNode("appView").innerHTML,/Continuer AUD-999/);
+run('state.view="resolution";state.selectedProblemId="P-999";data.problems.push({id:"P-999",site_id:"marzin",title:"Second problème",method:"8D",status:"Cadrage",owner:"Test",signal_ids:[],action_ids:[],content:{}});render()');assert.match(fakeNode("appView").innerHTML,/Second problème/);assert.match(fakeNode("appView").innerHTML,/data-select-problem="P-012"/);
+run('state.view="documents";render()');assert.match(fakeNode("appView").innerHTML,/data-open-document="DOC-001"/);assert.match(fakeNode("appView").innerHTML,/Choisir un modèle/);
+run('state.view="sqcdp";render()');assert.match(fakeNode("appView").innerHTML,/data-open-subject=/);
 run('state.role="lean";state.site="marzin";state.view="tools";state.toolId=null;render()');assert.match(fakeNode("appView").innerHTML,/Mes démarches/);
 run('startTool("smed")');assert.ok(run('data.toolRuns.some(r=>r.module_id==="smed"&&r.site_id==="marzin")'));assert.match(fakeNode("appView").innerHTML,/À faire maintenant/);assert.match(fakeNode("appView").innerHTML,/Bibliothèque → Mes démarches/);
 
 assert.match(fs.readFileSync("service-worker.js","utf8"),/v5\.js/);
 assert.match(fs.readFileSync("service-worker.js","utf8"),/lean-library\.js/);
+assert.match(fs.readFileSync("service-worker.js","utf8"),/v5-7/);
 assert.doesNotMatch(fs.readFileSync("index.html","utf8"),/src="(?:library|app)\.js"|href="styles\.css"/);
+for(const file of ["v5.js","lean-library.js","README.md"])assert.doesNotMatch(fs.readFileSync(file,"utf8"),/\bSite [1-9]\b/);
 console.log("PASS: référentiel BIA, 30 outils, audit 50 critères, 13 écrans, droits, persistance, cycle Signal, chantiers, A3/8D et cache V5.1.");
