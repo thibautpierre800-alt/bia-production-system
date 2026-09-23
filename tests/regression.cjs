@@ -58,6 +58,8 @@ assert.equal(run('scoped(data.signals).every(s=>s.site_id==="marzin")'),true);
 assert.doesNotMatch(fakeNode("siteSelect").innerHTML,/Europlacage/);
 run('state.view="pilotage";render()');assert.match(fakeNode("appView").innerHTML,/Tendance TRS|TRS/);assert.match(fakeNode("appView").innerHTML,/Rebut/);assert.match(fakeNode("appView").innerHTML,/Service client/);
 run('state.view="audits";render()');assert.match(fakeNode("appView").innerHTML,/50 critères/);assert.match(fakeNode("appView").innerHTML,/Audit Terrain/i);
+run('state.role="lean";state.site="marzin";state.view="tools";state.toolId=null;render()');assert.match(fakeNode("appView").innerHTML,/Mes démarches/);
+run('startTool("smed")');assert.ok(run('data.toolRuns.some(r=>r.module_id==="smed"&&r.site_id==="marzin")'));assert.match(fakeNode("appView").innerHTML,/À faire maintenant/);assert.match(fakeNode("appView").innerHTML,/Bibliothèque → Mes démarches/);
 
 assert.match(fs.readFileSync("service-worker.js","utf8"),/v5\.js/);
 assert.match(fs.readFileSync("service-worker.js","utf8"),/lean-library\.js/);
