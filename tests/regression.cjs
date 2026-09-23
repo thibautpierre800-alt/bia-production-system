@@ -78,7 +78,8 @@ run('startTool("smed")');assert.ok(run('data.toolRuns.some(r=>r.module_id==="sme
 
 assert.match(fs.readFileSync("service-worker.js","utf8"),/v5\.js/);
 assert.match(fs.readFileSync("service-worker.js","utf8"),/lean-library\.js/);
-assert.match(fs.readFileSync("service-worker.js","utf8"),/v5-8/);
+assert.match(fs.readFileSync("service-worker.js","utf8"),/v5-9/);
+assert.match(fs.readFileSync("index.html","utf8"),/v5\.js\?v=5\.9/);
 assert.doesNotMatch(fs.readFileSync("index.html","utf8"),/src="(?:library|app)\.js"|href="styles\.css"/);
 for(const file of ["v5.js","lean-library.js","README.md"])assert.doesNotMatch(fs.readFileSync(file,"utf8"),/\bSite [1-9]\b/);
 console.log("PASS: référentiel BIA, 30 outils, audit 50 critères, 13 écrans, droits, persistance, cycle Signal, chantiers, A3/8D et cache V5.1.");
