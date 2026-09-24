@@ -32,8 +32,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.equal(q('#gembaSite').options.length,1);
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v6-5-1/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='6.5'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v6-5-2/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='6.5.1'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -82,6 +82,10 @@ test('Audit 50 critères : brouillon incomplet, reprise, preuves et actions sans
   for(let i=0;i<10;i++){run(`auditForm(data.audits.find(x=>x.id==='${id}'),${i})`);all('[data-audit-score]').forEach((n,j)=>fill(`[data-audit-score][data-criterion="${n.dataset.criterion}"]`,i===0?'2':'4'));all('[data-audit-proof]').forEach(n=>{n.value='Constat et preuve terrain';});if(i<9)click(`[data-audit-domain='${i+1}']`);else submit('#auditForm');}
   assert.equal(run('data.audits[0].status'),'Terminé');assert.equal(run('data.audits[0].score'),76);assert.equal(run(`data.actions.filter(a=>a.origin_id==='${id}').length`),1);
   run(`auditForm(data.audits.find(x=>x.id==='${id}'))`);assert.equal(q('#auditForm'),null);assert.equal(run(`data.actions.filter(a=>a.origin_id==='${id}').length`),1);
+});
+test('Audit historique identifié et ouverture sans brouillon vide',t=>{
+  const {run,q}=app(t),before=run('data.audits.length');run('state.view="audits";render()');assert.match(q('#appView').textContent,/Ancien format · détail indisponible/);assert.match(q('#appView').textContent,/Audits 50 critères terminés/);
+  run('auditForm();requestCloseModal()');assert.equal(run('data.audits.length'),before);
 });
 test('Gemba : plusieurs constats, action traçable, retour terrain et clôture',t=>{
   const a=app(t),{run,fill,submit,click,q}=a;run('gembaForm()');fill('#gembaZone','Poste de coupe');fill('#gembaObjective','Comprendre les déplacements');fill('#gembaAuthor','Animateur');submit('#gembaForm');const id=run('data.gembas[0].id');
