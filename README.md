@@ -1,4 +1,4 @@
-# BIA Production System 6.7.0
+# BIA Production System 6.8.0
 
 Application web de management visuel et d'amélioration continue. Le référentiel comprend BIA Holding et six entités : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax.
 
@@ -6,6 +6,7 @@ Application web de management visuel et d'amélioration continue. Le référenti
 
 - Accueil adapté au périmètre, recherche des dossiers et reprise des brouillons.
 - Pilotage Groupe/Site : benchmark visuel des six sites visibles simultanément, un indicateur choisi parmi cinq et une période commune, sources et définitions accessibles, données absentes explicites, relevés manuels datés et graphiques de détail. Aucune moyenne Groupe artificielle ni classement non qualifié.
+- SQCDP Groupe : matrice des six sites × cinq axes sur une période commune, couleurs pour écart, cible atteinte, donnée absente ou à qualifier, évolution par rapport à un relevé comparable, détail de chaque case avec sujets, signaux et actions ouverts, et accès à la saisie et aux courbes du site. Les décisions et alertes critiques ouvertes sont visibles sous la matrice.
 - SQCDP Atelier S/Q/C/D/P avec TOP 15, sujets du jour, liens aux signaux, actions et décisions, et mode écran atelier.
 - Signal Terrain : saisie courte, photo facultative, prise en compte, résolution, vérification et clôture. Les actions et problèmes créés depuis le signal conservent le lien d'origine.
 - Gemba : visite avec plusieurs constats, parole de l'équipe, suite par constat, action/signal/A3/8D/QRQC liés et retour terrain avant clôture.

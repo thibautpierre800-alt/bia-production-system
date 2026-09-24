@@ -32,8 +32,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.equal(q('#gembaSite').options.length,1);
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v6-7-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='6.7.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v6-8-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='6.8.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -174,6 +174,45 @@ test('Benchmark : saisie manuelle par site, courbe datée et sauvegarde après r
   b.run('state.role="director";state.site="ag-deco";render()');b.click('[data-new-benchmark]');
   assert.equal(b.q('#benchmarkSite').options.length,1);
   assert.equal(b.q('#benchmarkSite').value,'ag-deco');
+});
+test('SQCDP Groupe : six sites simultanés, états qualifiés et détail actionnable',t=>{
+  const a=app(t),{run,q,all,fill,click,submit}=a;
+  run('state.site="group";state.role="lean";state.view="sqcdp";render()');
+  assert.match(q('#appView').textContent,/SQCDP Groupe/);
+  assert.equal(all('.sqcdp-row').length,7,'Un en-tête et six sites');
+  assert.equal(all('.sqcdp-cell').length,30);
+  assert.equal(all('.sqcdp-cell.missing').length,27);
+  assert.equal(all('.sqcdp-cell.gap').length,3);
+  assert.match(q('[data-sqcdp-site="marzin"][data-sqcdp-axis="Q"]').textContent,/4.1/);
+  click('[data-sqcdp-site="marzin"][data-sqcdp-axis="Q"]');
+  assert.match(q('#modalContent').textContent,/Défauts de surface/);
+  assert.match(q('#modalContent').textContent,/4.1/);
+  click('#sqcdpAddAction');assert.equal(q('#actionSite').value,'marzin');
+  assert.match(q('#actionTitle').value,/rebut/);
+  run('closeModal();state.view="sqcdp";render()');
+  click('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]');
+  click('#sqcdpAddMeasure');
+  assert.equal(q('#benchmarkSite').value,'ag-deco');
+  assert.equal(q('#benchmarkKpi').value,'service');
+  fill('#benchmarkDate','2026-09-24');fill('#benchmarkValue','96');
+  fill('#benchmarkTarget','95');fill('#benchmarkDefinition','Livraisons à la date demandée / livraisons dues');
+  submit('#benchmarkForm');
+  assert.equal(run('benchmarkObservation("ag-deco","service","2026-09-24").value'),96);
+  run('state.view="sqcdp";render()');
+  assert.equal(q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('ok'),true);
+  fill('#sqcdpGroupPeriod','2026-09-22');
+  assert.equal(q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('missing'),true);
+  run('state.role="dg";state.view="pilotage";render()');
+  assert.equal(all('.sqcdp-cell').length,30,'La direction retrouve la matrice dans Pilotage Groupe');
+  click('[data-sqcdp-site="marzin"][data-sqcdp-axis="S"]');
+  assert.equal(q('#sqcdpAddMeasure'),null);
+  assert.equal(q('#sqcdpAddAction'),null);
+  click('#sqcdpViewSite');
+  assert.equal(run('state.view'),'pilotage');
+  assert.equal(run('state.pilotSite'),'marzin');
+  const b=app(t,a.stored());b.run('state.role="lean";state.site="group";state.view="sqcdp";render()');
+  b.fill('#sqcdpGroupPeriod','2026-09-24');
+  assert.equal(b.q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('ok'),true);
 });
 test('Formation, roadmap, bibliothèque et bonnes pratiques restent opérationnelles',t=>{
   const a=app(t),{run,q,fill,submit,click}=a;

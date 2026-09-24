@@ -28,7 +28,7 @@ function topSubjects() {
   return [...topics,...signals,...actions,...decisions].sort((a,b)=>({Critique:0,Haute:1,Normale:2}[a.priority]??3)-({Critique:0,Haute:1,Normale:2}[b.priority]??3));
 }
 function renderSqcdp() {
-  if(state.site==="group")return `${pageHead("SQCDP Atelier","Choisir une entité","Le point quotidien se tient au niveau du terrain.")}<div class="grid cols-3">${OPERATIONAL_SITES.map(s=>`<button class="card" data-set-site="${s.id}">${esc(s.name)} →</button>`).join("")}</div>`;
+  if(state.site==="group")return renderGroupSqcdp();
   const subjects=topSubjects();
   return `${pageHead("Point quotidien",`SQCDP · ${site().name}`,`${workshop()?.name||"Atelier à préciser"} · ${shortDate(today())}`,'<div class="row-actions"><button class="btn secondary" data-display-mode>'+ (state.presentation?"Quitter l’écran atelier":"Écran atelier")+'</button><button class="btn" data-new-signal>＋ SIGNAL TERRAIN</button></div>')}<div class="sqcdp-grid section">${Object.entries(AXES).map(([axis,def])=>{const m=measureFor(axis),s=measureStatus(m);return `<article class="sqcdp-card" style="--axis:${def.color}"><h3><span class="axis-letter">${axis}</span>${esc(def.label)}</h3><div class="metric-label">${esc(m?.label||"Indicateur à définir")}</div><div class="sqcdp-value">${m?.value??"—"} <small>${esc(m?.unit||"")}</small></div><p>Cible : ${m?.target??"—"} ${esc(m?.unit||"")}</p>${pill(s.text,s.tone)}<p class="source-label">${esc(m?.source||"Source à connecter")} · ${shortDate(m?.period)}</p>${m?.value!=null?`<button class="btn secondary small" data-topic-axis="${axis}" data-topic-title="${esc(`Écart ${m.label} : ${m.value} ${m.unit} / cible ${m.target??"à définir"}`)}">Traiter un écart</button>`:""}</article>`;}).join("")}</div><section class="section"><div class="section-title"><div><h2>TOP 15 · À traiter aujourd’hui</h2><p class="hint">${subjects.length} sujet(s) · le TOP 15 désigne le rituel, pas un nombre de lignes.</p></div><div class="row-actions"><span class="timer" id="meetingTimer">${timerLabel()}</span><button class="btn secondary" data-timer>${state.timerStarted?"Arrêter":"Démarrer"} le point</button><button class="btn" data-new-topic>＋ Ajouter un sujet</button></div></div><div class="list">${subjects.map((s,i)=>`<article class="row top15-row"><b>${i+1} · ${esc(s.category)}</b><div><h3>${esc(s.title)}</h3><span class="hint">${esc(s.id)}</span></div><span>${esc(s.next)}</span><span>${esc(s.due)}</span><div>${pill(s.priority,s.priority==="Critique"?"critical":"progress")}${recordLink(s.id,"Traiter")}</div></article>`).join("")||empty("Aucun sujet ouvert. Ajoutez un écart ou un engagement pour l’équipe.")}</div></section>`;
 }
@@ -67,6 +67,92 @@ const BENCHMARK_KPIS=[
   {code:"service",label:"Service client",unit:"%"},
   {code:"staffing",label:"Personnel",unit:"%"}
 ];
+const GROUP_SQCDP=[
+  {axis:"S",code:"safety_signal",label:"Sécurité",unit:"",direction:"low"},
+  {axis:"Q",code:"scrap",label:"Qualité · rebut",unit:"%",direction:"low"},
+  {axis:"C",code:"trs",label:"Coûts · TRS",unit:"%",direction:"high"},
+  {axis:"D",code:"service",label:"Délais · service",unit:"%",direction:"high"},
+  {axis:"P",code:"staffing",label:"Personnel · couverture",unit:"%",direction:"high"}
+];
+function sqcdpGroupStatus(item,kpi){
+  if(!item)return "missing";
+  if(!Number.isFinite(item.target))return "qualify";
+  const gap=kpi.direction==="low"?item.value>item.target:item.value<item.target;
+  // Une définition absente ne permet pas de déclarer un site conforme.
+  return gap?"gap":item.definition?"ok":"qualify";
+}
+function sqcdpPrevious(siteId,code,period){
+  const kind=/^\d{4}-\d{2}-\d{2}$/.test(period)?"date":/^S\d+$/.test(period)?"week":"other";
+  const sameKind=p=>kind==="date"?/^\d{4}-\d{2}-\d{2}$/.test(p):kind==="week"?/^S\d+$/.test(p):p===period;
+  const periods=benchmarkPeriods().filter(sameKind),index=periods.indexOf(period);
+  for(let i=index+1;index>=0&&i<periods.length;i++){
+    const observation=benchmarkObservation(siteId,code,periods[i]);
+    if(observation)return observation;
+  }
+  return null;
+}
+function sqcdpRelated(siteId,kpi){
+  const topics=data.topics.filter(t=>t.site_id===siteId&&t.axis===kpi.axis&&t.status!=="Clos");
+  const topicIds=new Set(topics.map(t=>t.id));
+  const actions=data.actions.filter(a=>a.site_id===siteId&&isOpenAction(a)&&(a.origin_type==="KPI"&&a.origin_id===kpi.code||topicIds.has(a.origin_id)));
+  const types={S:["Sécurité"],Q:["Qualité"],C:["Production","Maintenance"],D:["Flux"],P:[]};
+  const signals=data.signals.filter(s=>s.site_id===siteId&&isOpenSignal(s)&&types[kpi.axis].includes(s.type));
+  return {topics,actions,signals};
+}
+function renderGroupSqcdp(embedded=false){
+  const periods=benchmarkPeriods(),period=periods.includes(state.benchmarkPeriod)?state.benchmarkPeriod:periods[0]||"";
+  const cells=OPERATIONAL_SITES.flatMap(site=>GROUP_SQCDP.map(kpi=>sqcdpGroupStatus(benchmarkObservation(site.id,kpi.code,period),kpi)));
+  const gaps=cells.filter(status=>status==="gap").length,missing=cells.filter(status=>status==="missing").length;
+  const openEscalations=[
+    ...data.decisions.filter(d=>d.status!=="Clos").map(d=>({id:d.id,site_id:d.site_id,title:d.title,kind:"Décision attendue"})),
+    ...data.signals.filter(s=>s.severity==="Critique"&&isOpenSignal(s)).map(s=>({id:s.id,site_id:s.site_id,title:s.description,kind:"Signal critique"}))
+  ].filter(r=>r.site_id==="group"||OPERATIONAL_SITES.some(s=>s.id===r.site_id));
+  const escalations=openEscalations.slice(0,5);
+  return `${embedded?"":pageHead("BIA Holding · pilotage multisite","SQCDP Groupe","Six sites industriels visibles sur une période commune. Cliquez sur une case pour voir la mesure et les dossiers liés.")}
+    <section class="panel group-sqcdp section" aria-labelledby="groupSqcdpTitle">
+      <div class="section-title"><div><h2 id="groupSqcdpTitle">SQCDP Groupe · six sites</h2><p class="hint">Revue Groupe hebdomadaire · cliquez sur une case pour accéder aux écarts et aux actions.</p></div><label class="sqcdp-period">Période commune<select id="sqcdpGroupPeriod">${periods.map(p=>`<option value="${esc(p)}" ${p===period?"selected":""}>${esc(p)}${/^S\d+$/.test(p)?" · année à qualifier":""}</option>`).join("")||'<option value="">Aucune mesure</option>'}</select></label></div>
+      ${data.meta.demo?'<p class="alert">Données de démonstration fictives. Les valeurs affichées ne décrivent pas la situation réelle du Groupe.</p>':""}
+      <div class="sqcdp-summary" role="status"><span><b>${gaps}</b> écart(s) mesuré(s)</span><span><b>${missing}</b> mesure(s) absente(s)</span><span><b>${openEscalations.length}</b> alerte(s) / décision(s) à voir</span></div>
+      <div class="sqcdp-matrix" role="table" aria-label="SQCDP des six sites, période ${esc(period||"inconnue")}">
+        <div class="sqcdp-row sqcdp-heading" role="row"><span role="columnheader">Site</span>${GROUP_SQCDP.map(k=>`<span role="columnheader" title="${esc(k.label)}">${k.axis}<small>${esc(k.label.split(" · ")[0])}</small></span>`).join("")}</div>
+        ${OPERATIONAL_SITES.map(site=>`<div class="sqcdp-row" role="row"><strong role="rowheader">${esc(site.name)}</strong>${GROUP_SQCDP.map(k=>{
+          const item=benchmarkObservation(site.id,k.code,period),status=sqcdpGroupStatus(item,k),previous=item?sqcdpPrevious(site.id,k.code,period):null;
+          const delta=previous?+(item.value-previous.value).toFixed(1):null;
+          const trend=delta===null?"":delta===0?"→":delta>0?"↑":"↓";
+          const label=status==="missing"?"À renseigner":status==="qualify"?"À qualifier":status==="gap"?"Écart":"Conforme";
+          return `<button role="cell" class="sqcdp-cell ${status}" data-sqcdp-site="${site.id}" data-sqcdp-axis="${k.axis}" aria-label="${esc(site.name)} · ${esc(k.label)} : ${item?`${item.value} ${k.unit}`:"aucune donnée"}, ${label}">
+            <b>${item?`${item.value}<small>${esc(k.unit)}</small>`:"—"}</b><span>${esc(label)}</span>${trend?`<i aria-label="Évolution ${delta>0?"hausse":"baisse"} de ${Math.abs(delta)}">${trend}</i>`:""}
+          </button>`;
+        }).join("")}</div>`).join("")}
+      </div>
+      <p class="hint sqcdp-legend">S Sécurité · Q Qualité · C Coûts / TRS · D Délais · P Personnel. Gris : absent · ambre : cible ou définition à qualifier · rouge : écart · vert : cible atteinte avec définition renseignée. La flèche indique l'évolution de la valeur, sans jugement sur son sens.</p>
+      <p class="hint">Chaque valeur reste locale et datée. Aucun score ni moyenne Groupe ne masque les écarts des sites. Les périodes « S… » n'indiquent pas l'année et doivent être qualifiées avant comparaison.</p>
+    </section>
+    <section class="section panel"><div class="section-title"><div><h2>Décisions et alertes à traiter</h2><p class="hint">Dossiers ouverts, toutes périodes confondues. L'affichage est limité à cinq entrées.</p></div></div>
+      <div class="list">${escalations.map(e=>`<article class="row"><div><b>${esc(e.kind)} · ${esc(getSiteName(e.site_id))}</b><p class="hint">${esc(e.title)}</p></div>${recordLink(e.id,"Ouvrir")}</article>`).join("")||empty("Aucune décision ouverte ni alerte critique.")}</div>
+    </section>`;
+}
+function openGroupSqcdpCell(siteId,axis){
+  const kpi=GROUP_SQCDP.find(k=>k.axis===axis),site=OPERATIONAL_SITES.find(s=>s.id===siteId);
+  if(!kpi||!site)return;
+  const periods=benchmarkPeriods(),period=periods.includes(state.benchmarkPeriod)?state.benchmarkPeriod:periods[0]||"";
+  const item=benchmarkObservation(siteId,kpi.code,period),previous=item?sqcdpPrevious(siteId,kpi.code,period):null,related=sqcdpRelated(siteId,kpi);
+  const status=sqcdpGroupStatus(item,kpi),statusLabel={missing:"Mesure absente",qualify:"À qualifier",gap:"Écart à traiter",ok:"Cible atteinte"}[status];
+  modal(`${site.name} · ${kpi.label}`,`<div class="sqcdp-detail">
+    <p>${pill(statusLabel,status==="gap"?"open":status==="ok"?"done":"neutral")} · période ${esc(period||"non renseignée")}</p>
+    <div class="grid cols-2"><div class="card"><span class="metric-label">Valeur</span><div class="metric-value">${item?`${item.value} ${esc(kpi.unit)}`:"—"}</div></div><div class="card"><span class="metric-label">Cible locale</span><div class="metric-value">${Number.isFinite(item?.target)?`${item.target} ${esc(kpi.unit)}`:"—"}</div></div></div>
+    <p>Mesure précédente comparable : ${previous?`${previous.value} ${esc(kpi.unit)}`:"indisponible"} · Source : ${esc(item?.source||"non renseignée")} · Définition : ${esc(item?.definition||"à qualifier")} · Saisie : ${item?.updated_at?shortDate(item.updated_at):"date inconnue"}</p>
+    <h3>Sujets SQCDP (${related.topics.length})</h3>${related.topics.map(t=>`<div class="row"><span>${esc(t.title)} · ${esc(t.owner||"sans responsable")}</span>${recordLink(t.id)}</div>`).join("")||empty("Aucun sujet lié à cet axe.")}
+    <h3>Signaux terrain (${related.signals.length})</h3>${related.signals.map(s=>`<div class="row"><span>${esc(s.description)}</span>${recordLink(s.id)}</div>`).join("")||empty("Aucun signal ouvert sur cet axe.")}
+    <h3>Actions liées (${related.actions.length})</h3>${related.actions.map(a=>`<div class="row"><span>${esc(a.title)} · ${esc(a.owner||"sans responsable")} · ${shortDate(a.due_date)}</span>${recordLink(a.id)}</div>`).join("")||empty("Aucune action liée à cet indicateur ou aux sujets de cet axe.")}
+    <div class="form-actions"><button type="button" class="btn secondary" id="sqcdpViewSite">Voir les courbes du site</button>${state.role==="lean"?'<button type="button" class="btn secondary" id="sqcdpAddMeasure">Saisir un relevé</button><button type="button" class="btn" id="sqcdpAddAction">Créer une action liée</button>':""}</div>
+  </div>`);
+  $("sqcdpViewSite").onclick=()=>{closeModal();state.pilotSite=siteId;state.view="pilotage";state.benchmarkMetric=kpi.code;render();};
+  if(state.role==="lean"){
+    $("sqcdpAddMeasure").onclick=()=>{closeModal();benchmarkForm({siteId,code:kpi.code});};
+    $("sqcdpAddAction").onclick=()=>{closeModal();actionForm(null,{site_id:siteId,origin_type:"KPI",origin_id:kpi.code,title:`Analyser l'écart ${kpi.label} · ${site.name}`});};
+  }
+}
 function benchmarkPeriods(){
   const periods=new Set();
   for(const m of data.measures)if(m.period&&Number.isFinite(m.value))periods.add(m.period);
@@ -106,10 +192,12 @@ function renderGroupBenchmark(){
     <p class="hint benchmark-note">${data.meta.demo?"Données de démonstration présentes · ":""}Valeurs locales propres à cet appareil · pas de classement ni moyenne Groupe avant validation des définitions, périmètres, sources et pondérations. SEQUOIA : connexion à vérifier.</p>
   </section>`;
 }
-function benchmarkForm(){
+function benchmarkForm(preset={}){
   if(state.role==="dg"||!["lean","director"].includes(state.role))return;
   const current=state.site==="group"?state.pilotSite:state.site;
   modal("Ajouter un relevé pour le benchmark",`<form id="benchmarkForm"><p>Une valeur par site, indicateur et date. Sélectionnez la même date pour comparer plusieurs sites. La source sera « Saisie manuelle ».</p><div class="form-grid"><label>Site<select id="benchmarkSite">${OPERATIONAL_SITES.filter(s=>allowedSite(s.id,true)).map(s=>`<option value="${s.id}" ${s.id===current?"selected":""}>${esc(s.name)}</option>`).join("")}</select></label><label>Indicateur<select id="benchmarkKpi">${BENCHMARK_KPIS.map(k=>`<option value="${k.code}">${esc(k.label)} (${esc(k.unit||"nombre")})</option>`).join("")}</select></label><label>Date du relevé<input id="benchmarkDate" type="date" value="${/^\d{4}-\d{2}-\d{2}$/.test(state.benchmarkPeriod)?state.benchmarkPeriod:today()}" required></label><label>Valeur<input id="benchmarkValue" type="number" min="0" step="any" required></label><label>Cible locale (facultative)<input id="benchmarkTarget" type="number" min="0" step="any"></label><label class="wide">Définition / périmètre de calcul<input id="benchmarkDefinition" placeholder="Ex. ligne concernée, calcul, exclusions"></label></div><p class="hint">Vérifiez la définition avec les sites avant tout classement. Les relevés manuels restent sur cet appareil.</p><div class="form-actions"><button class="btn">Enregistrer le relevé</button><button type="button" class="btn secondary" data-close-modal>Annuler</button></div></form>`);
+  if(preset.siteId&&Array.from($("benchmarkSite").options).some(o=>o.value===preset.siteId))$("benchmarkSite").value=preset.siteId;
+  if(preset.code&&BENCHMARK_KPIS.some(k=>k.code===preset.code))$("benchmarkKpi").value=preset.code;
   $("benchmarkForm").onsubmit=e=>{e.preventDefault();const siteId=$("benchmarkSite").value,code=$("benchmarkKpi").value,period=$("benchmarkDate").value,value=Number($("benchmarkValue").value),targetText=$("benchmarkTarget").value,definition=$("benchmarkDefinition").value.trim();if(!allowedSite(siteId,true)||!BENCHMARK_KPIS.some(k=>k.code===code)||!period||!Number.isFinite(value)||value<0)return toast("Vérifiez le site, la date et la valeur.");const target=targetText===""?null:Number(targetText),metric=BENCHMARK_KPIS.find(k=>k.code===code);if(target!==null&&(!Number.isFinite(target)||target<0))return toast("La cible doit être positive.");if(metric.unit==="%"&&(value>100||target>100))return toast("Une valeur ou une cible en pourcentage doit rester entre 0 et 100.");if(metric.unit===""&&(!Number.isInteger(value)||target!==null&&!Number.isInteger(target)))return toast("Un nombre de signaux sécurité doit être entier.");const source="Saisie manuelle",synced_at=now();
     if(!commitData(()=>{let measure=data.measures.find(m=>m.site_id===siteId&&m.code===code&&m.period===period);if(measure)Object.assign(measure,{value,target,definition,source,synced_at});else data.measures.push({id:uid("m"),site_id:siteId,code,period,value,target,definition,source,synced_at});let trend=data.trends.find(t=>t.site_id===siteId&&t.code===code&&t.granularity==="daily");if(!trend){trend={site_id:siteId,code,granularity:"daily",labels:[],values:[],target,source,details:{}};data.trends.push(trend);}const index=trend.labels.indexOf(period);if(index<0){trend.labels.push(period);trend.values.push(value);}else trend.values[index]=value;const ordered=trend.labels.map((label,i)=>({label,value:trend.values[i]})).sort((a,b)=>a.label.localeCompare(b.label));trend.labels=ordered.map(x=>x.label);trend.values=ordered.map(x=>x.value);trend.details||={};trend.details[period]={source,target,definition,updated_at:synced_at};}))return;
     state.benchmarkPeriod=period;state.benchmarkMetric=code;state.pilotSite=siteId;closeModal();render();toast(`Relevé ${BENCHMARK_KPIS.find(k=>k.code===code).label} enregistré pour ${getSiteName(siteId)} au ${period}. Retrouvable dans Pilotage Groupe · Benchmark.`);
@@ -117,7 +205,7 @@ function benchmarkForm(){
 }
 function renderPilotage() {
   const group=state.site==="group",selected=group?state.pilotSite:state.site,decisions=scoped(data.decisions).filter(d=>d.status!=="Clos"),critical=scoped(data.signals).filter(s=>s.severity==="Critique"&&isOpenSignal(s));
-  return `${pageHead(group?"Pilotage Groupe":"Pilotage Site",group?"Comparer les six sites":`Pilotage de ${site().name}`,"Choisir le périmètre, comprendre l’écart et ouvrir la suite utile.")}${group?renderGroupBenchmark():""}<div id="pilotDetail" class="panel pilot-controls">${group?`<label>Site observé<select id="pilotSite">${OPERATIONAL_SITES.map(s=>`<option value="${s.id}" ${s.id===selected?"selected":""}>${esc(s.name)}</option>`).join("")}</select></label>`:""}<label>Historique affiché<select id="pilotPeriod">${[["all","Tout l’historique disponible"],["4","4 derniers relevés"],["8","8 derniers relevés"]].map(([value,label])=>`<option value="${value}" ${value===state.period?"selected":""}>${label}</option>`).join("")}</select></label><span class="hint">${esc(getSiteName(selected))} · chaque courbe conserve sa source</span>${!group&&["lean","director"].includes(state.role)?'<button class="btn secondary" data-new-benchmark>＋ Relevé manuel</button>':""}</div>${group?'<p class="alert">Pas de moyenne Groupe des pourcentages : les définitions, périmètres et pondérations doivent être validés.</p>':""}<div class="grid cols-2 section">${[["trs","TRS","high","%"],["scrap","Qualité · Rebut","low","%"],["safety_signal","Sécurité","low",""],["service","Service client","high","%"],["staffing","Personnel","high","%"]].map(([code,title,direction,unit])=>pilotageChart(indicatorSeries(selected,code),{code,title,direction,unit,contextLabel:getSiteName(selected)})).join("")}</div><section class="section"><div class="section-title"><h2>Décisions et alertes · ${esc(site().name)}</h2><button class="btn secondary" data-new-decision>＋ Décision / escalade</button></div><div class="list">${decisions.map(d=>`<article class="row"><div><b>${esc(d.title)}</b><p class="hint">${esc(getSiteName(d.site_id))} · ${esc(d.owner)} · ${shortDate(d.due_date)}</p></div>${recordLink(d.id,"Décider")}</article>`).join("")}${critical.map(s=>`<article class="row"><div>${pill("Critique","critical")}<b>${esc(s.description)}</b></div>${recordLink(s.id,"Ouvrir")}</article>`).join("")}${!decisions.length&&!critical.length?empty("Aucune décision ouverte ni signal critique sur ce périmètre."):""}</div></section>`;
+  return `${pageHead(group?"Pilotage Groupe":"Pilotage Site",group?"Comparer les six sites":`Pilotage de ${site().name}`,"Choisir le périmètre, comprendre l’écart et ouvrir la suite utile.")}${group?renderGroupSqcdp(true)+renderGroupBenchmark():""}<div id="pilotDetail" class="panel pilot-controls">${group?`<label>Site observé<select id="pilotSite">${OPERATIONAL_SITES.map(s=>`<option value="${s.id}" ${s.id===selected?"selected":""}>${esc(s.name)}</option>`).join("")}</select></label>`:""}<label>Historique affiché<select id="pilotPeriod">${[["all","Tout l’historique disponible"],["4","4 derniers relevés"],["8","8 derniers relevés"]].map(([value,label])=>`<option value="${value}" ${value===state.period?"selected":""}>${label}</option>`).join("")}</select></label><span class="hint">${esc(getSiteName(selected))} · chaque courbe conserve sa source</span>${!group&&["lean","director"].includes(state.role)?'<button class="btn secondary" data-new-benchmark>＋ Relevé manuel</button>':""}</div>${group?'<p class="alert">Pas de moyenne Groupe des pourcentages : les définitions, périmètres et pondérations doivent être validés.</p>':""}<div class="grid cols-2 section">${[["trs","TRS","high","%"],["scrap","Qualité · Rebut","low","%"],["safety_signal","Sécurité","low",""],["service","Service client","high","%"],["staffing","Personnel","high","%"]].map(([code,title,direction,unit])=>pilotageChart(indicatorSeries(selected,code),{code,title,direction,unit,contextLabel:getSiteName(selected)})).join("")}</div><section class="section"><div class="section-title"><h2>Décisions et alertes · ${esc(site().name)}</h2><button class="btn secondary" data-new-decision>＋ Décision / escalade</button></div><div class="list">${decisions.map(d=>`<article class="row"><div><b>${esc(d.title)}</b><p class="hint">${esc(getSiteName(d.site_id))} · ${esc(d.owner)} · ${shortDate(d.due_date)}</p></div>${recordLink(d.id,"Décider")}</article>`).join("")}${critical.map(s=>`<article class="row"><div>${pill("Critique","critical")}<b>${esc(s.description)}</b></div>${recordLink(s.id,"Ouvrir")}</article>`).join("")}${!decisions.length&&!critical.length?empty("Aucune décision ouverte ni signal critique sur ce périmètre."):""}</div></section>`;
 }
 function validateImport(incoming) {
   if(incoming?.meta?.schema!==6)throw new Error("Format de sauvegarde incompatible.");
@@ -136,6 +224,8 @@ function bindDashboards() {
   $("pilotSite")?.addEventListener("change",e=>{state.pilotSite=e.target.value;render();});
   $("pilotPeriod")?.addEventListener("change",e=>{state.period=e.target.value;render();});
   $("benchmarkPeriod")?.addEventListener("change",e=>{state.benchmarkPeriod=e.target.value;render();});
+  $("sqcdpGroupPeriod")?.addEventListener("change",e=>{state.benchmarkPeriod=e.target.value;render();});
+  document.querySelectorAll("[data-sqcdp-site]").forEach(b=>b.onclick=()=>openGroupSqcdpCell(b.dataset.sqcdpSite,b.dataset.sqcdpAxis));
   document.querySelectorAll("[data-benchmark-metric]").forEach(b=>b.onclick=()=>{state.benchmarkMetric=b.dataset.benchmarkMetric;render();});
   document.querySelectorAll("[data-benchmark-site]").forEach(b=>b.onclick=()=>{state.pilotSite=b.dataset.benchmarkSite;render();$("pilotDetail")?.scrollIntoView({behavior:"smooth",block:"start"});});
   document.querySelectorAll("[data-new-benchmark]").forEach(b=>b.onclick=benchmarkForm);
