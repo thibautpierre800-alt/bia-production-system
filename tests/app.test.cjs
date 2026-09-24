@@ -32,8 +32,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.equal(q('#gembaSite').options.length,1);
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v6-6-1/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='6.6.1'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v6-7-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='6.7.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -132,15 +132,22 @@ test('Pilotage : sites, séries disponibles, absence signalée et lien avec les 
   fill('#pilotSite','sodeplax');assert.equal(run('state.pilotSite'),'sodeplax');assert.match(q('#appView').textContent,/Sodeplax/);assert.match(q('#appView').textContent,/indisponible|qualifier|connecter/);
   run('state.site="marzin";render()');assert.match(q('#appView').textContent,/TRS/);assert.match(q('#appView').textContent,/Rebut/);assert.match(q('#appView').textContent,/Service client/);
 });
-test('Benchmark Groupe : six sites, période identique, aucune valeur ni classement inventé',t=>{
+test('Benchmark Groupe : six sites visibles ensemble et indicateurs commutables sans valeurs inventées',t=>{
   const {run,q,all,fill,click}=app(t);
   run('state.site="group";state.role="lean";state.view="pilotage";render()');
-  assert.equal(all('.benchmark-table tbody tr').length,6);
-  assert.deepEqual(all('.benchmark-table tbody th').map(x=>x.textContent),['Ag Déco','Europlacage','Marzin','Oraison Menuiserie','Profiline','Sodeplax']);
-  assert.match(q('.benchmark-toolbar').textContent,/BIA Holding est le niveau Groupe/);
-  assert.match(q('.benchmark-toolbar').textContent,/3\/30 valeurs renseignées/);
-  assert.match(all('.benchmark-table tbody tr')[0].textContent,/Donnée indisponible/);
-  assert.doesNotMatch(q('.benchmark-table').textContent,/classement|moyenne/);
+  assert.equal(all('.benchmark-grid > article').length,6);
+  assert.deepEqual(all('.benchmark-site-head h3').map(x=>x.textContent),['Ag Déco','Europlacage','Marzin','Oraison Menuiserie','Profiline','Sodeplax']);
+  assert.equal(q('.benchmark-table'),null,'Aucun tableau à défilement horizontal');
+  assert.match(q('.benchmark-toolbar').textContent,/1\/6 sites renseignés · TRS/);
+  assert.match(all('.benchmark-site')[0].textContent,/Donnée indisponible/);
+  assert.doesNotMatch(q('.benchmark-grid').textContent,/classement|moyenne/);
+  click('[data-benchmark-metric="scrap"]');
+  assert.equal(run('state.benchmarkMetric'),'scrap');assert.equal(all('.benchmark-grid > article').length,6);
+  assert.match(all('.benchmark-site')[2].textContent,/4.1/);
+  click('[data-benchmark-metric="service"]');
+  assert.match(q('.benchmark-toolbar').textContent,/0\/6 sites renseignés/);
+  assert.equal(all('.benchmark-site-empty').length,6);
+  click('[data-benchmark-metric="trs"]');
   fill('#benchmarkPeriod','S39');
   assert.equal(run('benchmarkObservation("marzin","trs","S39").value'),78.6);
   assert.equal(run('benchmarkObservation("ag-deco","trs","S39")'),null);
@@ -150,17 +157,19 @@ test('Benchmark Groupe : six sites, période identique, aucune valeur ni classem
 test('Benchmark : saisie manuelle par site, courbe datée et sauvegarde après rechargement',t=>{
   const a=app(t),{run,q,click,fill,submit}=a;
   run('state.site="group";state.role="lean";state.view="pilotage";render()');
+  click('[data-benchmark-metric="service"]');
   click('[data-new-benchmark]');fill('#benchmarkSite','ag-deco');fill('#benchmarkDate','2026-09-24');fill('#benchmarkValue','82.4');fill('#benchmarkTarget','85');fill('#benchmarkDefinition','TRS de la ligne témoin, arrêts inclus');submit('#benchmarkForm');
+  assert.equal(run('state.benchmarkMetric'),'trs','La valeur enregistrée est immédiatement visible');
   assert.equal(run('benchmarkObservation("ag-deco","trs","2026-09-24").value'),82.4);
   assert.equal(run('indicatorSeries("ag-deco","trs").labels.at(-1)'),'2026-09-24');
   assert.equal(q('#benchmarkPeriod').value,'2026-09-24');
-  assert.match(q('.benchmark-table').textContent,/82.4%/);
-  assert.match(q('.benchmark-table').textContent,/Saisie manuelle/);
-  assert.match(q('.benchmark-toolbar').textContent,/1\/30 valeurs renseignées/);
+  assert.match(q('.benchmark-grid').textContent,/82.4%/);
+  assert.match(q('.benchmark-grid').textContent,/Saisie manuelle/);
+  assert.match(q('.benchmark-toolbar').textContent,/1\/6 sites renseignés/);
   const stored=a.stored(),b=app(t,stored);b.run('state.site="group";state.view="pilotage";render()');
   assert.equal(b.run('benchmarkObservation("ag-deco","trs","2026-09-24").value'),82.4);
   b.fill('#benchmarkPeriod','2026-09-22');
-  assert.match(b.q('.benchmark-table tbody tr:nth-child(1)').textContent,/Donnée indisponible/);
+  assert.match(b.q('.benchmark-site').textContent,/Donnée indisponible/);
   b.run('state.role="dg";render()');assert.equal(b.q('[data-new-benchmark]'),null);
   b.run('state.role="director";state.site="ag-deco";render()');b.click('[data-new-benchmark]');
   assert.equal(b.q('#benchmarkSite').options.length,1);
