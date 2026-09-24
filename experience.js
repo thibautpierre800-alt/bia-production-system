@@ -1,11 +1,11 @@
 "use strict";
 
 // Shared interaction rules. All records remain local; roles are UI profiles, not authentication.
-const APP_VERSION = "6.5.1";
+const APP_VERSION = "6.6.0";
 let modalSaver = null, modalDirty = false, modalOpener = null, modalTimer = null;
 let lastStored = localStorage.getItem(STORAGE_KEY);
 let storageConflict = false;
-Object.assign(state, {query:"", documentTab:"mine", documentType:"all", signalFilter:"open", period:"all", pilotSite:"marzin", presentation:false});
+Object.assign(state, {query:"", documentTab:"mine", documentType:"all", signalFilter:"open", period:"all", pilotSite:"marzin", benchmarkPeriod:"", presentation:false});
 
 function upgradeData(source) {
   const out = {...source};
