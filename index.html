@@ -7,7 +7,8 @@
   <meta name="description" content="BIA Production System — management visuel, performance et amélioration continue">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="v5.css?v=6.3">
+  <link rel="stylesheet" href="v5.css?v=6.4">
+  <link rel="stylesheet" href="experience.css?v=6.4">
   <title>BIA Production System</title>
 </head>
 <body>
@@ -20,7 +21,7 @@
       <nav id="desktopNav" aria-label="Navigation principale"></nav>
       <div class="sidebar-foot">
         <span class="source-dot"></span>
-        <span><b>Mode local sécurisé</b><small>SEQUOIA non connecté</small></span>
+        <span><b>Données sur cet appareil</b><small>SEQUOIA non connecté</small></span>
       </div>
     </aside>
     <div class="workspace">
@@ -28,12 +29,14 @@
         <button class="menu-button" id="menuButton" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>
         <div class="mobile-brand"><b>BIA</b> PRODUCTION SYSTEM</div>
         <div class="top-context">
+          <button class="btn secondary" data-search-all aria-label="Retrouver un dossier">⌕ Rechercher</button>
           <label class="context-field"><span>Périmètre</span><select id="siteSelect" aria-label="Périmètre actif"></select></label>
-          <label class="context-field role-field"><span>Profil</span><select id="roleSelect" aria-label="Profil de démonstration"></select></label>
+          <label class="context-field role-field"><span>Profil démo</span><select id="roleSelect" aria-label="Profil de démonstration"></select></label>
           <button class="profile-button" data-nav="account" aria-label="Compte"><span id="profileInitials">PT</span></button>
         </div>
       </header>
       <main id="main" class="main-content" tabindex="-1">
+        <p id="pageLocation" class="page-location" aria-label="Votre emplacement"></p>
         <div class="mode-banner" id="dataMode" role="status"></div>
         <div id="appView"></div>
       </main>
@@ -44,7 +47,13 @@
   <div class="modal-backdrop" id="modal" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div id="modalContent"></div></div>
   </div>
-  <script src="lean-library.js?v=6.3"></script>
-  <script src="v5.js?v=6.3"></script>
+  <script src="lean-library.js?v=6.4"></script>
+  <script src="v5.js?v=6.4"></script>
+  <script src="experience.js?v=6.4"></script>
+  <script src="workflows.js?v=6.4"></script>
+  <script src="fieldwork.js?v=6.4"></script>
+  <script src="documents-ui.js?v=6.4"></script>
+  <script src="dashboards.js?v=6.4"></script>
+  <script src="boot.js?v=6.4"></script>
 </body>
 </html>

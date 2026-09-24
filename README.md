@@ -1,68 +1,33 @@
-# BIA Production System V5
+# BIA Production System 6.4
 
-Application web progressive de management visuel, de pilotage de la performance et d’amélioration continue du Groupe BIA.
+Application web de management visuel et d'amélioration continue. Le référentiel comprend BIA Holding et six entités : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax.
 
-## Référentiel
+## Parcours
 
-- Niveau Groupe : BIA Holding
-- Sites : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax
-- Profils : Direction Générale Groupe, Responsable Lean Groupe, Directeur de site, Chef d’équipe / Opérateur
+- Accueil adapté au périmètre, recherche des dossiers et reprise des brouillons.
+- Pilotage Groupe/Site : séries réelles disponibles, cible, écart, tendance, source et actions liées ; donnée absente signalée explicitement. Aucune moyenne Groupe artificielle.
+- SQCDP Atelier S/Q/C/D/P avec TOP 15, sujets du jour, liens aux signaux, actions et décisions, et mode écran atelier.
+- Signal Terrain : saisie courte, photo facultative, prise en compte, résolution, vérification et clôture. Les actions et problèmes créés depuis le signal conservent le lien d'origine.
+- Gemba : visite avec plusieurs constats, parole de l'équipe, suite par constat, action/signal/A3/8D/QRQC liés et retour terrain avant clôture.
+- Audit Terrain : 50 critères répartis en 10 domaines, notes et preuves enregistrées en brouillon, résultat et actions issues des domaines en écart.
+- Résolution : A3, 8D et QRQC guidés rubrique par rubrique avec schémas d'ensemble, enregistrement automatique et impression. Les actions créées dans le dossier rejoignent le plan général.
+- Documents : fiches Avant/Après avec deux photos, VSM état actuel/futur avec relevés et calculs conditionnés aux données, 5 Pourquoi, Ishikawa, 5S, standards et autres trames.
+- Bibliothèque : 30 guides avec démarches retrouvables, checklist et responsable attribuable ; raccourcis vers les outils applicatifs correspondants.
+- Formation : contenu pédagogique, parcours VSL, suivi nominatif, compétences, validité, preuves et fiches individuelles imprimables pour validation RH.
+- Roadmap, chantiers d'amélioration, bonnes pratiques et export/restauration JSON.
 
-## Parcours livrés
+Les premières données sont fictives et identifiées comme telles. Les données saisies sont conservées **uniquement sur l'appareil et le navigateur utilisés**. Les profils sont des vues de démonstration : ils ne constituent pas une authentification ou un contrôle d'accès à des données RH. Les fiches RH nécessitent la validation réelle des personnes et du processus documentaire du Groupe. SEQUOIA n'est pas connecté ; ses possibilités techniques restent à vérifier. Exporter régulièrement les données depuis Compte.
 
-- Accueil Groupe et Accueil Site adaptés au rôle
-- Pilotage Groupe sans moyenne trompeuse et Pilotage Site avec tendance, cible et source
-- SQCDP Atelier S/Q/C/D/P et TOP 15 limité aux sujets réellement utiles
-- Signal Terrain rapide avec cycle Nouveau → Pris en compte → Action en cours → Résolu → Vérifié → Clos
-- Registre et statistiques Signal Terrain
-- Gemba, audits et bonnes pratiques
-- Audit Terrain BIA détaillé : 10 domaines, 50 critères, brouillon reprenable, preuve obligatoire et génération d’actions
-- Plan d’actions unique avec origine, responsable, échéance et preuve d’efficacité avant clôture
-- Transformation sans ressaisie d’un Signal en problème / A3
-- Dossiers A3 en 11 étapes, 8D de D0 à D8, QRQC, 5 Pourquoi et Ishikawa : trames guidées, schémas visuels, progression, version et impression
-- Portefeuille de chantiers SMED, VSM, DMAIC, Kaizen, PDCA, TPM et industrialisation
-- Bibliothèque de 30 outils Lean et industriels avec « Mes démarches », prochaine étape, recherche, checklist et création d’action
-- Benchmark contextualisé des six sites sans classement trompeur
-- Dossiers A3, 8D et QRQC sélectionnables, plus documents opérationnels ouvrables et versionnés
-- Espace Formation : catalogue structuré, programmes, matrice nominative de compétences, niveaux 0 à 5, preuves et fiches individuelles imprimables pour validation RH
-- Supports pédagogiques détaillés, parcours VSL, formation Roadmap, cas pratiques et questions de validation
-- Roadmap Groupe/Site par horizons 30/60/90 jours et 3-12 mois, avec résultat, KPI, propriétaire et arbitrage
-- Fiche d’amélioration Avant/Après remplissable et imprimable
-- Navigation et périmètres adaptés aux quatre profils
-- Export/import JSON avec sauvegarde préalable
+## Développement et vérification
 
-Les données affichées au premier lancement sont des exemples fictifs clairement marqués.
-
-## SEQUOIA
-
-SEQUOIA reste le système maître pour les données transactionnelles qui y existent. Aucune connexion n’est activée et aucune API n’est supposée. L’écran Paramètres expose le futur principe staging → validation → publication, avec secours manuel tracé.
-
-## Lancer localement
-
-Le service worker nécessite un serveur HTTP :
+Node.js 24 ou plus récent :
 
 ```bash
+npm ci
+npm test
 python3 -m http.server 8080
 ```
 
-Puis ouvrir `http://localhost:8080`.
+Ouvrir ensuite `http://localhost:8080`. L'ancien point d'entrée `node tests/regression.cjs` lance la même suite DOM.
 
-## Vérification
-
-```bash
-node --check v5.js
-node tests/regression.cjs
-```
-
-Le test contrôle le référentiel des six sites, les écrans, les droits, la persistance locale, le cycle du Signal Terrain, la traçabilité vers problème/document, les trames méthodologiques, la formation, le SQCDP et le cache PWA.
-
-## Fichiers actifs
-
-- `index.html` : coque de l’application
-- `v5.css` : identité et responsive PC / tablette / mobile / écran atelier
-- `lean-library.js` : bibliothèque métier de 30 outils, sans Plan des 100 premiers jours
-- `v5.js` : modèle local et fonctionnalités V5
-- `service-worker.js` : cache hors connexion des ressources statiques
-- `manifest.json` : installation PWA
-
-La V4 et la précédente V5 locale restent récupérables dans l’historique Git ; elles ne sont plus chargées par l’application.
+`index.html` charge `lean-library.js`, `v5.js` (référentiels et écrans historiques), `experience.js` (persistance et navigation), `workflows.js`, `fieldwork.js`, `documents-ui.js`, `dashboards.js` et `boot.js`. `v5.css` et `experience.css` définissent l'interface. Le service worker met en cache ces fichiers pour la PWA. `supabase/schema.sql` reste une piste de travail non utilisée par l'application publiée.
