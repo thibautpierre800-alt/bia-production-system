@@ -1,4 +1,4 @@
-# BIA Production System 6.4
+# BIA Production System 6.5
 
 Application web de management visuel et d'amélioration continue. Le référentiel comprend BIA Holding et six entités : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax.
 
