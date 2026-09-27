@@ -133,10 +133,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .home-alert-note{color:#fff!important;font-size:15px!important;font-weight:650;line-height:1.55}
 .hero-link{color:#fff;border-color:#b9cccd!important}
 
-.quick-action-dock{position:fixed;right:22px;bottom:22px;z-index:40;display:grid;gap:8px;width:200px;filter:drop-shadow(0 10px 20px rgba(22,43,43,.2))}
-.quick-action{display:grid;grid-template-columns:36px 1fr;column-gap:10px;align-items:center;min-height:64px;padding:9px 12px;border:2px solid transparent;border-radius:9px;text-align:left;color:#fff}
-.quick-action>span{grid-row:1/3;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#ffffff24;font-size:25px;font-weight:900}
-.quick-action b{align-self:end;font-size:14px;line-height:1.15}.quick-action small{align-self:start;font-size:12px;line-height:1.2}
+.quick-action-dock{position:fixed;right:16px;bottom:16px;z-index:40;display:flex;gap:6px;width:auto;padding:5px;border:1px solid #cad8d5;border-radius:999px;background:#fffffff2;box-shadow:0 8px 22px rgba(22,43,43,.2)}
+.quick-action{position:relative;display:grid;place-items:center;width:44px;height:44px;min-height:0;padding:0;border:2px solid transparent;border-radius:50%;color:#fff}
+.quick-action>span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#ffffff24;font-size:22px;font-weight:900}
+.quick-action:after{content:attr(data-label);position:absolute;right:0;bottom:calc(100% + 9px);width:max-content;max-width:150px;padding:6px 9px;border-radius:5px;background:#162f31;color:#fff;font-size:12px;font-weight:800;line-height:1.2;opacity:0;pointer-events:none;transform:translateY(4px);transition:opacity .15s,transform .15s}
+.quick-action:hover:after,.quick-action:focus-visible:after{opacity:1;transform:translateY(0)}
 .quick-action.signal{background:#a72f3c;border-color:#ffb7bd}.quick-action.idea{background:#163f3d;border-color:#5fc1b7}
 .quick-action:hover{filter:brightness(1.08)}
 
@@ -169,11 +170,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
 @media(max-width:820px){
   .home-alert-hero h1{grid-template-columns:1fr}.home-alert-count{font-size:32px}
-  .quick-action-dock{left:8px;right:8px;bottom:70px;width:auto;grid-template-columns:1fr 1fr}.quick-action{min-width:0}.quick-action small{display:none}.main-content{padding-bottom:165px}
+  .quick-action-dock{left:auto;right:10px;bottom:72px;width:auto}.main-content{padding-bottom:100px}
   .kaizen-callout,.app-training-hero,.maturity-controls,.group-display-head{align-items:stretch;flex-direction:column}.app-training-hero .row-actions,.kaizen-callout .btn{align-self:stretch}.guide-steps{grid-template-columns:1fr}.os-purpose-strip{grid-template-columns:1fr}.os-purpose-strip>.btn{border-radius:0}.maturity-controls>div:first-child{display:grid}.group-display-meta{justify-items:start;text-align:left}
 }
 @media(max-width:520px){
-  .quick-action{grid-template-columns:30px 1fr;padding:8px}.quick-action>span{width:30px;height:30px}.quick-action b{font-size:12px}
+  .quick-action{width:42px;height:42px}.quick-action>span{width:26px;height:26px;font-size:20px}
 }
 @media(min-width:800px) and (orientation:portrait){
   .group-presentation .main-content{padding:34px 30px}.group-presentation .group-sqcdp{min-height:1420px}.group-presentation .sqcdp-cell{min-height:132px}.group-presentation .sqcdp-cell b{font-size:38px}.group-presentation .sqcdp-row>strong{font-size:19px}.group-presentation #appView>.section.panel:last-child .row{padding:18px;font-size:16px}

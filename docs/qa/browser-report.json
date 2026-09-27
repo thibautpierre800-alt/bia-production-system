@@ -1,5 +1,5 @@
 {
-  "routes": 155,
+  "routes": 77,
   "viewports": [
     390,
     820,
@@ -7,7 +7,7 @@
   ],
   "errors": [],
   "badResponses": [],
-  "initialRenderMs": 317,
+  "initialRenderMs": 399,
   "groupVertical": true,
   "offline": true,
   "pointerAndTouch": true,

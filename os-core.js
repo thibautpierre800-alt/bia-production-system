@@ -189,10 +189,10 @@ function osWritable(siteId = "group") {
   return !role().readonly && (canGroup() || siteId === state.site);
 }
 function osIsAdmin() {
-  return ["lean", "admin"].includes(state.role);
+  return state.role === "lean";
 }
 function osManager() {
-  return !role().readonly && state.role !== "terrain";
+  return ["lean", "director", "teamlead"].includes(state.role);
 }
 function osActive(rows) {
   return (rows || []).filter((r) => !r.archived_at);

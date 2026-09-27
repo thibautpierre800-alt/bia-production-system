@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.1.1 — 27 septembre 2026
+
+- Raccourcis Signal Terrain et Idée Kaizen réduits à deux commandes compactes, avec libellé accessible et infobulle.
+- Profils simplifiés et séparés en cinq rôles : DG, Responsable Lean, Directeur de site, Chef d’équipe et Opérateur.
+- Anciens profils locaux automatiquement rapprochés du nouveau rôle équivalent sans supprimer les données.
+- Comptes fictifs de démonstration alignés sur ces cinq profils.
+
 ## 7.1.0 — 27 septembre 2026
 
 - Scénario industriel fictif cohérent sur six sites, avec tendances, signaux, actions, A3, Kaizen, décisions et transferts reliés.

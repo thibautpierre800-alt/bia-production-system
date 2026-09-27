@@ -1,4 +1,4 @@
-# BIA Lean Operating System 7.1.0
+# BIA Lean Operating System 7.1.1
 
 Application de pilotage Lean pour BIA Holding et ses six sites : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax. Cette version prolonge la version 7.0.0 issue de la transformation de la 6.8.0 ; elle conserve les outils, documents, formations et données compatibles.
 
@@ -42,7 +42,7 @@ Dans Administration, **Explorer le scénario complet** charge un cas industriel 
 
 Les données sont enregistrées dans le navigateur utilisé, avec contrôle du quota et des conflits entre onglets. Exporter régulièrement une sauvegarde JSON depuis Compte. Le hors connexion demande une première ouverture connectée réussie.
 
-Les huit profils sont des **permissions fonctionnelles locales**, sélectionnables pour les usages et la démonstration. Ils ne constituent pas une authentification et ne protègent pas une base partagée. Il n’existe pas de synchronisation entre appareils. SEQUOIA, ERP, MES et SQL ne sont pas connectés. Le CSV fonctionne ; les secrets et connexions automatiques devront être gérés par un service serveur autorisé.
+Les cinq profils — DG, Responsable Lean, Directeur de site, Chef d’équipe et Opérateur — sont des **permissions fonctionnelles locales**, sélectionnables pour les usages et la démonstration. Ils ne constituent pas une authentification et ne protègent pas une base partagée. Il n’existe pas de synchronisation entre appareils. SEQUOIA, ERP, MES et SQL ne sont pas connectés. Le CSV fonctionne ; les secrets et connexions automatiques devront être gérés par un service serveur autorisé.
 
 ## Documentation
 

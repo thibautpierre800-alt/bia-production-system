@@ -20,11 +20,14 @@ const SITES=[
 ];
 const OPERATIONAL_SITES=SITES.filter(s=>s.kind==="site");
 const ROLES={
-  dg:{label:"Direction Générale Groupe",scope:"group",nav:["home","pilotage","roadmap","actions","practices","training","account"]},
-  lean:{label:"Responsable Lean Groupe",scope:"group",nav:["home","pilotage","roadmap","sqcdp","actions","terrain","audits","resolution","projects","practices","documents","tools","training","account","settings"]},
+  dg:{label:"DG",scope:"group",readonly:true,nav:["home","pilotage","roadmap","actions","practices","training","account"]},
+  lean:{label:"Responsable Lean",scope:"group",nav:["home","pilotage","roadmap","sqcdp","actions","terrain","audits","resolution","projects","practices","documents","tools","training","account","settings"]},
   director:{label:"Directeur de site",scope:"site",nav:["home","pilotage","roadmap","sqcdp","actions","terrain","audits","resolution","projects","documents","tools","training","account"]},
-  terrain:{label:"Chef d’équipe / Opérateur",scope:"workshop",nav:["home","sqcdp","actions","terrain","audits","documents","training","account"]}
+  teamlead:{label:"Chef d’équipe",scope:"workshop",nav:["home","sqcdp","actions","terrain","audits","documents","training","account"]},
+  operator:{label:"Opérateur",scope:"workshop",nav:["home","sqcdp","actions","terrain","documents","training","account"]}
 };
+const ROLE_ALIASES={admin:"lean",sitelean:"lean",manager:"teamlead",terrain:"teamlead",reader:"dg",group:"dg"};
+function normalizeRoleId(id){return ROLES[id]?id:ROLE_ALIASES[id]||"lean"}
 const NAV=[
   {id:"home",icon:"⌂",label:"Accueil",group:"Piloter"},
   {id:"pilotage",icon:"↗",label:"Pilotage",group:"Piloter"},
@@ -119,7 +122,11 @@ const DEMO={
     {id:"DOC-001",site_id:"marzin",type:"A3",title:"P-012 · Défauts de surface",status:"Brouillon",problem_id:"P-012",updated_at:"2026-09-22T08:10:00Z",version:1}
   ],
   accounts:[
-    {id:"U-001",name:"Pierre Thibaut",role:"lean",site_id:"group",workshop_id:null,status:"Actif"}
+    {id:"U-001",name:"Pierre Thibaut",role:"lean",site_id:"group",workshop_id:null,status:"Actif"},
+    {id:"U-002",name:"Claire Dubois",role:"dg",site_id:"group",workshop_id:null,status:"Actif"},
+    {id:"U-003",name:"Julien Moreau",role:"director",site_id:"europlacage",workshop_id:null,status:"Actif"},
+    {id:"U-004",name:"Camille Martin",role:"teamlead",site_id:"marzin",workshop_id:"marzin-pilot",status:"Actif"},
+    {id:"U-005",name:"Nora Le Gall",role:"operator",site_id:"profiline",workshop_id:"profiline-main",status:"Actif"}
   ],
   people:[
     {id:"PER-001",employee_id:"BIA-0001",name:"Pierre Thibaut",site_id:"marzin",workshop:"Atelier pilote",job:"Responsable Lean Groupe",app_profile:"lean",manager:"Direction Générale",status:"Actif"},
@@ -145,7 +152,7 @@ const DEMO={
     {id:"FOR-015",code:"BIA-COACH-01",title:"Coaching Lean des équipes",category:"Leadership",duration:7,validity_months:36,objectives:"Faire résoudre les problèmes par les équipes sans imposer les solutions.",modules:["Questionnement","Kata","Feedback","Management transverse"],evaluation:"Mise en situation",status:"Publié"},
     {id:"FOR-016",code:"BIA-VSL-01",title:"VSL · Piloter une chaîne de valeur",category:"Leadership",duration:14,validity_months:36,objectives:"Tenir la responsabilité transverse d’une famille de produits, de la demande client au résultat opérationnel.",modules:["Rôle et mandat VSL","Voix du client et famille produit","Performance bout-en-bout","Animation transverse","VSM actuelle et future","Obeya et routines","Roadmap 30/60/90","Revue de résultats"],evaluation:"Soutenance d’une chaîne de valeur réelle + observation terrain",status:"Publié"},
     {id:"FOR-017",code:"BIA-ROADMAP-01",title:"Construire et piloter une Roadmap Lean",category:"Déploiement",duration:7,validity_months:36,objectives:"Transformer les priorités Groupe et les écarts terrain en trajectoire réaliste, arbitrée et mesurable.",modules:["Ambition et nord vrai","Diagnostic factuel","Percées prioritaires","Catchball","Jalons 30/60/90","Portefeuille d’initiatives","Revue PDCA","Ajustement"],evaluation:"Roadmap réelle présentée au sponsor",status:"Publié"},
-    {id:"FOR-018",code:"BIA-APP-01",title:"Utiliser BIA Lean OS",category:"Application",duration:3.5,validity_months:24,objectives:"Saisir, retrouver et faire progresser un dossier Lean dans l’application selon son rôle.",modules:["Se repérer et choisir son périmètre","Créer un signal terrain","Proposer une idée Kaizen","Traiter une action","Animer un SQCDP","Consulter la Control Tower","Réaliser un audit et suivre la maturité","Utiliser A3, 8D, QRQC et VSM","Sauvegarder et connaître les limites"],evaluation:"Parcours pratique adapté au profil + dossier retrouvé après rechargement",status:"Publié",profiles:["operator","teamlead","manager","director","lean","group","admin"]}
+    {id:"FOR-018",code:"BIA-APP-01",title:"Utiliser BIA Lean OS",category:"Application",duration:3.5,validity_months:24,objectives:"Saisir, retrouver et faire progresser un dossier Lean dans l’application selon son rôle.",modules:["Se repérer et choisir son périmètre","Créer un signal terrain","Proposer une idée Kaizen","Traiter une action","Animer un SQCDP","Consulter la Control Tower","Réaliser un audit et suivre la maturité","Utiliser A3, 8D, QRQC et VSM","Sauvegarder et connaître les limites"],evaluation:"Parcours pratique adapté au profil + dossier retrouvé après rechargement",status:"Publié",profiles:["operator","teamlead","director","lean","dg"]}
   ],
   trainingRecords:[
     {id:"REC-001",person_id:"PER-001",training_id:"FOR-001",date:"2026-09-10",trainer:"Référent interne",attendance:"Présent",score:88,level:3,status:"Validé",evidence:"Quiz et mise en situation",validated_by:"Direction Générale",validated_at:"2026-09-10",expires_at:null},
@@ -164,7 +171,7 @@ const DEMO={
 };
 
 let state={
-  role:localStorage.getItem("biaRole")||"lean",
+  role:normalizeRoleId(localStorage.getItem("biaRole")||"lean"),
   site:localStorage.getItem("biaSite")||"marzin",
   view:localStorage.getItem("biaView")||"home",
   terrainTab:"signals",
@@ -292,7 +299,7 @@ function render(){
 function quickActionDock(){
   if(role().readonly||state.presentation)return "";
   const kaizenArgs=esc(JSON.stringify({key:"kaizens"}));
-  return `<aside class="quick-action-dock" aria-label="Actions terrain rapides"><button class="quick-action signal" data-new-signal><span>!</span><b>Signal terrain</b><small>Remonter un fait</small></button><button class="quick-action idea" data-os="new" data-args="${kaizenArgs}"><span>＋</span><b>Proposer une idée</b><small>Lancer un Kaizen</small></button></aside>`;
+  return `<aside class="quick-action-dock" aria-label="Actions terrain rapides"><button class="quick-action signal" data-new-signal aria-label="Créer un signal terrain" data-label="Signal terrain" title="Créer un signal terrain"><span aria-hidden="true">!</span></button><button class="quick-action idea" data-os="new" data-args="${kaizenArgs}" aria-label="Proposer une idée" data-label="Proposer une idée" title="Proposer une idée"><span aria-hidden="true">＋</span></button></aside>`;
 }
 
 function homeCards(){
@@ -463,33 +470,32 @@ const APP_TRAINING_ID="FOR-018";
 const APP_PROFILES={
   operator:"Opérateur",
   teamlead:"Chef d’équipe",
-  manager:"Manager",
   director:"Direction de site",
   lean:"Responsable Lean",
-  group:"Direction Groupe",
-  admin:"Administrateur"
+  dg:"DG"
 };
 const APP_SKILLS=[
-  {id:"navigate",label:"Se repérer",expected:{operator:2,teamlead:3,manager:3,director:3,lean:4,group:2,admin:4}},
-  {id:"signal",label:"Signal terrain",expected:{operator:3,teamlead:4,manager:4,director:3,lean:4,group:1,admin:4}},
-  {id:"kaizen",label:"Idée Kaizen",expected:{operator:2,teamlead:3,manager:3,director:2,lean:4,group:1,admin:4}},
-  {id:"action",label:"Traiter une action",expected:{operator:1,teamlead:3,manager:4,director:4,lean:4,group:3,admin:4}},
-  {id:"sqcdp",label:"Animer le SQCDP",expected:{operator:1,teamlead:4,manager:4,director:3,lean:4,group:3,admin:4}},
-  {id:"tower",label:"Lire la Control Tower",expected:{operator:0,teamlead:1,manager:3,director:4,lean:4,group:4,admin:4}},
-  {id:"audit",label:"Audit et maturité",expected:{operator:0,teamlead:2,manager:3,director:2,lean:4,group:1,admin:4}},
-  {id:"problem",label:"A3 / 8D / QRQC / VSM",expected:{operator:0,teamlead:2,manager:3,director:2,lean:4,group:1,admin:4}},
-  {id:"backup",label:"Sauvegarde",expected:{operator:0,teamlead:1,manager:2,director:2,lean:4,group:1,admin:4}},
-  {id:"admin",label:"Administrer",expected:{operator:0,teamlead:0,manager:0,director:0,lean:3,group:0,admin:4}}
+  {id:"navigate",label:"Se repérer",expected:{operator:2,teamlead:3,director:3,lean:4,dg:2}},
+  {id:"signal",label:"Signal terrain",expected:{operator:3,teamlead:4,director:3,lean:4,dg:1}},
+  {id:"kaizen",label:"Idée Kaizen",expected:{operator:2,teamlead:3,director:2,lean:4,dg:1}},
+  {id:"action",label:"Traiter une action",expected:{operator:1,teamlead:3,director:4,lean:4,dg:3}},
+  {id:"sqcdp",label:"Animer le SQCDP",expected:{operator:1,teamlead:4,director:3,lean:4,dg:3}},
+  {id:"tower",label:"Lire la Control Tower",expected:{operator:0,teamlead:1,director:4,lean:4,dg:4}},
+  {id:"audit",label:"Audit et maturité",expected:{operator:0,teamlead:2,director:2,lean:4,dg:1}},
+  {id:"problem",label:"A3 / 8D / QRQC / VSM",expected:{operator:0,teamlead:2,director:2,lean:4,dg:1}},
+  {id:"backup",label:"Sauvegarde",expected:{operator:0,teamlead:1,director:2,lean:4,dg:1}},
+  {id:"admin",label:"Administrer",expected:{operator:0,teamlead:0,director:0,lean:3,dg:0}}
 ];
 function appProfileFor(person){
-  if(person.app_profile&&APP_PROFILES[person.app_profile])return person.app_profile;
+  const saved=normalizeRoleId(person.app_profile);
+  if(person.app_profile&&APP_PROFILES[saved])return saved;
   const job=(person.job||"").toLocaleLowerCase("fr");
   if(job.includes("opérat"))return "operator";
   if(job.includes("chef"))return "teamlead";
+  if(job.includes("direction générale")||job.includes("dg"))return "dg";
   if(job.includes("direct"))return "director";
-  if(job.includes("admin"))return "admin";
   if(job.includes("lean"))return "lean";
-  return "manager";
+  return "operator";
 }
 function latestTrainingRecord(personId,trainingId){return data.trainingRecords.filter(r=>r.person_id===personId&&r.training_id===trainingId).sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.created_at).localeCompare(String(a.created_at)))[0]||null;}
 function appSkillLevel(record,skill){return Number(record?.skill_levels?.[skill.id]??record?.level??0);}
@@ -519,7 +525,7 @@ function trainingPedagogy(training){
   if(special[training.id])return special[training.id];
   return {audience:"Personnes amenées à utiliser la méthode sur le terrain",prerequisites:"Aucun prérequis technique ; venir avec un cas réel si possible.",messages:["Partir d’un fait observable.","Pratiquer sur le terrain avant de théoriser.","Séparer hypothèse, preuve et décision.","Valider la compétence par une réalisation, pas par la présence."],workshop:`Appliquer ${training.title} à une situation réelle du site et présenter le résultat au groupe.`,quiz:["Quel problème cette méthode permet-elle de traiter ?","Quelle preuve faut-il recueillir ?","Quel est le piège principal ?","Comment vérifier l’efficacité ?"],lessons:training.modules.map((module,index)=>[module,`Comprendre le but de « ${module} » et savoir l’expliquer simplement.`,index===0?"Observer un exemple puis identifier le fait de départ.":"Réaliser la partie correspondante sur le cas fil rouge.",`Production vérifiable : ${module}.`])};
 }
-function trainingPeople(){const rows=scoped(data.people);return state.role==="terrain"?rows.filter(p=>p.name==="Pierre Thibaut"):rows}
+function trainingPeople(){const rows=scoped(data.people);return ["teamlead","operator"].includes(state.role)?rows.filter(p=>appProfileFor(p)===state.role):rows}
 function trainingRecordStatus(r){if(r.status==="Validé"){if(r.expires_at&&r.expires_at<today())return {text:"Expiré",tone:"open"};return {text:"Valide",tone:"done"}}return {text:r.status||"À former",tone:r.status==="Non validé"?"open":r.status==="En cours"?"progress":r.status==="Formé"?"info":"neutral"}}
 function renderTraining(){
   const people=trainingPeople(),records=data.trainingRecords.filter(r=>people.some(p=>p.id===r.person_id)),canManage=osManager(),tabs=`<div class="tabs"><button class="tab ${state.trainingTab==="catalog"?"active":""}" data-training-tab="catalog">Catalogue</button><button class="tab ${state.trainingTab==="application"?"active":""}" data-training-tab="application">Formation à l’application</button><button class="tab ${state.trainingTab==="people"?"active":""}" data-training-tab="people">Personnes</button><button class="tab ${state.trainingTab==="matrix"?"active":""}" data-training-tab="matrix">Matrice de compétences</button></div>`;
@@ -544,7 +550,7 @@ function openApplicationGuide(){
 function openTrainingPerson(id){const p=data.people.find(x=>x.id===id);if(!p)return;const rows=data.trainingRecords.filter(r=>r.person_id===id).sort((a,b)=>String(b.date).localeCompare(String(a.date)));modal(`Dossier formation · ${p.name}`,`<div class="hr-sheet"><header><div><p class="eyebrow">BIA PRODUCTION SYSTEM · SUIVI RH</p><h2>Fiche individuelle de formation et qualification</h2></div><div class="document-ref">${esc(p.employee_id)}<br>Édité le ${shortDate(today())}</div></header><div class="identity-grid"><div><span>Collaborateur</span><b>${esc(p.name)}</b></div><div><span>Entité</span><b>${esc(getSiteName(p.site_id))}</b></div><div><span>Fonction</span><b>${esc(p.job)}</b></div><div><span>Atelier / service</span><b>${esc(p.workshop||"—")}</b></div><div><span>Responsable</span><b>${esc(p.manager||"—")}</b></div><div><span>Statut</span><b>${esc(p.status)}</b></div></div><div class="table-wrap section"><table class="data-table"><thead><tr><th>Date</th><th>Formation</th><th>Présence</th><th>Évaluation</th><th>Niveau validé</th><th>Validateur</th><th>Recyclage / échéance</th></tr></thead><tbody>${rows.map(r=>{const t=data.trainingCatalog.find(x=>x.id===r.training_id),st=trainingRecordStatus(r);return `<tr><td>${shortDate(r.date)}</td><td><b>${esc(t?.code||r.training_id)}</b><br>${esc(t?.title||"Formation inconnue")}</td><td>${esc(r.attendance)}</td><td>${r.score==null?"—":`${r.score}/100`}<br><small>${esc(r.evidence||"")}</small></td><td>${pill(st.text==="Valide"?TRAINING_LEVELS[r.level]||"À qualifier":st.text,st.tone)}</td><td>${esc(r.validated_by||"—")}<br><small>${shortDate(r.validated_at)}</small></td><td>${shortDate(r.expires_at)}</td></tr>`}).join("")||'<tr><td colspan="7">Aucune formation enregistrée.</td></tr>'}</tbody></table></div><div class="signature-grid section"><div>Visa collaborateur<br><span>Date / signature</span></div><div>Visa manager / formateur<br><span>Date / signature</span></div><div>Validation RH<br><span>Date / signature</span></div></div><div class="alert section"><b>Document de suivi RH :</b> sa valeur officielle dépend de la validation RH, de l’identité des signataires et des règles documentaires du Groupe BIA.</div><div class="form-actions"><button class="btn" data-print>Imprimer / PDF RH</button>${osManager()?`<button class="btn secondary" data-new-training-record data-person-id="${p.id}">Ajouter une formation</button>`:""}<button class="btn ghost" data-close-modal>Fermer</button></div></div>`)}
 
 function renderAccount(){
-  const caps={dg:["Voir la synthèse Groupe","Arbitrer les décisions","Consulter les KPI et bonnes pratiques"],lean:["Accéder aux six sites","Animer le système Lean","Configurer les référentiels fonctionnels"],director:["Piloter le site attribué","Décider et escalader","Consulter les données de son site"],terrain:["Créer un Signal Terrain","Animer le TOP 15 selon habilitation","Voir les actions de son périmètre"]}[state.role]||[role().readonly?"Consulter les dossiers accessibles":"Piloter et contribuer sur le périmètre attribué"];
+  const caps={dg:["Voir la synthèse Groupe","Consulter les décisions attendues","Consulter les KPI et bonnes pratiques"],lean:["Accéder aux six sites","Animer le système Lean","Configurer les référentiels fonctionnels"],director:["Piloter le site attribué","Décider et escalader","Consulter les données de son site"],teamlead:["Animer le SQCDP de l’équipe","Prendre en charge les signaux","Suivre les actions du périmètre"],operator:["Créer un Signal Terrain","Proposer une idée","Suivre les dossiers de son périmètre"]}[state.role]||[role().readonly?"Consulter les dossiers accessibles":"Piloter et contribuer sur le périmètre attribué"];
   return `${pageHead("Compte","Profil et habilitations","Les profils adaptent l’interface locale. L’authentification et le partage entre appareils ne sont pas encore connectés.",osIsAdmin()?'<button class="btn" data-new-account>＋ Ajouter un compte</button>':"")}
     <div class="grid main-aside"><section class="panel account-role"><p class="eyebrow">Profil actif</p><h2>Profil de démonstration</h2><p>${esc(role().label)}</p><p class="hint">Périmètre : ${esc(site().name)}${workshop()?` · ${esc(workshop().name)}`:""}</p><div class="check-list section">${caps.map(c=>`<div class="check">✓ ${esc(c)}</div>`).join("")}</div></section>
     <aside class="panel"><h2>Les profils fonctionnels</h2><div class="list section">${Object.values(ROLES).map(r=>`<div class="row"><b>${esc(r.label)}</b><span class="row-meta" style="display:block">Périmètre ${esc(r.scope)}</span></div>`).join("")}</div></aside></div>

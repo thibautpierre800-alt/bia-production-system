@@ -112,6 +112,12 @@ async function main() {
       "La Control Tower doit afficher les priorités multisites",
     );
     assert.equal(await page.locator(".os-purpose-strip").count(), 1);
+    assert.deepEqual(
+      await page.locator("#roleSelect option").allTextContents(),
+      ["DG", "Responsable Lean", "Directeur de site", "Chef d’équipe", "Opérateur"],
+    );
+    const quickDock = await page.locator(".quick-action-dock").boundingBox();
+    assert.ok(quickDock.width <= 110 && quickDock.height <= 60, "Raccourcis terrain compacts");
     report.initialRenderMs = Date.now() - start;
     await page.screenshot({
       path: path.join(output, "control-tower-desktop.png"),
@@ -119,7 +125,7 @@ async function main() {
       animations: "disabled",
     });
 
-    // Every allowed route for all eight functional profiles must render.
+    // Every allowed route for all five functional profiles must render.
     const roles = await page.evaluate(() => Object.keys(ROLES));
     for (const roleId of roles) {
       const routes = await page.evaluate((id) => {
@@ -321,7 +327,7 @@ async function main() {
     );
     await page.evaluate(() => {
       closeModal();
-      state.role = "reader";
+      state.role = "dg";
       editDocument("DOC-VSM-demo");
     });
     assert.equal(await page.locator("#osVsmNode [name=ct]").isDisabled(), true);

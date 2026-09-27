@@ -1,6 +1,6 @@
-# Réception — BIA Lean Operating System 7.1.0
+# Réception — BIA Lean Operating System 7.1.1
 
-Date : 27 septembre 2026. Version précédente sauvegardée : 7.0.0, commit `0afb43f`, branche distante `backup/before-7.1.0-2026-09-27`.
+Date : 27 septembre 2026. Version précédente sauvegardée : 7.1.0, commit `1180497`, branche distante `backup/before-7.1.1-2026-09-27`.
 
 ## Changements réceptionnés
 
@@ -20,13 +20,13 @@ Les nouveaux parcours comprennent Control Tower, Hoshin/X-Matrix, routines/escal
 | E — Hoshin → KPI → projet → action → résultat | Réussi ; navigation inverse et avancement distinct du résultat |
 | F — audit → écart → action → résolution | Réussi ; preuve obligatoire et score vérifié |
 | G — benchmark → site en difficulté → pratique ailleurs | Réussi ; suggestion fondée sur les données, sans causalité prétendue |
-| Navigateur Chromium | 155 combinaisons de huit profils et routes, sans erreur JavaScript ni ressource manquante |
+| Navigateur Chromium | 77 combinaisons des cinq profils et routes accessibles, sans erreur JavaScript ni ressource manquante |
 | Responsive | 14 vues contrôlées à 390, 820 et 1440 px, plus le SQCDP Groupe à 1080 × 1920 ; aucun débordement horizontal de la page |
 | Saisie navigateur | Gemba créé par formulaire puis retrouvé après rechargement |
 | VSM navigateur | Déplacement souris persistant, sélection tactile, édition et lecture seule |
 | Navigation/cache | Sous-chemin réel de déploiement, ancre Hoshin directe et rechargement hors connexion |
-| Build | 20 ressources statiques, 529 Kio avant compression, syntaxe et chemins contrôlés |
-| Performance observée | Premier rendu local du scénario inférieur à 0,4 s dans l’environnement de test ; ce n’est pas une mesure de latence réseau en production |
+| Build | 20 ressources statiques, 530 Kio avant compression, syntaxe et chemins contrôlés |
+| Performance observée | Premier rendu local du scénario inférieur à 0,5 s dans l’environnement de test ; ce n’est pas une mesure de latence réseau en production |
 
 Les scénarios A–G sont des tests d’intégration DOM avec sauvegarde et relecture. Le contrôle Chromium complète ces tests sur les interactions et le rendu. Il ne constitue pas une certification sur tous les navigateurs ou un test de charge multisession. Le script `tests/browser.cjs` reproduit les contrôles et génère les captures.
 

@@ -358,7 +358,7 @@ test("Imports CSV atomiques, doublons et dates invalides refusés, seuils param�
 
 test("Profils lecture seule, archivage réversible, journal et intégrité", (t) => {
   const a = app(t);
-  a.run('state.role="reader"');
+  a.run('state.role="dg"');
   assert.equal(a.run('commitData(()=>data.actions[0].title="Écrasé")'), false);
   assert.notEqual(a.run("data.actions[0].title"), "Écrasé");
   a.run('state.role="lean"');
@@ -423,7 +423,7 @@ test("Action depuis le graphique historique : vraie relation KPI, sauvegarde et 
 test("VSM consultable en lecture seule et imports de géométrie invalides refusés", (t) => {
   const a = app(t);
   demo(a);
-  a.run('state.role="reader";editDocument("DOC-VSM-demo")');
+  a.run('state.role="dg";editDocument("DOC-VSM-demo")');
   assert.ok(a.q("#osVsmCanvas"));
   assert.equal(a.q('#osVsmNode [name="ct"]').disabled, true);
   assert.equal(a.all("[data-vsm-add]").length, 0);

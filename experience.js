@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared interaction rules. All records remain local; roles are UI profiles, not authentication.
-const APP_VERSION = "7.1.0";
+const APP_VERSION = "7.1.1";
 let modalSaver = null, modalDirty = false, modalOpener = null, modalTimer = null;
 let lastStored = localStorage.getItem(STORAGE_KEY);
 let storageConflict = false;
@@ -10,8 +10,13 @@ Object.assign(state, {query:"", documentTab:"mine", documentType:"all", signalFi
 function upgradeData(source) {
   const out = {...source};
   for (const key of ["workshops","measures","trends","signals","actions","problems","projects","decisions","audits","gembas","practices","documents","accounts","people","trainingCatalog","trainingRecords","roadmap","toolRuns","syncLog","topics"]) out[key] = Array.isArray(out[key]) ? out[key] : [];
+  out.users = (out.users || []).map((user) => ({...user, role: normalizeRoleId(user.role)}));
+  out.people = out.people.map((person) => ({...person, app_profile: person.app_profile ? normalizeRoleId(person.app_profile) : person.app_profile}));
   for (const p of out.problems) {p.action_ids ||= []; p.signal_ids ||= []; p.content ||= {};}
-  return migrateOS(out);
+  const migrated=migrateOS(out);
+  migrated.users=(migrated.users||[]).map((user)=>({...user,role:normalizeRoleId(user.role)}));
+  migrated.people=(migrated.people||[]).map((person)=>({...person,app_profile:person.app_profile?normalizeRoleId(person.app_profile):person.app_profile}));
+  return migrated;
 }
 function allowedSite(id, write=false) {
   if (write && role().readonly) return false;
@@ -160,7 +165,7 @@ function initExperience() {
   const rawBeforeOS=localStorage.getItem(STORAGE_KEY);
   try{if(rawBeforeOS&&JSON.parse(rawBeforeOS)?.meta?.schema===6&&!localStorage.getItem(STORAGE_KEY+"-before-lean-os"))localStorage.setItem(STORAGE_KEY+"-before-lean-os",rawBeforeOS);}catch{storageConflict=true;}
   data=upgradeData(data);
-  if(data.meta.demo&&Number(data.meta.demo_revision||0)<2&&!storageConflict){
+  if(data.meta.demo&&Number(data.meta.demo_revision||0)<3&&!storageConflict){
     const previous=clone(data);
     try{
       if(rawBeforeOS&&!localStorage.getItem(STORAGE_KEY+"-before-demo-refresh"))localStorage.setItem(STORAGE_KEY+"-before-demo-refresh",rawBeforeOS);

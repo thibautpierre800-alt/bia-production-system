@@ -1,4 +1,4 @@
-# Architecture réelle — 7.1.0
+# Architecture réelle — 7.1.1
 
 ## Choix de continuité
 

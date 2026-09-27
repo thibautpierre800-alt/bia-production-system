@@ -1,27 +1,5 @@
 "use strict";
 
-ROLES.dg.readonly = true;
-ROLES.admin = {
-  ...ROLES.lean,
-  label: "Administrateur Groupe",
-  nav: [...ROLES.lean.nav],
-};
-ROLES.sitelean = {
-  ...ROLES.director,
-  label: "Responsable Lean Site",
-  nav: [...ROLES.director.nav],
-};
-ROLES.manager = {
-  ...ROLES.director,
-  label: "Manager atelier",
-  nav: [...ROLES.director.nav],
-};
-ROLES.reader = {
-  ...ROLES.dg,
-  label: "Lecture seule",
-  readonly: true,
-  nav: [...ROLES.lean.nav].filter((n) => n !== "settings"),
-};
 const OS_NAV = [
   { id: "daily", icon: "↥", label: "Routines et escalades", group: "Pilotage" },
   { id: "analysis", icon: "⌕", label: "Analyse des écarts", group: "Pilotage" },
@@ -54,15 +32,15 @@ const OS_NAV = [
 ];
 for (const [id, r] of Object.entries(ROLES)) {
   const additions =
-    id === "terrain"
+    ["teamlead", "operator"].includes(id)
       ? ["kaizen", "daily"]
       : OS_NAV.filter(
           (n) =>
-            n.id !== "connectors" || ["lean", "admin", "reader"].includes(id),
+            n.id !== "connectors" || id === "lean",
         ).map((n) => n.id);
   r.nav = [...new Set([...r.nav, ...additions])];
   if (
-    ["director", "sitelean", "manager"].includes(id) &&
+    id === "director" &&
     !r.nav.includes("practices")
   )
     r.nav.push("practices");
@@ -538,7 +516,7 @@ function osFreshData(demo) {
   base.measures = [];
   base.trends = [];
   base.meta.demo = true;
-  base.meta.demo_revision = 2;
+  base.meta.demo_revision = 3;
   base.meta.demo_story = "Six sites fictifs, écarts reliés aux signaux, actions, problèmes, Kaizen et transferts.";
   const siteIds = base.sites.filter((s) => s.kind === "site").map((s) => s.id),
     periods = [-28, -21, -14, -7, 0];

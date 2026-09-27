@@ -23,7 +23,11 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   assert.equal(run('OPERATIONAL_SITES.map(s=>s.name).join("|")'),'Ag Déco|Europlacage|Marzin|Oraison Menuiserie|Profiline|Sodeplax');
   assert.equal(run('Object.values(AUDIT_CRITERIA).flat().length'),50);
   assert.equal(run('LEAN_MODULES.length'),30);assert.equal(run('data.trainingCatalog.length'),18);
-  for(const role of ['lean','dg','director','terrain','admin','sitelean','manager','reader']){
+  assert.deepEqual(Array.from(run('Object.keys(ROLES)')),['dg','lean','director','teamlead','operator']);
+  assert.deepEqual(Array.from(run('Object.values(ROLES).map(r=>r.label)')),['DG','Responsable Lean','Directeur de site','Chef d’équipe','Opérateur']);
+  assert.equal(run('normalizeRoleId("admin")'),'lean');assert.equal(run('normalizeRoleId("terrain")'),'teamlead');assert.equal(run('normalizeRoleId("reader")'),'dg');
+  assert.equal(q('#roleSelect').options.length,5);
+  for(const role of ['dg','lean','director','teamlead','operator']){
     run(`state.role='${role}';state.site='${role==='dg'?'group':'marzin'}';closeModal()`);
     for(const id of Array.from(run('visibleNav().map(n=>n.id)'))){run(`state.view='${id}';render()`);assert.ok(q('#appView').textContent.length>80,`${role} / ${id}`);}
   }
@@ -32,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.equal(q('#gembaSite').options.length,1);
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-1-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.1.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-1-1/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.1.1'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -43,6 +47,9 @@ test('Accueil, raccourcis terrain et écran SQCDP Groupe vertical sont explicite
   assert.match(q('#appView').textContent,/D’artisan industriel à industriel artisan\./);
   assert.deepEqual(all('.home-alert-count').map(x=>x.textContent.trim()),['2décision(s) attendue(s)','1risque(s) critique(s) ouvert(s)']);
   assert.equal(all('.quick-action-dock .quick-action').length,2);
+  assert.deepEqual(all('.quick-action-dock .quick-action').map(x=>x.getAttribute('aria-label')),['Créer un signal terrain','Proposer une idée']);
+  assert.equal(all('.quick-action-dock b,.quick-action-dock small').length,0);
+  assert.match(fs.readFileSync('experience.css','utf8'),/\.quick-action\{[^}]*width:44px;height:44px/);
   click('.quick-action.idea');assert.match(q('#modalContent').textContent,/Une idée courte suffit/);run('closeModal()');
   run('state.view="sqcdp";render()');click('[data-display-mode]');
   assert.equal(q('body').classList.contains('group-presentation'),true);
@@ -75,7 +82,8 @@ test('Maturité : campagnes historiques comparables et nouvelle évaluation non 
 });
 test('Le scénario de démonstration est actualisé avec sauvegarde sans toucher un espace réel',t=>{
   const a=app(t),raw=a.run('JSON.stringify(DEMO)'),b=app(t,raw);
-  assert.equal(b.run('data.meta.demo_revision'),2);assert.equal(b.run('data.measures.length'),300);
+  assert.equal(b.run('data.meta.demo_revision'),3);assert.equal(b.run('data.measures.length'),300);
+  assert.deepEqual(Array.from(b.run('data.users.map(u=>u.role)')),['lean','dg','director','teamlead','operator']);
   assert.deepEqual(JSON.parse(b.run('JSON.stringify(osIntegrity())')),[]);
   assert.equal(b.run('localStorage.getItem(STORAGE_KEY+"-before-demo-refresh")'),raw);
   const empty=a.run('JSON.stringify(osFreshData(false))'),c=app(t,empty);
@@ -275,7 +283,7 @@ test('Import : structure, référentiel et doublons contrôlés avant restaurati
 test('Boutons des écrans et des 30 guides : aucune commande sans gestionnaire',t=>{
   const {run,all}=app(t),missing=[];
   function inspect(context){for(const b of all('#appView button'))if(!b.disabled&&!b.onclick&&!(b.type==='submit'&&b.form?.onsubmit))missing.push(`${context}: ${b.textContent.trim()}`);}
-  for(const role of ['lean','dg','director','terrain']){run(`state.role='${role}';state.site='marzin';closeModal()`);for(const id of Array.from(run('visibleNav().map(n=>n.id)'))){run(`state.view='${id}';render()`);inspect(`${role}/${id}`);}}
+  for(const role of ['lean','dg','director','teamlead','operator']){run(`state.role='${role}';state.site='marzin';closeModal()`);for(const id of Array.from(run('visibleNav().map(n=>n.id)'))){run(`state.view='${id}';render()`);inspect(`${role}/${id}`);}}
   run('state.role="lean";state.view="tools"');for(const id of Array.from(run('LEAN_MODULES.map(t=>t.id)'))){run(`state.toolId='${id}';render()`);inspect(id);}
   run('state.view="documents";state.documentTab="models";render()');inspect('Modèles');
   assert.deepEqual(missing,[]);
