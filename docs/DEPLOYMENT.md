@@ -24,8 +24,8 @@ Le service worker installe un ensemble versionné d’assets avant activation. L
 
 Les données des appareils ne sont pas dans GitHub : leur sauvegarde JSON est distincte du déploiement logiciel.
 
-## Retour à 6.8.0
+## Retour à 7.0.0
 
-La branche distante `backup/before-lean-os-2026-09-27` conserve le commit `7a719ed0c3f7138ab02ef7a03d20e98bcf3ba3fc`, antérieur à toute transformation.
+La branche distante `backup/before-7.1.0-2026-09-27` conserve le commit `0afb43f`, correspondant à la version 7.0.0 immédiatement antérieure à cette livraison. La sauvegarde historique `backup/before-lean-os-2026-09-27` reste également disponible.
 
-Créer un nouveau commit rétablissant l’arbre sauvegardé, avec un nouveau numéro de cache ; ne pas forcer `main` ou supprimer l’historique. Publier et revérifier Pages. Sur les appareils, exporter d’abord les données 7.0, puis restaurer la copie de schéma 6 créée avant migration. Ne pas injecter directement un export 7 dans l’ancien logiciel.
+Créer un nouveau commit rétablissant l’arbre sauvegardé, avec un nouveau numéro de cache ; ne pas forcer `main` ou supprimer l’historique. Publier et revérifier Pages. Sur les appareils, exporter d’abord les données 7.1, puis restaurer la copie de schéma 6 créée avant migration. Ne pas injecter directement un export 7 dans l’ancien logiciel.

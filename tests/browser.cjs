@@ -107,7 +107,11 @@ async function main() {
       state.osTab = "tower";
       render();
     });
-    assert.equal(await page.locator(".os-kpi-cell").count(), 30);
+    assert.ok(
+      (await page.locator(".control-analysis-table tbody tr").count()) >= 5,
+      "La Control Tower doit afficher les priorités multisites",
+    );
+    assert.equal(await page.locator(".os-purpose-strip").count(), 1);
     report.initialRenderMs = Date.now() - start;
     await page.screenshot({
       path: path.join(output, "control-tower-desktop.png"),
@@ -153,6 +157,8 @@ async function main() {
         "hoshin",
         "maturity",
         "kaizen",
+        "sqcdp",
+        "training",
         "deployment",
         "analysis",
         "terrain",
@@ -193,6 +199,40 @@ async function main() {
       }
       report.viewports.push(width);
     }
+
+    // The Group SQCDP has a dedicated portrait display for a workshop screen.
+    await page.setViewportSize({ width: 1080, height: 1920 });
+    await page.evaluate(() => {
+      state.role = "lean";
+      state.site = "group";
+      state.workshop = null;
+      state.view = "sqcdp";
+      state.presentation = true;
+      render();
+    });
+    assert.equal(
+      await page.evaluate(() => document.body.classList.contains("group-presentation")),
+      true,
+    );
+    assert.equal(await page.locator(".sqcdp-cell").count(), 30);
+    assert.ok(await page.locator(".group-display-exit").isVisible());
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth + 1,
+      ),
+      false,
+      "Débordement horizontal du SQCDP Groupe vertical",
+    );
+    await page.screenshot({
+      path: path.join(output, "sqcdp-group-vertical.png"),
+      fullPage: true,
+      animations: "disabled",
+    });
+    report.groupVertical = true;
+    await page.evaluate(() => {
+      state.presentation = false;
+      render();
+    });
 
     // A browser-created Gemba survives a reload; fixtures only prepare scope.
     await page.evaluate(() => {

@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared interaction rules. All records remain local; roles are UI profiles, not authentication.
-const APP_VERSION = "7.0.0";
+const APP_VERSION = "7.1.0";
 let modalSaver = null, modalDirty = false, modalOpener = null, modalTimer = null;
 let lastStored = localStorage.getItem(STORAGE_KEY);
 let storageConflict = false;
@@ -159,7 +159,16 @@ function bindExperience() {
 function initExperience() {
   const rawBeforeOS=localStorage.getItem(STORAGE_KEY);
   try{if(rawBeforeOS&&JSON.parse(rawBeforeOS)?.meta?.schema===6&&!localStorage.getItem(STORAGE_KEY+"-before-lean-os"))localStorage.setItem(STORAGE_KEY+"-before-lean-os",rawBeforeOS);}catch{storageConflict=true;}
-  data=upgradeData(data);osInit();
+  data=upgradeData(data);
+  if(data.meta.demo&&Number(data.meta.demo_revision||0)<2&&!storageConflict){
+    const previous=clone(data);
+    try{
+      if(rawBeforeOS&&!localStorage.getItem(STORAGE_KEY+"-before-demo-refresh"))localStorage.setItem(STORAGE_KEY+"-before-demo-refresh",rawBeforeOS);
+      data=osFreshData(true);
+      if(!save())data=previous;
+    }catch(error){data=previous;console.warn("Actualisation du scénario impossible",error);}
+  }
+  osInit();
   try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const parsed=JSON.parse(raw);validateImport(parsed);}}catch{storageConflict=true;window.biaUnreadable=true;}
   $("siteSelect").onchange=e=>{if(!requestCloseModal())return;state.site=e.target.value;state.receipt=null;localStorage.setItem("biaSite",state.site);render();};
   $("roleSelect").onchange=e=>{if(!requestCloseModal())return;state.role=e.target.value;state.receipt=null;localStorage.setItem("biaRole",state.role);if(!canGroup()&&state.site==="group")state.site="marzin";render();};

@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.1.0 — 27 septembre 2026
+
+- Scénario industriel fictif cohérent sur six sites, avec tendances, signaux, actions, A3, Kaizen, décisions et transferts reliés.
+- Accueil renforcé et signature « D’artisan industriel à industriel artisan. ».
+- Control Tower recentrée sur l’analyse ; SQCDP Groupe vertical dédié à la réaction et aux arbitrages.
+- Signal Terrain et idée Kaizen accessibles en permanence sur les profils contributeurs.
+- Formation complète à BIA Lean OS, matrice par profil, preuves de qualification et livret imprimable.
+- Historique de maturité conservé, sélection de date et comparaison de deux campagnes sur le radar.
+- Sauvegarde automatique de l’ancien scénario de démonstration avant son actualisation.
+
+La persistance reste locale ; les profils ne constituent pas une authentification et aucun flux SEQUOIA, ERP ou MES n’est actif.
+
 ## 7.0.0 — 27 septembre 2026
 
 Transformation progressive de BIA Production System 6.8.0 en BIA Lean Operating System.

@@ -22,7 +22,7 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   const a=app(t),{run,q}=a;
   assert.equal(run('OPERATIONAL_SITES.map(s=>s.name).join("|")'),'Ag Déco|Europlacage|Marzin|Oraison Menuiserie|Profiline|Sodeplax');
   assert.equal(run('Object.values(AUDIT_CRITERIA).flat().length'),50);
-  assert.equal(run('LEAN_MODULES.length'),30);assert.equal(run('data.trainingCatalog.length'),17);
+  assert.equal(run('LEAN_MODULES.length'),30);assert.equal(run('data.trainingCatalog.length'),18);
   for(const role of ['lean','dg','director','terrain','admin','sitelean','manager','reader']){
     run(`state.role='${role}';state.site='${role==='dg'?'group':'marzin'}';closeModal()`);
     for(const id of Array.from(run('visibleNav().map(n=>n.id)'))){run(`state.view='${id}';render()`);assert.ok(q('#appView').textContent.length>80,`${role} / ${id}`);}
@@ -32,10 +32,54 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.equal(q('#gembaSite').options.length,1);
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-0-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.0.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-1-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.1.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
+});
+test('Accueil, raccourcis terrain et écran SQCDP Groupe vertical sont explicites',t=>{
+  const a=app(t),{run,q,all,click}=a;
+  run('state.role="lean";state.site="group";state.view="home";render()');
+  assert.match(q('#appView').textContent,/D’artisan industriel à industriel artisan\./);
+  assert.deepEqual(all('.home-alert-count').map(x=>x.textContent.trim()),['2décision(s) attendue(s)','1risque(s) critique(s) ouvert(s)']);
+  assert.equal(all('.quick-action-dock .quick-action').length,2);
+  click('.quick-action.idea');assert.match(q('#modalContent').textContent,/Une idée courte suffit/);run('closeModal()');
+  run('state.view="sqcdp";render()');click('[data-display-mode]');
+  assert.equal(q('body').classList.contains('group-presentation'),true);
+  assert.ok(q('.group-display-exit'));click('.group-display-exit');
+  assert.equal(q('body').classList.contains('group-presentation'),false);
+  run('state.view="pilotage";state.osTab="tower";render()');
+  assert.match(q('.control-analysis-table').textContent,/73,3 % défavorable/);
+  run('state.role="dg";state.view="home";render()');assert.equal(q('.quick-action-dock'),null);
+});
+test('Formation BIA Lean OS : livret, grille par profil et qualification enregistrée',t=>{
+  const a=app(t),{run,q,fill,click,submit}=a;
+  run('state.role="lean";state.site="group";state.view="training";state.trainingTab="application";render()');
+  assert.ok(q('.app-skill-matrix'));assert.match(q('#appView').textContent,/BIA-APP-01/);
+  click('[data-training-guide]');assert.match(q('#modalContent').textContent,/Limites actuelles/);assert.match(q('#modalContent').textContent,/Control Tower/);run('closeModal();render()');
+  click('[data-new-training-record][data-training-id="FOR-018"]');
+  assert.equal(q('#recordTraining').value,'FOR-018');assert.equal(q('#appSkillLevels').hidden,false);
+  fill('#recordTrainer','Responsable Lean Groupe');fill('#recordLevel','3');fill('#recordStatus','En cours');fill('#recordEvidence','Signal créé et retrouvé après rechargement');fill('[data-app-skill="signal"]','4');submit('#trainingRecordForm');
+  assert.equal(run('data.trainingRecords[0].training_id'),'FOR-018');assert.equal(run('data.trainingRecords[0].skill_levels.signal'),4);
+  run('state.trainingTab="matrix";render()');assert.match(q('#appView').textContent,/APP-01/);
+});
+test('Maturité : campagnes historiques comparables et nouvelle évaluation non destructive',t=>{
+  const a=app(t),{run,q,all,fill,click,submit}=a;
+  run('data=osFreshData(true);osInit();state.role="lean";state.site="group";state.view="maturity";render()');
+  assert.equal(q('#maturityDate').options.length,3);assert.equal(q('#maturityCompareDate').options.length,3);
+  const oldest=run('osMaturityDates(OPERATIONAL_SITES.map(s=>s.id)).at(-1)');fill('#maturityCompareDate',oldest);
+  assert.equal(all('.radar-legend').length,6);assert.match(q('#appView').textContent,/Évolution/);
+  const before=run('data.maturity.length'),oldId=run('data.maturity.at(-1).id');click('.os-maturity-cell');
+  fill('#osForm [name="level"]','4');fill('#osForm [name="owner"]','Auditrice interne');fill('#osForm [name="evidence"]','Observation terrain et standard daté');submit('#osForm');
+  assert.equal(run('data.maturity.length'),before+1);assert.ok(run(`data.maturity.some(m=>m.id==='${oldId}')`));
+});
+test('Le scénario de démonstration est actualisé avec sauvegarde sans toucher un espace réel',t=>{
+  const a=app(t),raw=a.run('JSON.stringify(DEMO)'),b=app(t,raw);
+  assert.equal(b.run('data.meta.demo_revision'),2);assert.equal(b.run('data.measures.length'),300);
+  assert.deepEqual(JSON.parse(b.run('JSON.stringify(osIntegrity())')),[]);
+  assert.equal(b.run('localStorage.getItem(STORAGE_KEY+"-before-demo-refresh")'),raw);
+  const empty=a.run('JSON.stringify(osFreshData(false))'),c=app(t,empty);
+  assert.equal(c.run('data.meta.demo'),false);assert.equal(c.run('data.measures.length'),0);assert.equal(c.run('data.people.length'),0);
 });
 test('Signal → prise en compte → action vérifiée → résolution → clôture et reprise',t=>{
   const a=app(t),{run,fill,submit,q,click}=a;
@@ -138,19 +182,19 @@ test('Benchmark Groupe : six sites visibles ensemble et indicateurs commutables 
   assert.equal(all('.benchmark-grid > article').length,6);
   assert.deepEqual(all('.benchmark-site-head h3').map(x=>x.textContent),['Ag Déco','Europlacage','Marzin','Oraison Menuiserie','Profiline','Sodeplax']);
   assert.equal(q('.benchmark-table'),null,'Aucun tableau à défilement horizontal');
-  assert.match(q('.benchmark-toolbar').textContent,/1\/6 sites renseignés · TRS/);
-  assert.match(all('.benchmark-site')[0].textContent,/Donnée indisponible/);
+  assert.match(q('.benchmark-toolbar').textContent,/6\/6 sites renseignés · TRS/);
+  assert.match(all('.benchmark-site')[0].textContent,/82%/);
   assert.doesNotMatch(q('.benchmark-grid').textContent,/classement|moyenne/);
   click('[data-benchmark-metric="scrap"]');
   assert.equal(run('state.benchmarkMetric'),'scrap');assert.equal(all('.benchmark-grid > article').length,6);
-  assert.match(all('.benchmark-site')[2].textContent,/4.1/);
+  assert.match(all('.benchmark-site')[2].textContent,/5.2/);
   click('[data-benchmark-metric="service"]');
-  assert.match(q('.benchmark-toolbar').textContent,/0\/6 sites renseignés/);
-  assert.equal(all('.benchmark-site-empty').length,6);
+  assert.match(q('.benchmark-toolbar').textContent,/6\/6 sites renseignés/);
+  assert.equal(all('.benchmark-site-empty').length,0);
   click('[data-benchmark-metric="trs"]');
-  fill('#benchmarkPeriod','S39');
-  assert.equal(run('benchmarkObservation("marzin","trs","S39").value'),78.6);
-  assert.equal(run('benchmarkObservation("ag-deco","trs","S39")'),null);
+  const previous=run('osDateOffset(-7)');fill('#benchmarkPeriod',previous);
+  assert.equal(run(`benchmarkObservation("marzin","trs","${previous}").value`),77);
+  assert.equal(run(`benchmarkObservation("ag-deco","trs","${previous}").value`),81);
   click('[data-benchmark-site="sodeplax"]');assert.equal(run('state.pilotSite'),'sodeplax');assert.equal(run('state.site'),'group');
   assert.equal(q('#pilotSite').value,'sodeplax');
 });
@@ -158,17 +202,17 @@ test('Benchmark : saisie manuelle par site, courbe datée et sauvegarde après r
   const a=app(t),{run,q,click,fill,submit}=a;
   run('state.site="group";state.role="lean";state.view="pilotage";state.osTab="detail";render()');
   click('[data-benchmark-metric="service"]');
-  click('[data-new-benchmark]');fill('#benchmarkSite','ag-deco');fill('#benchmarkDate','2026-09-24');fill('#benchmarkValue','82.4');fill('#benchmarkTarget','85');fill('#benchmarkDefinition','TRS de la ligne témoin, arrêts inclus');submit('#benchmarkForm');
-  assert.equal(run('state.benchmarkMetric'),'trs','La valeur enregistrée est immédiatement visible');
-  assert.equal(run('benchmarkObservation("ag-deco","trs","2026-09-24").value'),82.4);
-  assert.equal(run('indicatorSeries("ag-deco","trs").labels.at(-1)'),'2026-09-24');
+  click('[data-new-benchmark]');fill('#benchmarkSite','ag-deco');fill('#benchmarkDate','2026-09-24');fill('#benchmarkValue','82.4');fill('#benchmarkTarget','98');fill('#benchmarkDefinition','Commandes livrées à l’heure et complètes / commandes dues');submit('#benchmarkForm');
+  assert.equal(run('state.benchmarkMetric'),'service','L’indicateur choisi reste sélectionné');
+  assert.equal(run('benchmarkObservation("ag-deco","service","2026-09-24").value'),82.4);
+  assert.ok(run('indicatorSeries("ag-deco","service").labels.includes("2026-09-24")'));
   assert.equal(q('#benchmarkPeriod').value,'2026-09-24');
   assert.match(q('.benchmark-grid').textContent,/82.4%/);
   assert.match(q('.benchmark-grid').textContent,/Saisie manuelle/);
   assert.match(q('.benchmark-toolbar').textContent,/1\/6 sites renseignés/);
   const stored=a.stored(),b=app(t,stored);b.run('state.site="group";state.view="pilotage";state.osTab="detail";render()');
-  assert.equal(b.run('benchmarkObservation("ag-deco","trs","2026-09-24").value'),82.4);
-  b.fill('#benchmarkPeriod','2026-09-22');
+  assert.equal(b.run('benchmarkObservation("ag-deco","service","2026-09-24").value'),82.4);
+  b.fill('#benchmarkPeriod','2026-09-24');
   assert.match(b.q('.benchmark-site').textContent,/Donnée indisponible/);
   b.run('state.role="dg";render()');assert.equal(b.q('[data-new-benchmark]'),null);
   b.run('state.role="director";state.site="ag-deco";render()');b.click('[data-new-benchmark]');
@@ -181,12 +225,12 @@ test('SQCDP Groupe : six sites simultanés, états qualifiés et détail actionn
   assert.match(q('#appView').textContent,/SQCDP Groupe/);
   assert.equal(all('.sqcdp-row').length,7,'Un en-tête et six sites');
   assert.equal(all('.sqcdp-cell').length,30);
-  assert.equal(all('.sqcdp-cell.missing').length,27);
-  assert.equal(all('.sqcdp-cell.gap').length,3);
-  assert.match(q('[data-sqcdp-site="marzin"][data-sqcdp-axis="Q"]').textContent,/4.1/);
+  assert.equal(all('.sqcdp-cell.missing').length,0);
+  assert.equal(all('.sqcdp-cell.gap').length,15);
+  assert.match(q('[data-sqcdp-site="marzin"][data-sqcdp-axis="Q"]').textContent,/5.2/);
   click('[data-sqcdp-site="marzin"][data-sqcdp-axis="Q"]');
-  assert.match(q('#modalContent').textContent,/Défauts de surface/);
-  assert.match(q('#modalContent').textContent,/4.1/);
+  assert.match(q('#modalContent').textContent,/défauts de surface/i);
+  assert.match(q('#modalContent').textContent,/5.2/);
   click('#sqcdpAddAction');assert.equal(q('#actionSite').value,'marzin');
   assert.match(q('#actionTitle').value,/rebut/);
   run('closeModal();state.view="sqcdp";render()');
@@ -200,7 +244,7 @@ test('SQCDP Groupe : six sites simultanés, états qualifiés et détail actionn
   assert.equal(run('benchmarkObservation("ag-deco","service","2026-09-24").value'),96);
   run('state.view="sqcdp";render()');
   assert.equal(q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('ok'),true);
-  fill('#sqcdpGroupPeriod','2026-09-22');
+  const prior=run('osDateOffset(-7)');run(`data.measures=data.measures.filter(m=>!(m.site_id==='ag-deco'&&m.code==='service'&&m.period==='${prior}'))`);fill('#sqcdpGroupPeriod',prior);
   assert.equal(q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('missing'),true);
   run('state.role="dg";state.view="pilotage";state.osTab="detail";render()');
   assert.equal(all('.sqcdp-cell').length,30,'La direction retrouve la matrice dans Pilotage Groupe');

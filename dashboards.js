@@ -22,7 +22,7 @@ function topSubjects() {
   if(state.site==="group")return [];
   const topics=scoped(data.topics).filter(t=>t.status!=="Clos").map(t=>({id:t.id,category:AXES[t.axis]?.label||"Sujet",title:t.title,next:t.owner,due:shortDate(t.due_date),priority:t.priority}));
   const covered=new Set(scoped(data.topics).filter(t=>t.status!=="Clos").map(t=>t.linked_id).filter(Boolean));
-  const signals=scoped(data.signals).filter(s=>isOpenSignal(s)&&s.state!=="Vérifié"&&!covered.has(s.id)).map(s=>({id:s.id,category:s.type,title:s.description,next:signalNextLabel(s),due:"Aujourd’hui",priority:s.severity}));
+  const signals=scoped(data.signals).filter(s=>isOpenSignal(s)&&s.state!=="Vérifié"&&!covered.has(s.id)).map(s=>({id:s.id,category:s.type,title:s.description,next:signalNextLabel(s),due:shortDate(s.response_due||signalResponseDue(s.severity,s.created_at)),priority:s.severity}));
   const actions=scoped(data.actions).filter(a=>isOpenAction(a)&&!covered.has(a.id)&&(isLate(a)||a.status==="À vérifier"||["Critique","Haute"].includes(a.priority))).map(a=>({id:a.id,category:"Action",title:a.title,next:a.owner,due:shortDate(a.due_date),priority:a.priority}));
   const decisions=scoped(data.decisions).filter(d=>d.status!=="Clos").map(d=>({id:d.id,category:"Décision",title:d.title,next:d.owner,due:shortDate(d.due_date),priority:"Haute"}));
   return [...topics,...signals,...actions,...decisions].sort((a,b)=>({Critique:0,Haute:1,Normale:2}[a.priority]??3)-({Critique:0,Haute:1,Normale:2}[b.priority]??3));
@@ -110,12 +110,14 @@ function renderGroupSqcdp(embedded=false){
     ...data.signals.filter(s=>s.severity==="Critique"&&isOpenSignal(s)).map(s=>({id:s.id,site_id:s.site_id,title:s.description,kind:"Signal critique"}))
   ].filter(r=>r.site_id==="group"||OPERATIONAL_SITES.some(s=>s.id===r.site_id));
   const escalations=openEscalations.slice(0,5);
-  return `${embedded?"":pageHead("BIA Holding · pilotage multisite","SQCDP Groupe","Six sites industriels visibles sur une période commune. Cliquez sur une case pour voir la mesure et les dossiers liés.")}
+  const latestPeriod=data.measures.filter(m=>Number.isFinite(m.value)).map(m=>m.period).sort().at(-1)||"";
+  return `${embedded?"":pageHead("Management visuel Groupe","SQCDP Groupe","Tous les sites sur une période commune, avec les écarts et décisions à traiter.",'<button class="btn secondary" data-display-mode>'+ (state.presentation?"Quitter le plein écran":"Écran Groupe vertical")+'</button>')}
     <section class="panel group-sqcdp section" aria-labelledby="groupSqcdpTitle">
-      <div class="section-title"><div><h2 id="groupSqcdpTitle">SQCDP Groupe · six sites</h2><p class="hint">Revue Groupe hebdomadaire · cliquez sur une case pour accéder aux écarts et aux actions.</p></div><label class="sqcdp-period">Période commune<select id="sqcdpGroupPeriod">${periods.map(p=>`<option value="${esc(p)}" ${p===period?"selected":""}>${esc(p)}${/^S\d+$/.test(p)?" · année à qualifier":""}</option>`).join("")||'<option value="">Aucune mesure</option>'}</select></label></div>
+      <header class="group-display-head"><div><p class="eyebrow">BIA Holding · revue Groupe</p><h2 id="groupSqcdpTitle">SQCDP Groupe · ${OPERATIONAL_SITES.length} sites</h2><p>Réagir aux écarts, attribuer une suite et escalader au bon niveau.</p></div><div class="group-display-meta"><b>${shortDate(period)}</b><span>Dernière période disponible : ${latestPeriod?shortDate(latestPeriod):"—"}</span><button class="btn secondary group-display-exit" data-display-mode>Quitter le plein écran</button></div></header>
+      <div class="section-title group-sqcdp-controls"><p class="hint">Revue Groupe hebdomadaire · cliquez sur une case pour accéder aux écarts et aux actions.</p><label class="sqcdp-period">Période commune<select id="sqcdpGroupPeriod">${periods.map(p=>`<option value="${esc(p)}" ${p===period?"selected":""}>${esc(p)}${/^S\d+$/.test(p)?" · année à qualifier":""}</option>`).join("")||'<option value="">Aucune mesure</option>'}</select></label></div>
       ${data.meta.demo?'<p class="alert">Données de démonstration fictives. Les valeurs affichées ne décrivent pas la situation réelle du Groupe.</p>':""}
       <div class="sqcdp-summary" role="status"><span><b>${gaps}</b> écart(s) mesuré(s)</span><span><b>${missing}</b> mesure(s) absente(s)</span><span><b>${openEscalations.length}</b> alerte(s) / décision(s) à voir</span></div>
-      <div class="sqcdp-matrix" role="table" aria-label="SQCDP des six sites, période ${esc(period||"inconnue")}">
+      <div class="sqcdp-matrix" role="table" aria-label="SQCDP des ${OPERATIONAL_SITES.length} sites, période ${esc(period||"inconnue")}">
         <div class="sqcdp-row sqcdp-heading" role="row"><span role="columnheader">Site</span>${GROUP_SQCDP.map(k=>`<span role="columnheader" title="${esc(k.label)}">${k.axis}<small>${esc(k.label.split(" · ")[0])}</small></span>`).join("")}</div>
         ${OPERATIONAL_SITES.map(site=>`<div class="sqcdp-row" role="row"><strong role="rowheader">${esc(site.name)}</strong>${GROUP_SQCDP.map(k=>{
           const item=benchmarkObservation(site.id,k.code,period),status=sqcdpGroupStatus(item,k),previous=item?sqcdpPrevious(site.id,k.code,period):null;
@@ -230,7 +232,7 @@ function bindDashboards() {
   document.querySelectorAll("[data-sqcdp-site]").forEach(b=>b.onclick=()=>openGroupSqcdpCell(b.dataset.sqcdpSite,b.dataset.sqcdpAxis));
   document.querySelectorAll("[data-benchmark-metric]").forEach(b=>b.onclick=()=>{state.benchmarkMetric=b.dataset.benchmarkMetric;render();});
   document.querySelectorAll("[data-benchmark-site]").forEach(b=>b.onclick=()=>{state.pilotSite=b.dataset.benchmarkSite;render();$("pilotDetail")?.scrollIntoView({behavior:"smooth",block:"start"});});
-  document.querySelectorAll("[data-new-benchmark]").forEach(b=>b.onclick=benchmarkForm);
+  document.querySelectorAll("[data-new-benchmark]").forEach(b=>b.onclick=()=>benchmarkForm({code:state.benchmarkMetric}));
   document.querySelectorAll("[data-topic-axis]").forEach(b=>b.onclick=()=>topicForm(null,{axis:b.dataset.topicAxis,title:b.dataset.topicTitle}));
   document.querySelectorAll("[data-timer]").forEach(b=>b.onclick=()=>{state.timerStarted=state.timerStarted?null:Date.now();clearInterval(window.biaTimer);render();if(state.timerStarted)window.biaTimer=setInterval(()=>{if($("meetingTimer"))$("meetingTimer").textContent=timerLabel();},1000);});
 }

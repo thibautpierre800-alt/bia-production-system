@@ -302,15 +302,17 @@ test("G · benchmark → site en difficulté → pratique validée ailleurs, san
   const a = app(t);
   demo(a);
   a.run('state.view="pilotage";state.osTab="tower";render()');
-  assert.equal(a.all(".os-kpi-cell").length, 30);
-  assert.equal(a.all(".os-site").length, 6);
+  assert.equal(a.all(".os-kpi-cell").length, 0);
+  assert.ok(a.all(".control-analysis-table tbody tr").length >= 5);
+  assert.match(a.q("#appView").textContent, /Control Tower/);
+  assert.match(a.q("#appView").textContent, /SQCDP/);
   const result = JSON.parse(
     a.run(
       'JSON.stringify(osSuggestions("marzin").find(s=>s.kpi_id==="KPI-trs"))',
     ),
   );
   assert.ok(result.practices.includes("BP-transfert"));
-  assert.equal(result.basis.length, 4);
+  assert.equal(result.basis.length, 5);
   assert.match(a.q("#appView").textContent, /Suggestion à examiner/);
   a.run('osOpenTrace("BP-transfert")');
   assert.match(a.q("#modalContent").textContent, /TRS/);

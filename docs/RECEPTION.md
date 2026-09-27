@@ -1,6 +1,6 @@
-# Réception — BIA Lean Operating System 7.0.0
+# Réception — BIA Lean Operating System 7.1.0
 
-Date : 27 septembre 2026. Base auditée : version 6.8.0, commit `7a719ed0c3f7138ab02ef7a03d20e98bcf3ba3fc`. Sauvegarde distante : `backup/before-lean-os-2026-09-27`.
+Date : 27 septembre 2026. Version précédente sauvegardée : 7.0.0, commit `0afb43f`, branche distante `backup/before-7.1.0-2026-09-27`.
 
 ## Changements réceptionnés
 
@@ -12,7 +12,7 @@ Les nouveaux parcours comprennent Control Tower, Hoshin/X-Matrix, routines/escal
 
 | Contrôle | Résultat et portée |
 |---|---|
-| Tests métier/DOM | 35 tests : intégrité, formulaires, relecture, migration et non-régression |
+| Tests métier/DOM | 39 tests réussis : intégrité, formulaires, relecture, migration, scénario réaliste, formation logicielle, maturité historique et non-régression |
 | A — Gemba → action → SQCDP → escalade → clôture | Réussi ; une seule action et pas de double escalade |
 | B — KPI → problème → A3 → action → résultat | Réussi ; douze rubriques et résultat conservé après rechargement |
 | C — VSM → opportunité → projet/action → résultat | Réussi ; calculs numériques et liens persistants |
@@ -21,14 +21,14 @@ Les nouveaux parcours comprennent Control Tower, Hoshin/X-Matrix, routines/escal
 | F — audit → écart → action → résolution | Réussi ; preuve obligatoire et score vérifié |
 | G — benchmark → site en difficulté → pratique ailleurs | Réussi ; suggestion fondée sur les données, sans causalité prétendue |
 | Navigateur Chromium | 155 combinaisons de huit profils et routes, sans erreur JavaScript ni ressource manquante |
-| Responsive | Contrôle de 12 vues à 390, 820 et 1440 px ; pas de débordement horizontal de la page |
+| Responsive | 14 vues contrôlées à 390, 820 et 1440 px, plus le SQCDP Groupe à 1080 × 1920 ; aucun débordement horizontal de la page |
 | Saisie navigateur | Gemba créé par formulaire puis retrouvé après rechargement |
 | VSM navigateur | Déplacement souris persistant, sélection tactile, édition et lecture seule |
 | Navigation/cache | Sous-chemin réel de déploiement, ancre Hoshin directe et rechargement hors connexion |
-| Build | 20 ressources statiques, moins de 500 Kio avant compression, syntaxe et chemins contrôlés |
-| Performance observée | Premier rendu local du scénario proche de 0,2 s dans l’environnement de test ; ce n’est pas une mesure de latence réseau en production |
+| Build | 20 ressources statiques, 529 Kio avant compression, syntaxe et chemins contrôlés |
+| Performance observée | Premier rendu local du scénario inférieur à 0,4 s dans l’environnement de test ; ce n’est pas une mesure de latence réseau en production |
 
-Les scénarios A–G sont des tests d’intégration DOM avec sauvegarde et relecture ; le contrôle Chromium complète ces tests sur les interactions et le rendu. Il ne constitue pas une certification sur tous les navigateurs ou un test de charge multisession. Le script `tests/browser.cjs` reproduit les contrôles et génère les captures.
+Les scénarios A–G sont des tests d’intégration DOM avec sauvegarde et relecture. Le contrôle Chromium complète ces tests sur les interactions et le rendu. Il ne constitue pas une certification sur tous les navigateurs ou un test de charge multisession. Le script `tests/browser.cjs` reproduit les contrôles et génère les captures.
 
 ## Corrections issues de la réception
 

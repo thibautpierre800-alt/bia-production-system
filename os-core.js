@@ -1009,4 +1009,6 @@ function osInit() {
   state.workshop ||= "";
   state.dailyLevel ||= 1;
   state.adminTab ||= "sites";
+  state.maturityDate ||= "";
+  state.maturityCompareDate ||= "";
 }

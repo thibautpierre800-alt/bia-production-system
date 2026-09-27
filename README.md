@@ -1,6 +1,6 @@
-# BIA Lean Operating System 7.0.0
+# BIA Lean Operating System 7.1.0
 
-Application de pilotage Lean pour BIA Holding et ses six sites : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax. Cette version prolonge la version 6.8.0 existante ; elle conserve les outils, documents, formations et données compatibles.
+Application de pilotage Lean pour BIA Holding et ses six sites : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax. Cette version prolonge la version 7.0.0 issue de la transformation de la 6.8.0 ; elle conserve les outils, documents, formations et données compatibles.
 
 ## Le parcours métier
 
@@ -10,7 +10,7 @@ Les fiches utilisent une base d’actions et un registre de mesures uniques. Le 
 
 | Espace | Fonctions utilisables |
 |---|---|
-| Pilotage | Control Tower six sites, SQCDP, tendances, benchmark, rapprochement de pratiques, sources et écart normalisé |
+| Pilotage | Control Tower analytique, SQCDP Groupe vertical, tendances, benchmark, rapprochement de pratiques, sources et écart normalisé |
 | Quotidien | Routines N1–N4, décisions, escalades sans doublon, responsables et échéances |
 | Terrain | Signaux, Gemba multiconstats, photos, audits génériques, 5S et audit historique de 50 critères |
 | Résolution | QRQC, A3 complet, PDCA, 8D, DMAIC, 5 Pourquoi, Ishikawa et Pareto |
@@ -18,9 +18,9 @@ Les fiches utilisent une base d’actions et un registre de mesures uniques. Le 
 | Stratégie | Objectifs hiérarchiques, X-Matrix, contributions, KPI, projets, actions et résultats |
 | Flux | VSM graphique actuel/futur, déplacement souris/tactile/clavier, zoom, objets, flux et calculs |
 | Capitalisation | Matrice pratique × sites, essais locaux, preuves et validation du déploiement |
-| Maturité | Dix piliers, cinq niveaux, évaluations datées, preuves, radar et heatmap |
+| Maturité | Dix piliers, cinq niveaux, historique daté, comparaison de campagnes, preuves et radar superposé |
 | Administration | Organisation, utilisateurs déclarés, KPI/seuils, catégories, questionnaires, règles et journal |
-| Ressources | Trente guides, parcours de formation, suivi individuel et documents imprimables conservés |
+| Ressources | Trente guides, formation complète à BIA Lean OS, matrice par profil, suivi individuel et livret imprimable |
 | Échanges | Sauvegarde/restauration JSON, CSV contrôlé, configuration des connecteurs et mock documenté |
 
 ## Démarrer

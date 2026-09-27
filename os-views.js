@@ -322,7 +322,7 @@ function osForm(key, id = null, preset = {}) {
     return toast("Configuration réservée à l’administration Groupe.");
   modal(
     `${id || "Créer"} · ${schema.title}`,
-    `<form id="osForm" data-key="${key}"><div class="form-grid">${schema.fields.map((f) => osField(f, row)).join("")}</div>${key === "gains" ? '<p class="hint">Gain = écart avant/après × répétitions. Les unités et périodes restent séparées ; seule une validation avec preuve entre dans le total.</p>' : ""}${key === "connectors" ? '<p class="hint">Cette configuration documente le raccordement. Aucun accès au système source n’est déclenché.</p>' : ""}<div class="form-actions"><button class="btn">Enregistrer</button><button type="button" class="btn secondary" data-close-modal>Annuler</button></div></form>${id ? osContext(id) : ""}`,
+    `<form id="osForm" data-key="${key}">${key === "kaizens" ? '<div class="signal-form-intro"><b>Une idée courte suffit pour commencer.</b><span>Décrivez le problème observé. Le pilote, l’essai et la mesure permettront ensuite de décider si elle devient un standard.</span></div>' : ""}<div class="form-grid ${key === "kaizens" ? "section" : ""}">${schema.fields.map((f) => osField(f, row)).join("")}</div>${key === "gains" ? '<p class="hint">Gain = écart avant/après × répétitions. Les unités et périodes restent séparées ; seule une validation avec preuve entre dans le total.</p>' : ""}${key === "connectors" ? '<p class="hint">Cette configuration documente le raccordement. Aucun accès au système source n’est déclenché.</p>' : ""}<div class="form-actions"><button class="btn">${key === "kaizens" && !id ? "Envoyer l’idée" : "Enregistrer"}</button><button type="button" class="btn secondary" data-close-modal>Annuler</button></div></form>${id ? osContext(id) : ""}`,
   );
   const form = $("osForm");
   form.elements.site_id?.addEventListener("change", () => {
@@ -364,7 +364,14 @@ function osForm(key, id = null, preset = {}) {
       osInit();
       closeModal();
       state.view = OS_COLLECTIONS[key][1];
-      receipt(saved.id, OS_COLLECTIONS[key][0], saved.site_id);
+      receipt(
+        saved.id,
+        OS_COLLECTIONS[key][0],
+        saved.site_id,
+        key === "kaizens"
+          ? `${saved.owner} · prochaine étape : ${saved.status}`
+          : undefined,
+      );
       render();
     } catch (error) {
       toast(error.message);
@@ -728,6 +735,10 @@ function osSpark(rows, k) {
       .join(" ");
   return `<svg viewBox="0 0 100 34" class="os-spark" role="img" aria-label="${esc(k.name)} : ${esc(values.join(", "))}"><polyline points="${points}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`;
 }
+function osTowerRows(sites,period){
+  const order={gap:0,warn:1,qualify:2,missing:3,ok:4};
+  return sites.flatMap(s=>osActive(data.kpis).map(k=>{const measure=osLatest(s.id,k.id,period,state.workshop),status=osStatus(measure,k),trend=osKpiTrend(s.id,k.id,state.workshop,period),linked=[...osRecordIndex().values()].filter(x=>x.row.site_id===s.id&&!x.row.archived_at&&x.row.kpi_id===k.id&&!["measures","kpis"].includes(x.key));return {site:s,k,measure,status,trend,linked,gap:osNormalizedGap(measure,k)}})).sort((a,b)=>order[a.status]-order[b.status]||Math.abs(b.gap||0)-Math.abs(a.gap||0));
+}
 function renderOSTower() {
   const sites = OPERATIONAL_SITES.filter(
       (s) => state.site === "group" || s.id === state.site,
@@ -735,24 +746,10 @@ function renderOSTower() {
     actions = osScope(data.actions),
     problems = osScope(data.problems),
     suggestions = osSuggestions(),
-    period = state.osPeriod || today();
-  return `${pageHead("Pilotage · Control Tower", state.site === "group" ? "Les sites, d’un regard" : site().name, "Repérer l’écart, comprendre les faits et ouvrir le dossier utile.", osWritable(state.site) ? osButton("Saisir un KPI", "measure", {}, false) : "")}<div class="os-toolbar"><label>Situation au<input id="osPeriod" type="date" value="${esc(period)}"></label><span>${sites.length} site(s) opérationnel(s) · ${data.sites.filter((s) => s.kind === "group").length} Holding · ${data.meta.demo ? "Démonstration fictive" : "Données saisies"}</span></div><div class="os-metrics">${osMetric("Actions ouvertes", actions.filter(isOpenAction).length)}${osMetric("En retard", actions.filter(isLate).length)}${osMetric("Problèmes ouverts", problems.filter((p) => p.status !== "Clos").length)}${osMetric("Alertes critiques", osScope(data.signals).filter((s) => s.severity === "Critique" && isOpenSignal(s)).length)}${osMetric("Pratiques transférables", osActive(data.practices).filter((p) => p.status === "Publiée").length)}</div><section class="panel section"><div class="section-title"><h2>Sites × KPI</h2>${osButton("Détail et benchmark historique", "pilotDetail")}</div><p class="hint">Dernier relevé disponible au ${shortDate(period)} ; sa date est visible dans chaque case. Les pourcentages des sites ne sont pas additionnés. Les actions et dossiers affichent leur état actuel.</p><div class="os-site-grid" style="--sites:${sites.length}">${sites
-    .map(
-      (s) =>
-        `<article class="os-site"><h3>${esc(s.name)}</h3>${osActive(data.kpis)
-          .map((k) => {
-            const m = osLatest(s.id, k.id, period, state.workshop),
-              status = osStatus(m, k),
-              t = osKpiTrend(s.id, k.id, state.workshop, period);
-            return `<button class="os-kpi-cell ${status}" data-os="kpiDetail" data-args="${esc(JSON.stringify({ siteId: s.id, kpiId: k.id, period }))}"><span>${esc(k.axis)} · ${esc(k.name)}</span><strong>${osNum(m?.value)} <small>${esc(k.unit)}</small></strong><span>${osStatusText(status)} · cible ${osNum(m?.target ?? k.target)}</span><small>${m ? shortDate(m.period) : "Aucun relevé"}</small>${osSpark(t.rows.slice(-6), k)}</button>`;
-          })
-          .join(
-            "",
-          )}<div class="os-site-footer">${data.actions.filter((a) => a.site_id === s.id && !a.archived_at && isLate(a)).length} action(s) en retard<br>${data.audits.filter((a) => a.site_id === s.id && a.status === "Terminé" && !a.archived_at).length} audit(s) terminé(s)</div></article>`,
-    )
-    .join(
-      "",
-    )}</div></section><section class="section"><div class="section-title"><h2>Rapprochements utiles</h2>${osButton("Analyser les liens", "nav", { view: "analysis" })}</div>${osSuggestionCards(suggestions.slice(0, 6))}</section><section class="panel section"><h2>Gains vérifiés</h2><div class="os-metrics">${
+    period = state.osPeriod || today(),
+    rows=osTowerRows(sites,period),
+    priorities=rows.filter(r=>r.status!=="ok").slice(0,12);
+  return `${pageHead("Pilotage · Control Tower", state.site === "group" ? "Analyser les écarts multisites" : `Analyser ${site().name}`, "Tendances, écarts normalisés et dossiers liés : ici on analyse ; le SQCDP reste l’écran de réaction quotidienne.", osWritable(state.site) ? osButton("Saisir un KPI", "measure", {}, false) : "")}<div class="os-purpose-strip"><div><b>Control Tower</b><span>Comprendre tendances, écarts et liens</span></div><div><b>SQCDP</b><span>Réagir, décider et escalader</span></div>${osButton("Ouvrir le SQCDP", "nav", {view:"sqcdp"}, false)}</div><div class="os-toolbar"><label>Analyser la situation au<input id="osPeriod" type="date" value="${esc(period)}"></label><span>${sites.length} site(s) opérationnel(s) · ${data.meta.demo ? "Démonstration fictive" : "Données saisies"}</span></div><div class="os-metrics">${osMetric("KPI hors cible", rows.filter(r=>r.status==="gap").length)}${osMetric("À surveiller", rows.filter(r=>r.status==="warn").length)}${osMetric("Actions en retard", actions.filter(isLate).length)}${osMetric("Problèmes ouverts", problems.filter((p) => p.status !== "Clos").length)}${osMetric("Alertes critiques", osScope(data.signals).filter((s) => s.severity === "Critique" && isOpenSignal(s)).length)}</div><section class="panel section"><div class="section-title"><div><h2>Écarts à analyser</h2><p class="hint">Classés par criticité et écart normalisé à la cible. Une proximité ne prouve pas une causalité.</p></div>${osButton("Benchmark et historique", "pilotDetail")}</div><div class="table-wrap"><table class="data-table control-analysis-table"><thead><tr><th>Site</th><th>Indicateur</th><th>Valeur / cible</th><th>État</th><th>Tendance</th><th>Dossiers liés</th><th></th></tr></thead><tbody>${priorities.map(r=>`<tr><td><b>${esc(r.site.name)}</b></td><td>${esc(r.k.axis)} · ${esc(r.k.name)}</td><td><b>${osNum(r.measure?.value)} ${esc(r.k.unit)}</b><br><small>cible ${osNum(r.measure?.target??r.k.target)} · ${r.measure?shortDate(r.measure.period):"aucun relevé"}</small></td><td>${pill(osStatusText(r.status),r.status==="gap"?"open":r.status==="warn"?"progress":"neutral")}${Number.isFinite(r.gap)?`<small class="normalized-gap">${osNum(Math.abs(r.gap))} % ${r.gap>=0?"favorable":"défavorable"}</small>`:""}</td><td>${osSpark(r.trend.rows.slice(-6),r.k)}</td><td>${r.linked.length}</td><td>${osButton("Analyser", "kpiDetail", {siteId:r.site.id,kpiId:r.k.id,period})}</td></tr>`).join("")||'<tr><td colspan="7">Tous les indicateurs qualifiés sont dans leur zone attendue à cette date.</td></tr>'}</tbody></table></div></section><section class="section"><div class="section-title"><h2>Rapprochements utiles</h2>${osButton("Analyser les liens", "nav", { view: "analysis" })}</div>${osSuggestionCards(suggestions.slice(0, 6))}</section><section class="panel section"><h2>Gains vérifiés</h2><div class="os-metrics">${
     Object.entries(osValidatedGains(osScope(data.gains)))
       .map(([unit, v]) => osMetric(unit, osNum(v)))
       .join("") || "<p>Aucun gain encore validé sur ce périmètre.</p>"
@@ -853,14 +850,33 @@ function renderOSDaily() {
     escalations = osScope(data.escalations).filter(
       (e) => e.level === level && e.status !== "Clos",
     ),
+    signals = osScope(data.signals)
+      .filter((s) => isOpenSignal(s) && s.state !== "Vérifié")
+      .sort(
+        (a, b) =>
+          ({ Critique: 0, Haute: 1, Normale: 2 }[a.severity] ?? 3) -
+          ({ Critique: 0, Haute: 1, Normale: 2 }[b.severity] ?? 3),
+      ),
     candidates = osEscalationCandidates().filter(
       (c) => state.site === "group" || c.action.site_id === state.site,
     );
-  return `${pageHead("Management quotidien", "Routines N1 → N4", "Les mêmes écarts et actions alimentent chaque niveau ; les décisions restent tracées.", osWritable(state.site) ? osButton("Préparer une routine", "new", { key: "routines", preset: { level } }, false) : "")}<div class="tabs">${[1, 2, 3, 4].map((n) => osButton(`N${n} · ${["", "Équipe", "Atelier", "Site", "Groupe"][n]}`, "level", { level: n }, n !== level)).join("")}</div><div class="panel"><h2>Escalades</h2><p>${candidates.length} action(s) répondent à la règle : ${data.settings.escalationDays} jours après l’échéance, puis N+1 au même rythme.</p>${osManager() ? osButton("Appliquer les règles d’escalade", "escalate", {}, false) : ""}<p class="hint">L’application crée les escalades lors de ce contrôle explicite. Aucun traitement ne s’exécute quand elle est fermée.</p></div><section class="section">${osCards("escalations", escalations)}</section><section class="section"><h2>Routines de ce niveau</h2>${osCards("routines", routines)}</section><section class="section"><h2>Actions du périmètre</h2>${osCards("actions", osScope(data.actions).filter(isOpenAction).slice(0, 12))}</section>`;
+  return `${pageHead("Management quotidien", "Routines N1 → N4", "Les mêmes écarts et actions alimentent chaque niveau ; les décisions restent tracées.", osWritable(state.site) ? osButton("Préparer une routine", "new", { key: "routines", preset: { level } }, false) : "")}
+    <div class="tabs">${[1, 2, 3, 4].map((n) => osButton(`N${n} · ${["", "Équipe", "Atelier", "Site", "Groupe"][n]}`, "level", { level: n }, n !== level)).join("")}</div>
+    <section class="panel daily-signal-board">
+      <div class="section-title"><div><p class="eyebrow">Entrée prioritaire du rituel</p><h2>Signaux terrain à traiter</h2><p>Chaque remontée visible ici doit recevoir une prise en charge, une suite et une échéance.</p></div>${osWritable(state.site) ? '<button class="btn" data-new-signal>＋ SIGNAL TERRAIN</button>' : ""}</div>
+      <div class="list">${signals.slice(0, 8).map((s) => `<article class="row signal-row ${s.severity === "Critique" ? "critical" : ""}"><div><b>${esc(s.severity)} · ${esc(getSiteName(s.site_id))}</b><p>${esc(s.description)}</p><span class="hint">${esc(s.owner || "Responsable à confirmer")} · réponse attendue ${shortDate(s.response_due || signalResponseDue(s.severity, s.created_at))}</span></div>${recordLink(s.id, "Prendre en charge")}</article>`).join("") || empty("Aucun signal ouvert sur ce périmètre.")}</div>
+    </section>
+    <div class="panel"><h2>Escalades</h2><p>${candidates.length} action(s) répondent à la règle : ${data.settings.escalationDays} jours après l’échéance, puis N+1 au même rythme.</p>${osManager() ? osButton("Appliquer les règles d’escalade", "escalate", {}, false) : ""}<p class="hint">L’application crée les escalades lors de ce contrôle explicite. Aucun traitement ne s’exécute quand elle est fermée.</p></div>
+    <section class="section">${osCards("escalations", escalations)}</section>
+    <section class="section"><h2>Routines de ce niveau</h2>${osCards("routines", routines)}</section>
+    <section class="section"><h2>Actions du périmètre</h2>${osCards("actions", osScope(data.actions).filter(isOpenAction).slice(0, 12))}</section>`;
 }
 function renderOSKaizen() {
   const rows = osScope(data.kaizens);
-  return `${pageHead("Amélioration", "Idées, Kaizen et résultats", "De l’idée à la preuve, puis au standard partagé.", osWritable(state.site) ? osButton("Proposer une idée", "new", { key: "kaizens" }, false) : "")}<div class="os-phase-strip">${OS_KAIZEN_STATES.map((s) => `<span>${esc(s)} <b>${rows.filter((k) => k.status === s).length}</b></span>`).join("")}</div>${listSearch()}${osCards("kaizens", rows, (k) => `<div class="row-actions">${osButton("Avant / Après", "createFrom", { id: k.id, kind: "beforeafter" })}${osButton("Mesurer le gain", "createFrom", { id: k.id, kind: "gains" })}${osButton("Créer la suite", "follow", { id: k.id })}</div>`)}<section class="section"><div class="section-title"><h2>Registre des gains</h2>${osWritable(state.site) ? osButton("Ajouter une mesure de gain", "new", { key: "gains" }) : ""}</div>${osCards("gains", osScope(data.gains), (g) => `<p class="os-gain">${osNum(osGainValue(g))} ${esc(g.unit)} · ${esc(g.period)} · ${esc(g.status)}</p>`)}</section>`;
+  return `${pageHead("Amélioration", "Idées, Kaizen et résultats", "De l’idée à la preuve, puis au standard partagé.", osWritable(state.site) ? osButton("Proposer une idée", "new", { key: "kaizens" }, false) : "")}
+    ${osWritable(state.site) ? `<section class="kaizen-callout"><div><p class="eyebrow">Une difficulté répétée ou une amélioration simple ?</p><h2>Votre idée peut devenir le prochain standard du Groupe.</h2><p>Décrivez le problème en quelques mots. Le pilote, l'essai et la mesure seront complétés avec l'équipe.</p></div>${osButton("＋ PROPOSER UNE IDÉE", "new", { key: "kaizens" }, false)}</section>` : ""}
+    <div class="os-phase-strip">${OS_KAIZEN_STATES.map((s) => `<span>${esc(s)} <b>${rows.filter((k) => k.status === s).length}</b></span>`).join("")}</div>${listSearch()}${osCards("kaizens", rows, (k) => `<div class="row-actions">${osButton("Avant / Après", "createFrom", { id: k.id, kind: "beforeafter" })}${osButton("Mesurer le gain", "createFrom", { id: k.id, kind: "gains" })}${osButton("Créer la suite", "follow", { id: k.id })}</div>`)}
+    <section class="section"><div class="section-title"><h2>Registre des gains</h2>${osWritable(state.site) ? osButton("Ajouter une mesure de gain", "new", { key: "gains" }) : ""}</div>${osCards("gains", osScope(data.gains), (g) => `<p class="os-gain">${osNum(osGainValue(g))} ${esc(g.unit)} · ${esc(g.period)} · ${esc(g.status)}</p>`)}</section>`;
 }
 function renderOSDeployment() {
   const practices = osActive(data.practices),
@@ -887,11 +903,16 @@ function renderOSDeployment() {
     )
   }</div></section>`;
 }
-function osRadar(siteId) {
+function osMaturityDates(siteIds){
+  const ids=new Set(siteIds),dates=new Set(osActive(data.maturity).filter(m=>ids.has(m.site_id)&&(!state.workshop||m.workshop_id===state.workshop)).map(m=>m.date).filter(Boolean));
+  return [...dates].sort((a,b)=>b.localeCompare(a));
+}
+function osRadar(siteId,atDate,compareDate="") {
   const pillars = data.settings.pillars,
     levels = pillars.map(
-      (p) => osMaturity(siteId, p, state.osPeriod)?.level ?? null,
+      (p) => osMaturity(siteId, p, atDate, state.workshop)?.level ?? null,
     ),
+    previous=compareDate?pillars.map(p=>osMaturity(siteId,p,compareDate,state.workshop)?.level??null):[],
     cx = 150,
     cy = 150,
     r = 110,
@@ -899,19 +920,22 @@ function osRadar(siteId) {
       const a = -Math.PI / 2 + (i * 2 * Math.PI) / pillars.length;
       return `${cx + (Math.cos(a) * r * v) / 5},${cy + (Math.sin(a) * r * v) / 5}`;
     };
-  return `<svg class="os-radar" viewBox="0 0 300 320" role="img" aria-label="Maturité de ${esc(getSiteName(siteId))}">${[1, 2, 3, 4, 5].map((v) => `<polygon points="${pillars.map((_, i) => point(i, v)).join(" ")}" fill="none" stroke="#cad5db"/>`).join("")}${pillars.map((p, i) => `<line x1="150" y1="150" x2="${point(i, 5).split(",")[0]}" y2="${point(i, 5).split(",")[1]}" stroke="#cad5db"/><text x="${point(i, 6).split(",")[0]}" y="${point(i, 6).split(",")[1]}" text-anchor="middle" font-size="12">${i + 1}</text>`).join("")}${levels.every((x) => x !== null) ? `<polygon points="${levels.map((v, i) => point(i, v)).join(" ")}" fill="#2a8d8530" stroke="#137b72" stroke-width="2"/>` : levels.map((v, i) => (v === null ? "" : `<circle cx="${point(i, v).split(",")[0]}" cy="${point(i, v).split(",")[1]}" r="5" fill="#137b72"/>`)).join("")}<text x="150" y="310" text-anchor="middle" font-size="12">${levels.filter((x) => x !== null).length}/${pillars.length} piliers évalués</text></svg>`;
+  return `<div class="maturity-radar-wrap"><svg class="os-radar" viewBox="0 0 300 320" role="img" aria-label="Maturité de ${esc(getSiteName(siteId))} au ${esc(atDate)}${compareDate?` comparée au ${esc(compareDate)}`:""}">${[1, 2, 3, 4, 5].map((v) => `<polygon points="${pillars.map((_, i) => point(i, v)).join(" ")}" fill="none" stroke="#cad5db"/>`).join("")}${pillars.map((p, i) => `<line x1="150" y1="150" x2="${point(i, 5).split(",")[0]}" y2="${point(i, 5).split(",")[1]}" stroke="#cad5db"/><text x="${point(i, 6).split(",")[0]}" y="${point(i, 6).split(",")[1]}" text-anchor="middle" font-size="12">${i + 1}</text>`).join("")}${previous.length&&previous.every(x=>x!==null)?`<polygon points="${previous.map((v,i)=>point(i,v)).join(" ")}" fill="#d7781314" stroke="#b0600d" stroke-width="2" stroke-dasharray="6 4"/>`:""}${levels.every((x) => x !== null) ? `<polygon points="${levels.map((v, i) => point(i, v)).join(" ")}" fill="#2a8d8530" stroke="#137b72" stroke-width="3"/>` : levels.map((v, i) => (v === null ? "" : `<circle cx="${point(i, v).split(",")[0]}" cy="${point(i, v).split(",")[1]}" r="5" fill="#137b72"/>`)).join("")}<text x="150" y="310" text-anchor="middle" font-size="12">${levels.filter((x) => x !== null).length}/${pillars.length} piliers évalués</text></svg>${compareDate?'<div class="radar-legend"><span class="current">Date analysée</span><span class="previous">Date comparée</span></div>':""}</div>`;
 }
 function renderOSMaturity() {
   const sites = OPERATIONAL_SITES.filter(
     (s) => state.site === "group" || s.id === state.site,
-  );
-  return `${pageHead("Pilotage", "Maturité Lean", "Dix piliers, cinq niveaux et des preuves datées. Une absence de mesure reste visible.", osWritable(state.site) ? osButton("Évaluer un pilier", "new", { key: "maturity" }, false) : "")}<div class="os-site-grid" style="--sites:${sites.length}">${sites
+  ),dates=osMaturityDates(sites.map(s=>s.id));
+  if(!dates.includes(state.maturityDate))state.maturityDate=dates[0]||today();
+  if(state.maturityCompareDate&&(!dates.includes(state.maturityCompareDate)||state.maturityCompareDate===state.maturityDate))state.maturityCompareDate="";
+  const at=state.maturityDate,compare=state.maturityCompareDate,currentRows=sites.flatMap(s=>data.settings.pillars.map(p=>osMaturity(s.id,p,at,state.workshop)).filter(Boolean)),previousRows=compare?sites.flatMap(s=>data.settings.pillars.map(p=>osMaturity(s.id,p,compare,state.workshop)).filter(Boolean)):[],average=rows=>rows.length?rows.reduce((sum,m)=>sum+m.level,0)/rows.length:null,currentAverage=average(currentRows),previousAverage=average(previousRows),delta=currentAverage!=null&&previousAverage!=null?currentAverage-previousAverage:null;
+  return `${pageHead("Pilotage", "Maturité Lean", "Retrouver chaque campagne, comparer deux dates et ouvrir les preuves ou plans d’amélioration.", osWritable(state.site) ? osButton("Nouvelle évaluation", "new", { key: "maturity" }, false) : "")}<section class="panel maturity-controls"><div><label>Date analysée<select id="maturityDate">${dates.map(d=>`<option value="${d}" ${d===at?"selected":""}>${shortDate(d)}</option>`).join("")||`<option value="${today()}">${shortDate(today())}</option>`}</select></label><label>Comparer à<select id="maturityCompareDate"><option value="">Aucune comparaison</option>${dates.filter(d=>d!==at).map(d=>`<option value="${d}" ${d===compare?"selected":""}>${shortDate(d)}</option>`).join("")}</select></label></div><div class="maturity-summary"><span>Moyenne observée <b>${currentAverage==null?"—":currentAverage.toFixed(1)}/5</b></span>${compare?`<span>Évolution <b class="${delta>0?"good":delta<0?"bad":""}">${delta>0?"+":""}${delta?.toFixed(1)||"0.0"}</b></span>`:""}<span>Campagnes disponibles <b>${dates.length}</b></span></div></section><div class="os-site-grid maturity-site-grid" style="--sites:${sites.length}">${sites
     .map(
       (s) =>
-        `<article class="panel"><h3>${esc(s.name)}</h3>${osRadar(s.id)}${data.settings.pillars
+        `<article class="panel"><h3>${esc(s.name)}</h3>${osRadar(s.id,at,compare)}${data.settings.pillars
           .map((p, i) => {
-            const m = osMaturity(s.id, p, state.osPeriod, state.workshop);
-            return `<button class="os-maturity-cell level-${m?.level || 0}" data-os="maturityCell" data-args="${esc(JSON.stringify({ siteId: s.id, pillar: p }))}"><span>${i + 1} · ${esc(p)}</span><b>${m?.level ?? "—"}/5</b></button>`;
+            const m = osMaturity(s.id, p, at, state.workshop),old=compare?osMaturity(s.id,p,compare,state.workshop):null,pillarDelta=m&&old?m.level-old.level:null;
+            return `<button class="os-maturity-cell level-${m?.level || 0}" data-os="maturityCell" data-args="${esc(JSON.stringify({ siteId: s.id, pillar: p, target:m?.target||4 }))}"><span>${i + 1} · ${esc(p)}</span><b>${m?.level ?? "—"}/5</b>${compare?`<small class="maturity-delta ${pillarDelta>0?"good":pillarDelta<0?"bad":""}">${pillarDelta==null?"n.c.":`${pillarDelta>0?"+":""}${pillarDelta}`}</small>`:""}</button>`;
           })
           .join("")}</article>`,
     )
@@ -1030,7 +1054,7 @@ function renderOSAdmin() {
             )
             .join("") || empty("Aucune entrée.")
         }</div></section>`
-  }<section class="panel section"><h2>Données et sauvegardes</h2><div class="row-actions">${osButton("Exporter les données", "export")}${osButton("Explorer le scénario complet", "demo")}${osButton("Créer un espace de saisie vide", "emptyData")}${localStorage.getItem(STORAGE_KEY + "-before-lean-os") ? osButton("Sauvegarde avant migration", "backup") : ""}${localStorage.getItem(STORAGE_KEY + "-before-demo") ? osButton("Revenir à mes données", "restoreDemo") : ""}</div><p class="hint">Un changement d’espace conserve d’abord les données courantes dans une sauvegarde locale récupérable.</p></section>`;
+  }<section class="panel section"><h2>Données et sauvegardes</h2><div class="row-actions">${osButton("Exporter les données", "export")}${osButton("Explorer le scénario complet", "demo")}${osButton("Créer un espace de saisie vide", "emptyData")}${localStorage.getItem(STORAGE_KEY + "-before-lean-os") ? osButton("Sauvegarde avant migration", "backup") : ""}${localStorage.getItem(STORAGE_KEY + "-before-demo-refresh") ? osButton("Sauvegarde avant actualisation démo", "backupDemoRefresh") : ""}${localStorage.getItem(STORAGE_KEY + "-before-demo") ? osButton("Revenir à mes données", "restoreDemo") : ""}</div><p class="hint">Un changement d’espace conserve d’abord les données courantes dans une sauvegarde locale récupérable.</p></section>`;
 }
 function osRulesView() {
   return `<form id="osRules" class="panel"><h2>Règles de management</h2><div class="form-grid"><label>Délai avant escalade (jours)<input name="days" type="number" min="1" max="365" value="${data.settings.escalationDays}" required></label>${[2, 3, 4].map((n) => `<label>Décideur N${n}<input name="owner${n}" value="${esc(data.settings.escalationOwners[n])}" required></label>`).join("")}<label class="wide">Catégories terrain (une par ligne)<textarea name="categories" rows="5" required>${esc(data.settings.categories.join("\n"))}</textarea></label></div><h3>Dix piliers et niveaux de maturité</h3><p class="hint">Les noms des piliers existants sont conservés pour préserver l’historique. Les définitions des niveaux peuvent être précisées.</p>${data.settings.levels.map((l, i) => `<label class="field">Niveau ${i + 1}<input name="level${i}" required value="${esc(l)}"></label>`).join("")}<div class="form-actions"><button class="btn">Enregistrer les règles</button></div></form>`;
