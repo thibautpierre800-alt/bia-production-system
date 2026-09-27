@@ -1,0 +1,14 @@
+{
+  "routes": 155,
+  "viewports": [
+    390,
+    820,
+    1440
+  ],
+  "errors": [],
+  "badResponses": [],
+  "initialRenderMs": 223,
+  "offline": true,
+  "pointerAndTouch": true,
+  "persistedGemba": "G-015"
+}

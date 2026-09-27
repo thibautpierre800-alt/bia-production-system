@@ -1,0 +1,48 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> bia-production-system@7.0.0 test
+> node --test tests/*.test.cjs
+
+✔ Référentiel, écrans, profils, outils existants et cache cohérent (2660.196619ms)
+✔ Signal → prise en compte → action vérifiée → résolution → clôture et reprise (380.587072ms)
+✔ A3, 8D et QRQC : étapes réelles, sauvegarde, action liée, validation protégée (1286.015226ms)
+✔ Audit 50 critères : brouillon incomplet, reprise, preuves et actions sans doublon (701.01173ms)
+✔ Audit historique identifié et ouverture sans brouillon vide (56.059387ms)
+✔ Gemba : plusieurs constats, action traçable, retour terrain et clôture (277.76093ms)
+✔ VSM : calculs incomplets, ordre conservé, retrait réversible, état futur distinct (265.912237ms)
+✔ Avant / après : deux photos, descriptif court, impression de la dernière saisie (43.751644ms)
+✔ Sauvegarde : abandon protégé, quota et conflits empêchent un faux succès (47.365817ms)
+✔ TOP 15 : sujet issu du KPI, action et escalade accessibles sans masquer les suivants (261.864752ms)
+✔ Pilotage : sites, séries disponibles, absence signalée et lien avec les actions (116.200429ms)
+✔ Benchmark Groupe : six sites visibles ensemble et indicateurs commutables sans valeurs inventées (263.93842ms)
+✔ Benchmark : saisie manuelle par site, courbe datée et sauvegarde après rechargement (328.252005ms)
+✔ SQCDP Groupe : six sites simultanés, états qualifiés et détail actionnable (351.222438ms)
+✔ Formation, roadmap, bibliothèque et bonnes pratiques restent opérationnelles (168.150057ms)
+✔ Import : structure, référentiel et doublons contrôlés avant restauration (32.102536ms)
+✔ Boutons des écrans et des 30 guides : aucune commande sans gestionnaire (1340.579288ms)
+✔ Recherche globale : démarches retrouvables et responsable modifiable (115.616151ms)
+✔ Sauvegarde illisible : avertissement durable et contenu original préservé (36.77817ms)
+✔ Formation : une qualification expirée ne devient pas une compétence valide (52.606907ms)
+✔ Photos : format invalide refusé, dernière sélection prioritaire (45.63808ms)
+✔ Migration 6 → 7 idempotente, données/photos conservées et retour disponible (323.657983ms)
+✔ A · observation Gemba → action unique → SQCDP → escalade sans doublon → clôture (321.07583ms)
+✔ B · dérive KPI → A3 relié → action → résultat, lecture après rechargement (878.88925ms)
+✔ C · VSM graphique → opportunité → projet/action → résultat, calculs explicites (297.240655ms)
+✔ D · Kaizen → Avant/Après → gain validé → pratique → transfert autre site (300.673304ms)
+✔ E · objectif Hoshin → KPI → projet → action → efficacité et navigation inverse (238.445818ms)
+✔ F · audit paramétrable → preuve obligatoire → écart → action vérifiée (143.354671ms)
+✔ G · benchmark → site en difficulté → pratique validée ailleurs, sans causalité inventée (149.074249ms)
+✔ Imports CSV atomiques, doublons et dates invalides refusés, seuils paramétrables (34.206184ms)
+✔ Profils lecture seule, archivage réversible, journal et intégrité (65.371727ms)
+✔ Périmètres atelier/site distincts, seuils et historique des corrections (68.32116ms)
+✔ Action depuis le graphique historique : vraie relation KPI, sauvegarde et relecture (192.151279ms)
+✔ VSM consultable en lecture seule et imports de géométrie invalides refusés (106.095438ms)
+✔ Adaptateur mock explicite : export accepté par le contrat réel d’import (35.573429ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9340.896146
