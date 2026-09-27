@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Mesure normalisée BIA — contrat d’entrée version 1",
+  "type": "object",
+  "required": ["site_id", "code", "period", "value", "definition", "source"],
+  "properties": {
+    "site_id": {"type": "string", "minLength": 1},
+    "workshop_id": {"type": ["string", "null"]},
+    "code": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+    "period": {"type": "string", "format": "date"},
+    "value": {"type": "number", "minimum": 0},
+    "target": {"type": ["number", "null"], "minimum": 0},
+    "definition": {"type": "string", "minLength": 1},
+    "source": {"type": "string", "minLength": 1},
+    "entry_mode": {"enum": ["import"]}
+  },
+  "additionalProperties": false
+}

@@ -1,34 +1,56 @@
-# BIA Production System 6.8.0
+# BIA Lean Operating System 7.0.0
 
-Application web de management visuel et d'amélioration continue. Le référentiel comprend BIA Holding et six entités : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax.
+Application de pilotage Lean pour BIA Holding et ses six sites : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax. Cette version prolonge la version 6.8.0 existante ; elle conserve les outils, documents, formations et données compatibles.
 
-## Parcours
+## Le parcours métier
 
-- Accueil adapté au périmètre, recherche des dossiers et reprise des brouillons.
-- Pilotage Groupe/Site : benchmark visuel des six sites visibles simultanément, un indicateur choisi parmi cinq et une période commune, sources et définitions accessibles, données absentes explicites, relevés manuels datés et graphiques de détail. Aucune moyenne Groupe artificielle ni classement non qualifié.
-- SQCDP Groupe : matrice des six sites × cinq axes sur une période commune, couleurs pour écart, cible atteinte, donnée absente ou à qualifier, évolution par rapport à un relevé comparable, détail de chaque case avec sujets, signaux et actions ouverts, et accès à la saisie et aux courbes du site. Les décisions et alertes critiques ouvertes sont visibles sous la matrice.
-- SQCDP Atelier S/Q/C/D/P avec TOP 15, sujets du jour, liens aux signaux, actions et décisions, et mode écran atelier.
-- Signal Terrain : saisie courte, photo facultative, prise en compte, résolution, vérification et clôture. Les actions et problèmes créés depuis le signal conservent le lien d'origine.
-- Gemba : visite avec plusieurs constats, parole de l'équipe, suite par constat, action/signal/A3/8D/QRQC liés et retour terrain avant clôture.
-- Audit Terrain : 50 critères répartis en 10 domaines, notes et preuves enregistrées en brouillon, résultat et actions issues des domaines en écart.
-- Résolution : A3, 8D et QRQC guidés rubrique par rubrique avec schémas d'ensemble, enregistrement automatique et impression. Les actions créées dans le dossier rejoignent le plan général.
-- Documents : fiches Avant/Après avec deux photos, VSM état actuel/futur avec relevés et calculs conditionnés aux données, 5 Pourquoi, Ishikawa, 5S, standards et autres trames.
-- Bibliothèque : 30 guides avec démarches retrouvables, checklist et responsable attribuable ; raccourcis vers les outils applicatifs correspondants.
-- Formation : contenu pédagogique, parcours VSL, suivi nominatif, compétences, validité, preuves et fiches individuelles imprimables pour validation RH.
-- Roadmap, chantiers d'amélioration, bonnes pratiques et export/restauration JSON.
+Observer → qualifier → analyser → décider → agir → mesurer → vérifier → standardiser → déployer → capitaliser.
 
-Les premières données sont fictives et identifiées comme telles. Les données saisies sont conservées **uniquement sur l'appareil et le navigateur utilisés**. Les profils sont des vues de démonstration : ils ne constituent pas une authentification ou un contrôle d'accès à des données RH. Les fiches RH nécessitent la validation réelle des personnes et du processus documentaire du Groupe. SEQUOIA n'est pas connecté ; ses possibilités techniques restent à vérifier. Exporter régulièrement les données depuis Compte.
+Les fiches utilisent une base d’actions et un registre de mesures uniques. Le panneau **Ce dossier dans le système** permet de retrouver les sources, créer une suite, relier un dossier et parcourir les relations dans les deux sens.
 
-## Développement et vérification
+| Espace | Fonctions utilisables |
+|---|---|
+| Pilotage | Control Tower six sites, SQCDP, tendances, benchmark, rapprochement de pratiques, sources et écart normalisé |
+| Quotidien | Routines N1–N4, décisions, escalades sans doublon, responsables et échéances |
+| Terrain | Signaux, Gemba multiconstats, photos, audits génériques, 5S et audit historique de 50 critères |
+| Résolution | QRQC, A3 complet, PDCA, 8D, DMAIC, 5 Pourquoi, Ishikawa et Pareto |
+| Amélioration | Actions centrales, Kaizen, avant/après, gains vérifiés, standards et bonnes pratiques |
+| Stratégie | Objectifs hiérarchiques, X-Matrix, contributions, KPI, projets, actions et résultats |
+| Flux | VSM graphique actuel/futur, déplacement souris/tactile/clavier, zoom, objets, flux et calculs |
+| Capitalisation | Matrice pratique × sites, essais locaux, preuves et validation du déploiement |
+| Maturité | Dix piliers, cinq niveaux, évaluations datées, preuves, radar et heatmap |
+| Administration | Organisation, utilisateurs déclarés, KPI/seuils, catégories, questionnaires, règles et journal |
+| Ressources | Trente guides, parcours de formation, suivi individuel et documents imprimables conservés |
+| Échanges | Sauvegarde/restauration JSON, CSV contrôlé, configuration des connecteurs et mock documenté |
 
-Node.js 24 ou plus récent :
+## Démarrer
+
+Node.js 24, puis :
 
 ```bash
-npm ci
+npm ci --ignore-scripts
 npm test
-python3 -m http.server 8080
+npm run build
+npm run preview
 ```
 
-Ouvrir ensuite `http://localhost:8080`. L'ancien point d'entrée `node tests/regression.cjs` lance la même suite DOM.
+Ouvrir `http://127.0.0.1:8080`. Les fichiers dans `dist/` sont autonomes et peuvent être hébergés sous un sous-chemin. Aucun service tiers n’est nécessaire au fonctionnement local.
 
-`index.html` charge `lean-library.js`, `v5.js` (référentiels et écrans historiques), `experience.js` (persistance et navigation), `workflows.js`, `fieldwork.js`, `documents-ui.js`, `dashboards.js` et `boot.js`. `v5.css` et `experience.css` définissent l'interface. Le service worker met en cache ces fichiers pour la PWA. `supabase/schema.sql` reste une piste de travail non utilisée par l'application publiée.
+Dans Administration, **Explorer le scénario complet** charge un cas industriel fictif relié de bout en bout. **Créer un espace de saisie vide** ouvre un espace sans dossiers métier, avec le référentiel initial. Ces opérations sauvegardent l’espace précédent ; son retour reste accessible dans Administration.
+
+## Périmètre de mise en service
+
+Les données sont enregistrées dans le navigateur utilisé, avec contrôle du quota et des conflits entre onglets. Exporter régulièrement une sauvegarde JSON depuis Compte. Le hors connexion demande une première ouverture connectée réussie.
+
+Les huit profils sont des **permissions fonctionnelles locales**, sélectionnables pour les usages et la démonstration. Ils ne constituent pas une authentification et ne protègent pas une base partagée. Il n’existe pas de synchronisation entre appareils. SEQUOIA, ERP, MES et SQL ne sont pas connectés. Le CSV fonctionne ; les secrets et connexions automatiques devront être gérés par un service serveur autorisé.
+
+## Documentation
+
+- [Audit avant transformation](docs/AUDIT_INITIAL.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Modèle de données et migration](docs/DATA_MODEL.md)
+- [Installation et tests](docs/INSTALLATION.md)
+- [Déploiement et retour arrière](docs/DEPLOYMENT.md)
+- [Contrats de connecteurs](docs/CONNECTORS.md)
+- [Réception et limites de mise en service](docs/RECEPTION.md)
+- [Changelog](CHANGELOG.md)

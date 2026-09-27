@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared interaction rules. All records remain local; roles are UI profiles, not authentication.
-const APP_VERSION = "6.8.0";
+const APP_VERSION = "7.0.0";
 let modalSaver = null, modalDirty = false, modalOpener = null, modalTimer = null;
 let lastStored = localStorage.getItem(STORAGE_KEY);
 let storageConflict = false;
@@ -11,10 +11,10 @@ function upgradeData(source) {
   const out = {...source};
   for (const key of ["workshops","measures","trends","signals","actions","problems","projects","decisions","audits","gembas","practices","documents","accounts","people","trainingCatalog","trainingRecords","roadmap","toolRuns","syncLog","topics"]) out[key] = Array.isArray(out[key]) ? out[key] : [];
   for (const p of out.problems) {p.action_ids ||= []; p.signal_ids ||= []; p.content ||= {};}
-  return out;
+  return migrateOS(out);
 }
 function allowedSite(id, write=false) {
-  if (write && state.role === "dg") return false;
+  if (write && role().readonly) return false;
   return canGroup() || id === state.site;
 }
 function siteOptions(selected, group=false) {
@@ -29,7 +29,7 @@ function save() {
 }
 function commitData(change) {
   const backup=clone(data);
-  try {change();if(save())return true;} catch(error){toast(error.message||"Enregistrement impossible.");}
+  try {if(role().readonly)throw Error("Ce profil est en lecture seule.");change();osValidate(data);osAuditChanges(backup,data);if(save())return true;} catch(error){toast(error.message||"Enregistrement impossible.");}
   data=backup;return false;
 }
 function recordHistory(record, status, note="") {
@@ -43,14 +43,14 @@ function historyView(record) {
 function recordMeta(id) {
   const modules={signals:"terrain",gembas:"terrain",actions:"actions",problems:"resolution",documents:"documents",audits:"audits",projects:"projects",practices:"practices",decisions:"pilotage",topics:"sqcdp",roadmap:"roadmap",toolRuns:"tools"};
   for (const [key,module] of Object.entries(modules)) {const row=data[key]?.find(r=>r.id===id);if(row)return {row,key,module};}
-  return null;
+  return osRecord(id);
 }
 function recordLink(id,label="Ouvrir") {
   const info=recordMeta(id);
   if(!info||!allowedSite(info.row.site_id))return "";
   return `<button type="button" class="btn secondary small" data-open-record="${esc(id)}">${esc(label)} · ${esc(id)}</button>`;
 }
-function linkedActions(id) {return data.actions.filter(a=>a.origin_id===id&&allowedSite(a.site_id));}
+function linkedActions(id) {return data.actions.filter(a=>!a.archived_at&&allowedSite(a.site_id)&&([a.origin_id,a.source_id,a.project_id,a.problem_id,a.kaizen_id,a.objective_id].includes(id)||data.links?.some(l=>l.from===id&&l.to===a.id||l.to===id&&l.from===a.id)));}
 function relatedPanel(id) {
   const rows=linkedActions(id);
   return `<section class="section"><div class="section-title"><h3>Actions liées</h3><span>${rows.filter(isOpenAction).length} ouverte(s)</span></div>${rows.length?`<div class="list">${rows.map(a=>`<div class="row compact"><div><b>${esc(a.title)}</b><p class="hint">${esc(a.owner)} · ${shortDate(a.due_date)} · ${esc(a.status)}</p></div>${recordLink(a.id,"Ouvrir")}</div>`).join("")}</div>`:empty("Aucune action liée pour le moment.")}</section>`;
@@ -59,12 +59,13 @@ function openRecord(id) {
   const info=recordMeta(id);if(!info||!allowedSite(info.row.site_id))return toast("Ce dossier n’est pas accessible sur ce périmètre.");
   if(!requestCloseModal())return;
   const {row,key,module}=info;
+  if(OS_FORMS[key]||["measures","auditTemplates","comments"].includes(key)){osOpen(key,row);return;}
   if(row.site_id!=="group")state.site=row.site_id;
   if(role().nav.includes(module))state.view=module;
   if(key==="gembas")state.terrainTab="gemba";
   if(key==="signals")state.terrainTab="signals";
   render();
-  ({signals:()=>openSignal(id),gembas:()=>openGemba(id),actions:()=>actionForm(row),documents:()=>editDocument(id),audits:()=>auditForm(row),projects:()=>projectForm(row),practices:()=>practiceForm(row),decisions:()=>decisionForm(row),topics:()=>topicForm(row),roadmap:()=>roadmapForm(row),toolRuns:()=>{state.toolId=row.module_id;render();},problems:()=>{if(role().nav.includes("resolution")){state.selectedProblemId=id;render()}else{const doc=data.documents.find(d=>d.problem_id===id);if(doc)editDocument(doc.id);else toast("Dossier accessible au responsable de site.")}}})[key]?.();
+  ({signals:()=>openSignal(id),gembas:()=>openGemba(id),actions:()=>actionForm(row),documents:()=>editDocument(id),audits:()=>row.template_id?osAuditForm(row):auditForm(row),projects:()=>projectForm(row),practices:()=>practiceForm(row),decisions:()=>decisionForm(row),topics:()=>topicForm(row),roadmap:()=>roadmapForm(row),toolRuns:()=>{state.toolId=row.module_id;render();},problems:()=>{if(role().nav.includes("resolution")){state.selectedProblemId=id;render()}else{const doc=data.documents.find(d=>d.problem_id===id);if(doc)editDocument(doc.id);else toast("Dossier accessible au responsable de site.")}}})[key]?.();
 }
 function receipt(id,module,siteId,next="") {
   state.receipt={id,module,siteId,next};modalDirty=false;
@@ -93,7 +94,8 @@ function modal(title,content) {
   $("modal").hidden=false;document.body.classList.add("modal-open");
   $("modalContent").oninput=()=>{modalDirty=true;const s=$("saveState");if(s)s.textContent="Enregistrement…";scheduleModalSave();};
   $("modalContent").onchange=()=>{modalDirty=true;scheduleModalSave();};
-  bindModal();bindExperience();
+  osDecorateModal(title);
+  bindModal();bindExperience();osBind();
   setTimeout(()=>$("modalContent").querySelector("input:not([type=file]),textarea,select,button")?.focus(),0);
 }
 function closeModal() {clearTimeout(modalTimer);modalSaver=null;modalDirty=false;$("modal").hidden=true;$("modalContent").innerHTML="";document.body.classList.remove("modal-open");modalOpener?.focus?.();}
@@ -119,8 +121,8 @@ function photoPicker(inputId,previewId,initial="") {
 }
 function searchableRecords(query="") {
   const q=query.trim().toLocaleLowerCase("fr");
-  const keys={actions:"Actions",signals:"Signal Terrain",gembas:"Gemba",problems:"Résolution",documents:"Documents",audits:"Audits",projects:"Chantiers",practices:"Bonnes pratiques",roadmap:"Roadmap",topics:"SQCDP",decisions:"Décisions",toolRuns:"Démarches"};
-  return Object.entries(keys).flatMap(([key,label])=>(data[key]||[]).filter(r=>allowedSite(r.site_id)&&role().nav.includes(recordMeta(r.id)?.module)).map(r=>({id:r.id,title:r.title||r.description||r.zone||r.scope||r.finding||LEAN_MODULES.find(t=>t.id===r.module_id)?.title,label,site_id:r.site_id,status:r.status||r.state||"À poursuivre",updated:r.updated_at||r.created_at||r.performed_at||""}))).filter(r=>!q||[r.id,r.title,r.label,r.status,getSiteName(r.site_id)].join(" ").toLocaleLowerCase("fr").includes(q)).sort((a,b)=>String(b.updated).localeCompare(String(a.updated)));
+  const keys={...Object.fromEntries(Object.entries(OS_COLLECTIONS).map(([k,v])=>[k,v[0]])),actions:"Actions",signals:"Signal Terrain",gembas:"Gemba",problems:"Résolution",documents:"Documents",audits:"Audits",projects:"Chantiers",practices:"Bonnes pratiques",roadmap:"Roadmap",topics:"SQCDP",decisions:"Décisions",toolRuns:"Démarches"};
+  return Object.entries(keys).flatMap(([key,label])=>(data[key]||[]).filter(r=>allowedSite(r.site_id)&&role().nav.includes(recordMeta(r.id)?.module)).map(r=>({id:r.id,title:r.title||r.name||r.code||r.description||r.zone||r.scope||r.finding||LEAN_MODULES.find(t=>t.id===r.module_id)?.title,label,site_id:r.site_id,status:r.status||r.state||"À poursuivre",updated:r.updated_at||r.created_at||r.performed_at||""}))).filter(r=>!q||[r.id,r.title,r.label,r.status,getSiteName(r.site_id)].join(" ").toLocaleLowerCase("fr").includes(q)).sort((a,b)=>String(b.updated).localeCompare(String(a.updated)));
 }
 function searchForm() {
   modal("Retrouver un dossier",'<label class="field">Nom, identifiant, sujet ou module<input id="globalQuery" type="search" placeholder="Ex. A3, protection, G-014…" autocomplete="off"></label><div id="searchResults" class="list section"></div>');
@@ -150,12 +152,14 @@ function bindExperience() {
   document.querySelectorAll("[data-display-mode]").forEach(b=>b.onclick=()=>{state.presentation=!state.presentation;render();});
   document.querySelectorAll("[data-new-topic]").forEach(b=>b.onclick=()=>topicForm());
   document.querySelectorAll("[data-new-decision]").forEach(b=>b.onclick=()=>decisionForm());
-  document.querySelectorAll("[data-kpi-action]").forEach(b=>b.onclick=()=>actionForm(null,{site_id:state.site==="group"?state.pilotSite:state.site,origin_type:"KPI",origin_id:b.dataset.kpiAction,title:`Analyser l’écart · ${b.dataset.kpiLabel}`}));
-  document.querySelectorAll("[data-kpi-records]").forEach(b=>b.onclick=()=>{const siteId=state.site==="group"?state.pilotSite:state.site,rows=data.actions.filter(a=>a.site_id===siteId&&a.origin_type==="KPI"&&a.origin_id===b.dataset.kpiRecords);modal("Actions de cet indicateur",rows.map(a=>actionCard(a)).join("")||empty("Aucune action encore reliée à cet indicateur."));bind();});
-  bindFieldwork();bindDocuments();bindDashboards();
+  document.querySelectorAll("[data-kpi-action]").forEach(b=>b.onclick=()=>actionForm(null,{site_id:state.site==="group"?state.pilotSite:state.site,origin_type:"KPI",origin_id:osKpi(b.dataset.kpiAction).id,kpi_id:osKpi(b.dataset.kpiAction).id,title:`Analyser l’écart · ${b.dataset.kpiLabel}`}));
+  document.querySelectorAll("[data-kpi-records]").forEach(b=>b.onclick=()=>{const siteId=state.site==="group"?state.pilotSite:state.site,rows=data.actions.filter(a=>a.site_id===siteId&&(a.kpi_id===osKpi(b.dataset.kpiRecords)?.id||a.origin_type==="KPI"&&[b.dataset.kpiRecords,osKpi(b.dataset.kpiRecords)?.id].includes(a.origin_id)));modal("Actions de cet indicateur",rows.map(a=>actionCard(a)).join("")||empty("Aucune action encore reliée à cet indicateur."));bind();});
+  bindFieldwork();bindDocuments();bindDashboards();osBind();
 }
 function initExperience() {
-  data=upgradeData(data);
+  const rawBeforeOS=localStorage.getItem(STORAGE_KEY);
+  try{if(rawBeforeOS&&JSON.parse(rawBeforeOS)?.meta?.schema===6&&!localStorage.getItem(STORAGE_KEY+"-before-lean-os"))localStorage.setItem(STORAGE_KEY+"-before-lean-os",rawBeforeOS);}catch{storageConflict=true;}
+  data=upgradeData(data);osInit();
   try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const parsed=JSON.parse(raw);validateImport(parsed);}}catch{storageConflict=true;window.biaUnreadable=true;}
   $("siteSelect").onchange=e=>{if(!requestCloseModal())return;state.site=e.target.value;state.receipt=null;localStorage.setItem("biaSite",state.site);render();};
   $("roleSelect").onchange=e=>{if(!requestCloseModal())return;state.role=e.target.value;state.receipt=null;localStorage.setItem("biaRole",state.role);if(!canGroup()&&state.site==="group")state.site="marzin";render();};
@@ -169,6 +173,7 @@ function initExperience() {
   window.addEventListener("storage",e=>{if(e.key===STORAGE_KEY&&e.newValue!==lastStored){storageConflict=true;toast("Données modifiées dans un autre onglet. Exportez votre saisie avant de recharger.");}});
   window.addEventListener("hashchange",()=>{const view=location.hash.slice(1);if(role().nav.includes(view)&&requestCloseModal()){state.view=view;render();}});
   if(role().nav.includes(location.hash.slice(1)))state.view=location.hash.slice(1);
+  if(!storageConflict&&rawBeforeOS&&JSON.parse(rawBeforeOS)?.meta?.schema===6)save();
   if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
   render();
 }

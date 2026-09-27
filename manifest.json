@@ -1,14 +1,21 @@
 {
-  "name":"BIA Production System V5",
-  "short_name":"BIA PS",
-  "id":"./",
-  "start_url":"./",
-  "scope":"./",
-  "display":"standalone",
-  "orientation":"any",
-  "background_color":"#f4f4f1",
-  "theme_color":"#202020",
-  "lang":"fr",
-  "icons":[{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}],
-  "description":"Management visuel, pilotage de la performance et amélioration continue du Groupe BIA"
+  "name": "BIA Lean Operating System",
+  "short_name": "BIA Lean OS",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f4f1",
+  "theme_color": "#202020",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "description": "Management visuel, pilotage de la performance et amélioration continue du Groupe BIA"
 }
