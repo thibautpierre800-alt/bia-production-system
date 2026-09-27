@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','boot.js'];
 function app(t,stored){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -23,7 +23,7 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   assert.equal(run('OPERATIONAL_SITES.map(s=>s.name).join("|")'),'Ag Déco|Europlacage|Marzin|Oraison Menuiserie|Profiline|Sodeplax');
   assert.equal(run('Object.values(AUDIT_CRITERIA).flat().length'),50);
   assert.equal(run('LEAN_MODULES.length'),30);assert.equal(run('data.trainingCatalog.length'),17);
-  for(const role of ['lean','dg','director','terrain']){
+  for(const role of ['lean','dg','director','terrain','admin','sitelean','manager','reader']){
     run(`state.role='${role}';state.site='${role==='dg'?'group':'marzin'}';closeModal()`);
     for(const id of Array.from(run('visibleNav().map(n=>n.id)'))){run(`state.view='${id}';render()`);assert.ok(q('#appView').textContent.length>80,`${role} / ${id}`);}
   }
@@ -32,8 +32,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.equal(q('#gembaSite').options.length,1);
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v6-8-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='6.8.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-0-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.0.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -100,7 +100,7 @@ test('Gemba : plusieurs constats, action traçable, retour terrain et clôture',
 });
 test('VSM : calculs incomplets, ordre conservé, retrait réversible, état futur distinct',t=>{
   const a=app(t),{run,fill,submit,click,q}=a;run('simpleDocument("VSM")');fill('#documentTitle','Flux panneaux');fill('#documentOwner','VSL');submit('#documentForm');const id=run('data.documents[0].id');
-  assert.match(q('#vsmPreview').textContent,/—/);fill('[data-vsm-meta="demand_per_day"]','200');fill('[data-vsm-meta="available_minutes"]','400');
+  click('[data-os="vsmTable"]');assert.match(q('#vsmPreview').textContent,/—/);fill('[data-vsm-meta="demand_per_day"]','200');fill('[data-vsm-meta="available_minutes"]','400');
   click('#addVsmNode');fill('[data-vsm-node="0"][data-key="name"]','Découpe');fill('[data-vsm-node="0"][data-key="ct"]','40');click('#addVsmNode');fill('[data-vsm-node="1"][data-key="name"]','Assemblage');fill('[data-vsm-node="1"][data-key="ct"]','60');
   click('[data-vsm-up="1"]');assert.equal(q('[data-vsm-node="0"][data-key="name"]').value,'Assemblage');assert.equal(q('[data-vsm-node="1"][data-key="name"]').value,'Découpe');
   click('[data-vsm-remove="0"]');click('#undoVsmRemove');assert.equal(q('[data-vsm-node="0"][data-key="ct"]').value,'60');
@@ -120,21 +120,21 @@ test('Sauvegarde : abandon protégé, quota et conflits empêchent un faux succ�
   run('closeModal();storageConflict=true');assert.equal(run('save()'),false);assert.match(q('#toast').textContent,/autre onglet/);
 });
 test('TOP 15 : sujet issu du KPI, action et escalade accessibles sans masquer les suivants',t=>{
-  const a=app(t),{run,fill,submit,click,q}=a;run('state.view="sqcdp";render()');click('[data-topic-axis]');fill('#topicOwner','Chef équipe');submit('#topicForm');const id=run('data.topics[0].id');
+  const a=app(t),{run,fill,submit,click,q}=a;run('state.site="marzin";state.workshop="marzin-pilot";state.view="sqcdp";render()');click('[data-topic-axis]');fill('#topicOwner','Chef équipe');submit('#topicForm');const id=run('data.topics[0].id');
   run(`openRecord('${id}')`);assert.ok(q('#topicForm'));fill('#topicDecision','À traiter demain');submit('#topicForm');
   run(`topicForm(data.topics[0])`);click('[data-new-action]');fill('#actionTitle','Analyser la dérive');fill('#actionOwner','Responsable');submit('#actionForm');assert.equal(run('data.actions[0].origin_id'),id);
   run(`topicForm(data.topics[0])`);click('[data-escalate-topic]');fill('#decisionOwner','Directeur');submit('#decisionForm');assert.equal(run('data.decisions[0].origin_id'),id);assert.ok(run('data.topics[0].escalation_id'));
-  run('closeModal();for(let i=0;i<16;i++)data.topics.push({id:"TOP-T"+i,site_id:"marzin",title:"Sujet "+i,status:"Ouvert",priority:"Normale"});render()');assert.ok(run('topSubjects().length')>=16);
+  run('closeModal();for(let i=0;i<16;i++)data.topics.push({id:"TOP-T"+i,site_id:"marzin",workshop_id:"marzin-pilot",title:"Sujet "+i,status:"Ouvert",priority:"Normale"});render()');assert.ok(run('topSubjects().length')>=16);
 });
 test('Pilotage : sites, séries disponibles, absence signalée et lien avec les actions',t=>{
-  const a=app(t),{run,q,click,fill}=a;run('state.site="group";state.view="pilotage";render()');
+  const a=app(t),{run,q,click,fill}=a;run('state.site="group";state.view="pilotage";state.osTab="detail";render()');
   assert.match(q('#appView').textContent,/Source|source/);assert.ok(q('#pilotSite'));
   fill('#pilotSite','sodeplax');assert.equal(run('state.pilotSite'),'sodeplax');assert.match(q('#appView').textContent,/Sodeplax/);assert.match(q('#appView').textContent,/indisponible|qualifier|connecter/);
   run('state.site="marzin";render()');assert.match(q('#appView').textContent,/TRS/);assert.match(q('#appView').textContent,/Rebut/);assert.match(q('#appView').textContent,/Service client/);
 });
 test('Benchmark Groupe : six sites visibles ensemble et indicateurs commutables sans valeurs inventées',t=>{
   const {run,q,all,fill,click}=app(t);
-  run('state.site="group";state.role="lean";state.view="pilotage";render()');
+  run('state.site="group";state.role="lean";state.view="pilotage";state.osTab="detail";render()');
   assert.equal(all('.benchmark-grid > article').length,6);
   assert.deepEqual(all('.benchmark-site-head h3').map(x=>x.textContent),['Ag Déco','Europlacage','Marzin','Oraison Menuiserie','Profiline','Sodeplax']);
   assert.equal(q('.benchmark-table'),null,'Aucun tableau à défilement horizontal');
@@ -156,7 +156,7 @@ test('Benchmark Groupe : six sites visibles ensemble et indicateurs commutables 
 });
 test('Benchmark : saisie manuelle par site, courbe datée et sauvegarde après rechargement',t=>{
   const a=app(t),{run,q,click,fill,submit}=a;
-  run('state.site="group";state.role="lean";state.view="pilotage";render()');
+  run('state.site="group";state.role="lean";state.view="pilotage";state.osTab="detail";render()');
   click('[data-benchmark-metric="service"]');
   click('[data-new-benchmark]');fill('#benchmarkSite','ag-deco');fill('#benchmarkDate','2026-09-24');fill('#benchmarkValue','82.4');fill('#benchmarkTarget','85');fill('#benchmarkDefinition','TRS de la ligne témoin, arrêts inclus');submit('#benchmarkForm');
   assert.equal(run('state.benchmarkMetric'),'trs','La valeur enregistrée est immédiatement visible');
@@ -166,7 +166,7 @@ test('Benchmark : saisie manuelle par site, courbe datée et sauvegarde après r
   assert.match(q('.benchmark-grid').textContent,/82.4%/);
   assert.match(q('.benchmark-grid').textContent,/Saisie manuelle/);
   assert.match(q('.benchmark-toolbar').textContent,/1\/6 sites renseignés/);
-  const stored=a.stored(),b=app(t,stored);b.run('state.site="group";state.view="pilotage";render()');
+  const stored=a.stored(),b=app(t,stored);b.run('state.site="group";state.view="pilotage";state.osTab="detail";render()');
   assert.equal(b.run('benchmarkObservation("ag-deco","trs","2026-09-24").value'),82.4);
   b.fill('#benchmarkPeriod','2026-09-22');
   assert.match(b.q('.benchmark-site').textContent,/Donnée indisponible/);
@@ -202,7 +202,7 @@ test('SQCDP Groupe : six sites simultanés, états qualifiés et détail actionn
   assert.equal(q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('ok'),true);
   fill('#sqcdpGroupPeriod','2026-09-22');
   assert.equal(q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('missing'),true);
-  run('state.role="dg";state.view="pilotage";render()');
+  run('state.role="dg";state.view="pilotage";state.osTab="detail";render()');
   assert.equal(all('.sqcdp-cell').length,30,'La direction retrouve la matrice dans Pilotage Groupe');
   click('[data-sqcdp-site="marzin"][data-sqcdp-axis="S"]');
   assert.equal(q('#sqcdpAddMeasure'),null);
@@ -226,7 +226,7 @@ test('Import : structure, référentiel et doublons contrôlés avant restaurati
   const {run}=app(t);assert.throws(()=>run('validateImport({meta:{schema:5}})'));
   assert.throws(()=>run('const invalid=clone(data);invalid.actions[0].site_id="inconnu";validateImport(invalid)'));
   assert.throws(()=>run('const duplicate=clone(data);duplicate.actions.push(duplicate.actions[0]);validateImport(duplicate)'));
-  assert.equal(run('validateImport(clone(data)).meta.schema'),6);
+  assert.equal(run('validateImport(clone(data)).meta.schema'),7);
 });
 test('Boutons des écrans et des 30 guides : aucune commande sans gestionnaire',t=>{
   const {run,all}=app(t),missing=[];
