@@ -1,4 +1,4 @@
-# Architecture réelle — 7.3.0
+# Architecture réelle — 7.4.0
 
 ## Choix de continuité
 
@@ -20,6 +20,7 @@ L’application reste une PWA statique en JavaScript natif. Aucun framework ou s
 | `os-audits.js` | Questionnaires paramétrables et audits |
 | `os-vsm.js` | Éditeur SVG, déplacement, flux et calculs |
 | `os-app.js` | Intégration des parcours, profils, liens, commandes et scénario fictif |
+| `os-improvements.js` | Suivi durable, qualification par version, VSM actualisée, environnement, synthèse et connecteur IA optionnel |
 | `boot.js` | Initialisation après chargement des fonctions |
 
 Les trois feuilles CSS partagent boutons, champs, cartes, statuts et comportements responsive. Les classes historiques restent compatibles. La navigation est filtrée par rôle et par mode Essentiel/Complet ; ce filtre ne change pas les permissions. Les vues utilisent des ancres, par exemple `#hoshin`, `#pilotage` et l’ancienne ancre `#sqcdp` conservée.
@@ -42,9 +43,9 @@ Le service worker installe les ressources ensemble dans un cache versionné. Une
 
 ## Assistance et extensions
 
-Les suggestions reposent sur les relevés qualifiés hors cible, les retards et les relations enregistrées. Une pratique d’un autre site est proposée si elle possède un résultat documenté et le même KPI. Aucune cause racine n’est déduite automatiquement. Il n’y a pas d’appel à une IA distante.
+Les suggestions locales reposent sur les relevés qualifiés hors cible, les retards et les relations enregistrées. Une pratique d’un autre site est proposée si elle possède un résultat documenté et le même KPI. Aucune cause racine n’est déduite automatiquement. Aucun appel IA distant n’est effectué par défaut. Le raccordement facultatif décrit dans `LEAN_74.md` peut envoyer le seul contexte affiché à un serveur HTTPS configuré, après confirmation ; aucune réponse n’est appliquée automatiquement au métier.
 
-Les escalades avancent d’un niveau après le délai paramétré, depuis l’échéance puis depuis l’escalade précédente. Le bouton de contrôle déclenche leur création ; aucun ordonnanceur ne fonctionne application fermée.
+Les escalades avancent d’un niveau après le délai paramétré, depuis l’échéance puis depuis l’escalade précédente. Le contrôle manuel reste disponible. Une option explicite active le contrôle à l’ouverture/navigation et toutes les minutes pour les managers, hors formulaire en cours ; aucun ordonnanceur ne fonctionne application fermée. Les signaux disposant déjà d’une action ouverte ne sont pas escaladés en doublon.
 
 Les relèves d’équipe sont des dossiers du registre transverse. Elles référencent les signaux et actions existants au lieu de les recopier. La confirmation de reprise conserve l’auteur et l’heure. Le lien direct Terrain encode seulement le site et l’atelier dans l’URL ; il n’accorde aucun droit supplémentaire.
 

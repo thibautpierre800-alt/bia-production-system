@@ -24,8 +24,8 @@ Le service worker installe un ensemble versionné d’assets avant activation. L
 
 Les données des appareils ne sont pas dans GitHub : leur sauvegarde JSON est distincte du déploiement logiciel.
 
-## Retour à 7.2.0
+## Retour à 7.3.0
 
-La branche `backup/before-7.3.0-2026-09-28` conserve le commit `c83b46e`, correspondant à la version 7.2.0 immédiatement antérieure à cette livraison. Les sauvegardes antérieures restent également disponibles.
+La branche `backup/before-7.4.0-2026-09-28` conserve le commit `f5ff277`, correspondant à la version 7.3.0 immédiatement antérieure à cette livraison. Les sauvegardes antérieures restent également disponibles. Exporter les données 7.4 avant retour : les nouveaux champs peuvent être ignorés par l’ancienne interface et ne doivent pas être perdus lors d’une restauration.
 
 Créer un nouveau commit rétablissant l’arbre sauvegardé, avec un nouveau numéro de cache ; ne pas forcer `main` ou supprimer l’historique. Publier et revérifier Pages. Sur les appareils, exporter d’abord les données actuelles avant toute restauration.

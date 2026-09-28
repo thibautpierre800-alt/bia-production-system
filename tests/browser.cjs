@@ -412,6 +412,63 @@ async function main() {
       render();
     });
 
+    // 7.4: exercise the new workflows in Chromium, with a mock AI server only.
+    await page.evaluate(() => {
+      closeModal(); state.role="lean"; state.site="marzin"; state.workshop="";
+      data.actions.push({id:"A-RECEPTION-74",site_id:"marzin",title:"Suivi durable navigateur",owner:"Qualité",due_date:today(),status:"En cours"});
+      render(); actionForm(data.actions.find(a=>a.id==="A-RECEPTION-74"));
+    });
+    await page.locator('.os-continuity > summary').click();
+    await page.locator('[data-improvement="plan"]').click();
+    await page.locator('#osSustainmentForm [name="start_date"]').fill(await page.evaluate(()=>osDateOffset(-95)));
+    await page.locator('#osSustainmentForm [name="criterion"]').fill("Trois lots sans défaut");
+    await page.locator('#osSustainmentForm [name="before"]').fill("8");
+    await page.locator('#osSustainmentForm [name="target"]').fill("3");
+    await page.locator('#osSustainmentForm [name="unit"]').fill("%");
+    await page.locator('#osSustainmentForm button').click();
+    await page.locator('[data-improvement="review"][data-days="30"]').click();
+    await page.locator('#osReviewForm [name="value"]').fill("2");
+    await page.locator('#osReviewForm [name="outcome"]').selectOption("Efficace");
+    await page.locator('#osReviewForm [name="evidence"]').fill("Trois lots contrôlés conformes");
+    await page.locator('#osReviewForm button').click();
+    assert.equal(await page.evaluate(()=>data.actions.find(a=>a.id==="A-RECEPTION-74").sustainment.checks.length),1);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    await page.locator('.modal').evaluate(el=>el.scrollTop=el.scrollHeight);
+    await page.screenshot({path:path.join(output,"action-sustainment-mobile.png"),animations:"disabled"});
+
+    await page.evaluate(()=>{closeModal();osVsmComparison("DOC-VSM-demo")});
+    await page.locator('[data-improvement="vsmFreeze"]').click();
+    const csv=await page.evaluate(()=>{const n=data.documents.find(d=>d.id==="DOC-VSM-demo").vsm.current.nodes[0];return `node_id,period,source,ct,va\n${n.id},${today()},Chronometrage,70,40`;});
+    await page.locator('#osVsmObservationFile').setInputFiles({name:"observations.csv",mimeType:"text/csv",buffer:Buffer.from(csv)});
+    await page.locator('#osVsmObservationConfirm').click();
+    assert.equal(await page.evaluate(()=>data.documents.find(d=>d.id==="DOC-VSM-demo").vsm.current.nodes[0].ct),70);
+    assert.ok(await page.evaluate(()=>data.documents.find(d=>d.id==="DOC-VSM-demo").vsm.baseline));
+
+    await page.evaluate(()=>{closeModal();state.view="pilotage";state.site="marzin";state.osTab="tower";state.pilotageMode="analysis";render()});
+    await page.locator('.os-environment summary').click();
+    await page.locator('[data-improvement="environment"]').click();
+    for(const [name,value] of Object.entries({title:"Atelier / famille pilote",good_units:"100",energy_kwh:"300",evidence:"Compteur atelier mesuré"}))await page.locator(`#osForm [name="${name}"]`).fill(value);
+    await page.locator('#osForm [name="waste_type"]').selectOption("Défauts");
+    await page.locator('#osForm button:not([type])').click();
+    assert.equal(await page.evaluate(()=>osEnvironmentRatios(data.environmentLogs[0]).energy_good),3);
+
+    let aiCalls=0;
+    await page.route('https://bia-ai-test.invalid/analysis',async route=>{aiCalls++;await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({answer:"Hypothèse à tester au poste. Réponse de test, pas un modèle réel."})})});
+    await page.evaluate(()=>{data.settings.assistantEndpoint="https://bia-ai-test.invalid/analysis";osAssistantForm("A-RECEPTION-74")});
+    assert.equal(aiCalls,0);
+    await page.locator('#osAssistantConsent').check();
+    await page.locator('#osAssistantSend').click();
+    await page.waitForFunction(()=>document.querySelector('#osAssistantResult').textContent.includes("Réponse de test"));
+    assert.equal(aiCalls,1);
+    await page.evaluate(()=>{closeModal();delete data.settings.assistantEndpoint;save();state.site="group";state.view="pilotage";state.osTab="tower";render()});
+    await page.setViewportSize({width:1440,height:1100});
+    assert.equal(await page.locator('.os-site-summary').count(),6);
+    await page.locator('.os-multisite-map').screenshot({path:path.join(output,"multisite-74-desktop.png"),animations:"disabled"});
+    await page.setViewportSize({width:390,height:844});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    await page.locator('.os-multisite-map').screenshot({path:path.join(output,"multisite-74-mobile.png"),animations:"disabled"});
+    report.improvements74={sustainment:true,vsmImport:true,environment:true,aiMockOnly:true,multisite:true};
+
     // Offline reload uses one installed release, under a non-root base URL.
     await page.evaluate(() => navigator.serviceWorker.ready);
     await page.waitForFunction(

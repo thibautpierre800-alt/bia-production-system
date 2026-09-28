@@ -7,10 +7,18 @@
   ],
   "errors": [],
   "badResponses": [],
-  "initialRenderMs": 399,
+  "initialRenderMs": 510,
   "roleHomes": true,
   "groupVertical": true,
+  "improvements74": {
+    "sustainment": true,
+    "vsmImport": true,
+    "environment": true,
+    "aiMockOnly": true,
+    "multisite": true
+  },
   "offline": true,
   "pointerAndTouch": true,
-  "persistedGemba": "G-015"
+  "persistedGemba": "G-015",
+  "version": "7.4.0"
 }

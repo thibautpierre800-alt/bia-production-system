@@ -1,5 +1,7 @@
 # Connecteurs — contrat disponible, connexions non activées
 
+Depuis 7.4.0, le [contrat VSM et le raccordement IA facultatif](LEAN_74.md) complètent le contrat KPI. Les VSM s’actualisent par CSV confirmé. Aucun serveur IA n’est configuré par défaut ; aucune clé fournisseur n’est placée dans le client. Les mesures environnementales publiées portent `entry_mode: calculated` et leur provenance vers le relevé physique.
+
 ## Fonctionnement actuel
 
 Le CSV passe par prévisualisation et confirmation. Toutes les lignes sont validées avant écriture atomique ; une erreur empêche l’import entier. Guillemets, séparateurs virgule/point-virgule, accents UTF-8, décimales françaises et champs multilignes sont traités. Limite : 3 Mo. Les doublons site/atelier/KPI/date sont refusés ; une correction passe par le relevé existant et conserve anciennes/nouvelles valeurs dans le journal.
