@@ -30,7 +30,7 @@ npm run build
 npm run test:browser
 ```
 
-`npm test` couvre 40 tests DOM/métier, dont les scénarios A–G, migration, profils, erreurs de stockage, imports, scénario multisite, alertes, relève, accès terrain, paquet d’échanges, formation logicielle et historique de maturité. `tests/regression.cjs` conserve le point d’entrée historique.
+`npm test` couvre 41 tests DOM/métier, dont les scénarios A–G, migration, profils, interface Essentielle/Complète, erreurs de stockage, imports, scénario multisite, alertes, relève, accès terrain, paquet d’échanges, formation logicielle et historique de maturité. `tests/regression.cjs` conserve le point d’entrée historique.
 
 Le test navigateur ouvre son serveur sous `/bia-production-system/`, parcourt toutes les combinaisons profil/écran autorisées, contrôle 14 vues à 390/820/1440 px et le SQCDP Groupe vertical à 1080 × 1920, puis vérifie création/relecture, ancres directes, VSM souris/tactile et hors connexion. Captures et rapport vont dans `qa-results/`, ignoré par Git. `BIA_CHROMIUM_EXECUTABLE` permet d’utiliser un Chromium installé ; `BIA_QA_OUTPUT` change le dossier des preuves.
 

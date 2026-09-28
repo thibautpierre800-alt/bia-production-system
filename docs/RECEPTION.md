@@ -1,20 +1,20 @@
-# Réception — BIA Lean Operating System 7.2.0
+# Réception — BIA Lean Operating System 7.3.0
 
-Date : 28 septembre 2026. Version précédente sauvegardée : 7.1.1, commit `6dc3fab`, branche distante `backup/before-7.2.0-2026-09-28`.
+Date : 28 septembre 2026. Version précédente sauvegardée : 7.2.0, commit `c83b46e`, branche `backup/before-7.3.0-2026-09-28`.
 
 ## Changements réceptionnés
 
 Le cœur transversal relie les modules conservés et nouveaux : identifiants, relations, base d’actions, mesures canoniques, résultats, preuves, commentaires et historique. La migration conserve les données compatibles et le JSON antérieur. Les écrans sont alimentés par les dossiers enregistrés ; les scénarios fictifs restent explicitement identifiés.
 
-La version 7.2.0 ajoute les alertes opérationnelles, les passages d’équipe reliés aux dossiers actifs, l’accès direct Signal Terrain et une file d’échanges exportable. Ces fonctions restent cohérentes avec le fonctionnement local : aucun écran ne prétend qu’un serveur, une notification poussée ou un ERP est connecté.
+La version 7.3.0 réduit la charge de navigation : accueil adapté à chaque rôle, interface Essentielle/Complète, quatre entrées mobiles, création regroupée et écran Aujourd’hui compact. Le pilotage ne duplique plus Control Tower et SQCDP dans les profils de direction : une seule vue propose les modes Analyser et Décider. L’ancienne route SQCDP reste utilisable pour les liens existants et les profils atelier.
 
-Les parcours existants comprennent Control Tower, Hoshin/X-Matrix, routines/escalades, VSM graphique, Kaizen/gains, déploiement et maturité. Les audits restent paramétrables. A3, PDCA et DMAIC partagent le module de résolution. Les formations, guides et documents historiques restent disponibles.
+Les parcours existants restent disponibles en interface Complète : Hoshin/X-Matrix, routines/escalades, VSM graphique, Kaizen/gains, déploiement, maturité, audits, résolution, formations, guides et documents historiques. Aucun dossier ni permission métier n’est retiré.
 
 ## Vérifications exécutées
 
 | Contrôle | Résultat et portée |
 |---|---|
-| Tests métier/DOM | 40 tests réussis : intégrité, formulaires, relecture, migration, scénario réaliste, alertes, relève, accès terrain, paquet d’échanges et non-régression |
+| Tests métier/DOM | 41 tests réussis : intégrité, formulaires, relecture, migration, scénarios, ergonomie par rôle, interface Essentielle/Complète, alertes, relève et non-régression |
 | A — Gemba → action → SQCDP → escalade → clôture | Réussi ; une seule action et pas de double escalade |
 | B — KPI → problème → A3 → action → résultat | Réussi ; douze rubriques et résultat conservé après rechargement |
 | C — VSM → opportunité → projet/action → résultat | Réussi ; calculs numériques et liens persistants |
@@ -22,13 +22,13 @@ Les parcours existants comprennent Control Tower, Hoshin/X-Matrix, routines/esca
 | E — Hoshin → KPI → projet → action → résultat | Réussi ; navigation inverse et avancement distinct du résultat |
 | F — audit → écart → action → résolution | Réussi ; preuve obligatoire et score vérifié |
 | G — benchmark → site en difficulté → pratique ailleurs | Réussi ; suggestion fondée sur les données, sans causalité prétendue |
-| Navigateur Chromium | 77 combinaisons des cinq profils et routes accessibles, sans erreur JavaScript ni ressource manquante |
+| Navigateur Chromium | 75 combinaisons des cinq profils et routes visibles, sans erreur JavaScript ni ressource manquante ; les anciennes routes masquées restent compatibles |
 | Responsive | 14 vues contrôlées à 390, 820 et 1440 px, plus le SQCDP Groupe à 1080 × 1920 ; aucun débordement horizontal de la page |
 | Saisie navigateur | Gemba créé par formulaire puis retrouvé après rechargement |
 | VSM navigateur | Déplacement souris persistant, sélection tactile, édition et lecture seule |
 | Navigation/cache | Sous-chemin réel de déploiement, ancre Hoshin directe et rechargement hors connexion |
-| Build | 20 ressources statiques, 556 Kio avant compression, syntaxe et chemins contrôlés |
-| Performance observée | Premier rendu local du scénario mesuré à 0,405 s dans l’environnement de test ; ce n’est pas une mesure de latence réseau en production |
+| Build | 20 ressources statiques, environ 573 Kio avant compression, syntaxe et chemins contrôlés |
+| Performance observée | Premier rendu local du scénario mesuré à 0,399 s dans l’environnement de test ; ce n’est pas une mesure de latence réseau en production |
 
 Les scénarios A–G sont des tests d’intégration DOM avec sauvegarde et relecture. Le contrôle Chromium complète ces tests sur les interactions et le rendu. Il ne constitue pas une certification sur tous les navigateurs ou un test de charge multisession. Le script `tests/browser.cjs` reproduit les contrôles et génère les captures.
 
@@ -45,6 +45,9 @@ Les scénarios A–G sont des tests d’intégration DOM avec sauvegarde et rele
 - Centre d’alertes filtré par profil/périmètre, sans doublonner les dossiers métier.
 - Relève d’équipe avec dossiers liés et confirmation distincte de la clôture des actions.
 - Accès Terrain partageable et paquet d’échanges explicitement limités au fonctionnement local/export.
+- Accueils, niveaux quotidiens et navigation mobile adaptés aux cinq rôles.
+- Pilotage unifié Analyser/Décider, sans double entrée Control Tower/SQCDP pour les profils de direction.
+- Création regroupée dans une commande compacte et formulaires progressifs avec préremplissage cohérent.
 
 ## Mise en service partagée : éléments non activés
 

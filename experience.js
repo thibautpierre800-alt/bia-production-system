@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared interaction rules. All records remain local; roles are UI profiles, not authentication.
-const APP_VERSION = "7.2.0";
+const APP_VERSION = "7.3.0";
 let modalSaver = null, modalDirty = false, modalOpener = null, modalTimer = null;
 let lastStored = localStorage.getItem(STORAGE_KEY);
 let storageConflict = false;
@@ -235,7 +235,7 @@ function initExperience() {
   if(entryView==="terrain"&&role().nav.includes("terrain"))state.view="terrain";
   try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const parsed=JSON.parse(raw);validateImport(parsed);}}catch{storageConflict=true;window.biaUnreadable=true;}
   $("siteSelect").onchange=e=>{if(!requestCloseModal())return;state.site=e.target.value;state.receipt=null;localStorage.setItem("biaSite",state.site);render();};
-  $("roleSelect").onchange=e=>{if(!requestCloseModal())return;state.role=e.target.value;state.receipt=null;localStorage.setItem("biaRole",state.role);if(!canGroup()&&state.site==="group")state.site="marzin";render();};
+  $("roleSelect").onchange=e=>{if(!requestCloseModal())return;state.role=normalizeRoleId(e.target.value);state.interfaceMode=preferredInterfaceMode(state.role);state.dailyLevel=defaultDailyLevel(state.role);state.receipt=null;localStorage.setItem("biaRole",state.role);if(!canGroup()&&state.site==="group")state.site="marzin";if(!role().nav.includes(state.view)||!visibleNav().some(item=>item.id===state.view))state.view="home";render();};
   $("menuButton").onclick=()=>{const open=$("sidebar").classList.toggle("open");$("menuButton").setAttribute("aria-expanded",String(open));};
   $("modal").onclick=e=>{if(e.target===$("modal"))requestCloseModal();};
   document.addEventListener("keydown",e=>{

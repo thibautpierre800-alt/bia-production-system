@@ -111,13 +111,14 @@ async function main() {
       (await page.locator(".control-analysis-table tbody tr").count()) >= 5,
       "La Control Tower doit afficher les priorités multisites",
     );
-    assert.equal(await page.locator(".os-purpose-strip").count(), 1);
+    assert.equal(await page.locator(".pilotage-switch").count(), 1);
+    assert.deepEqual(await page.locator("[data-pilotage-mode] b").allTextContents(), ["Analyser", "Décider"]);
     assert.deepEqual(
       await page.locator("#roleSelect option").allTextContents(),
       ["DG", "Responsable Lean", "Directeur de site", "Chef d’équipe", "Opérateur"],
     );
     const quickDock = await page.locator(".quick-action-dock").boundingBox();
-    assert.ok(quickDock.width <= 110 && quickDock.height <= 60, "Raccourcis terrain compacts");
+    assert.ok(quickDock.width <= 60 && quickDock.height <= 60, "Commande de création compacte");
     assert.ok(Number(await page.locator("#notificationCount").innerText()) > 0);
     await page.locator("#notificationButton").click();
     assert.match(
@@ -135,6 +136,48 @@ async function main() {
       fullPage: true,
       animations: "disabled",
     });
+
+    // Role-specific homes stay concise on a direction screen and a phone.
+    await page.evaluate(() => {
+      state.role = "dg";
+      state.site = "group";
+      state.interfaceMode = "essential";
+      state.view = "home";
+      render();
+    });
+    assert.equal(await page.locator(".home-alert-count").count(), 2);
+    assert.match(await page.locator("#appView").innerText(), /Décider et débloquer/);
+    await page.screenshot({
+      path: path.join(output, "home-dg-desktop.png"),
+      fullPage: true,
+      animations: "disabled",
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.evaluate(() => {
+      state.role = "operator";
+      state.site = "marzin";
+      state.interfaceMode = "essential";
+      state.view = "home";
+      render();
+    });
+    assert.equal(await page.locator(".mobile-nav .nav-button").count(), 4);
+    assert.match(await page.locator("#appView").innerText(), /Voir, signaler, agir/);
+    await page.screenshot({
+      path: path.join(output, "home-operator-mobile.png"),
+      fullPage: true,
+      animations: "disabled",
+    });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.evaluate(() => {
+      state.role = "lean";
+      state.site = "group";
+      state.interfaceMode = "complete";
+      state.view = "pilotage";
+      state.pilotageMode = "analysis";
+      state.osTab = "tower";
+      render();
+    });
+    report.roleHomes = true;
 
     // Every allowed route for all five functional profiles must render.
     const roles = await page.evaluate(() => Object.keys(ROLES));
@@ -226,6 +269,7 @@ async function main() {
         animations: "disabled",
       });
       if (width === 390) {
+        assert.equal(await page.locator(".mobile-nav .nav-button").count(), 4);
         await page.waitForFunction(
           () =>
             document.querySelector(".sidebar").getBoundingClientRect().right <=

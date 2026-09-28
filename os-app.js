@@ -1,7 +1,7 @@
 "use strict";
 
 const OS_NAV = [
-  { id: "daily", icon: "↥", label: "Routines et escalades", group: "Pilotage" },
+  { id: "daily", icon: "↥", label: "Aujourd’hui", group: "Pilotage" },
   { id: "analysis", icon: "⌕", label: "Analyse des écarts", group: "Pilotage" },
   { id: "maturity", icon: "◉", label: "Maturité Lean", group: "Pilotage" },
   { id: "hoshin", icon: "✣", label: "Hoshin et objectifs", group: "Stratégie" },
@@ -64,7 +64,7 @@ const osGroups = {
 };
 for (const n of NAV) {
   n.group = osGroups[n.id] || n.group;
-  if (n.id === "pilotage") n.label = "Control Tower";
+  if (n.id === "pilotage") n.label = "Pilotage";
   if (n.id === "audits") n.label = "Audits et 5S";
   if (n.id === "sqcdp") n.label = "SQCDP";
 }
@@ -233,10 +233,12 @@ function osBind() {
           if (action === "kpiDetail")
             return osKpiDetail(args.siteId, args.kpiId, args.period);
           if (action === "pilotDetail") {
+            state.pilotageMode = "analysis";
             state.osTab = "detail";
             return render();
           }
           if (action === "tower") {
+            state.pilotageMode = "analysis";
             state.osTab = "tower";
             return render();
           }
@@ -356,6 +358,7 @@ function osBind() {
             osInit();
             state.site = "group";
             state.view = "pilotage";
+            state.pilotageMode = "analysis";
             state.osTab = "tower";
             closeModal();
             return render();

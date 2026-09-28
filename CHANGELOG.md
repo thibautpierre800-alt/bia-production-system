@@ -1,5 +1,18 @@
 # Changelog
 
+## 7.3.0 — 28 septembre 2026
+
+- Accueil distinct pour les cinq profils : décisions Groupe, transformation multisite, pilotage site, journée d’équipe ou contribution opérateur.
+- Interface Essentielle par défaut hors Responsable Lean, avec bascule persistante vers l’interface Complète sans suppression de droits ni de dossiers.
+- Navigation mobile limitée à quatre entrées par rôle et pictogrammes SVG homogènes.
+- Control Tower et SQCDP réunis dans Pilotage avec deux modes explicites : **Analyser** et **Décider** ; l’ancienne route SQCDP reste compatible.
+- Écran **Aujourd’hui** limité à cinq priorités, dernières relèves visibles et sections escalades/routines/actions repliables ; niveaux N1–N4 limités selon le rôle.
+- Deux raccourcis flottants remplacés par une commande « + » unique ouvrant Signal Terrain, Idée Kaizen, Action ou Relève selon les droits.
+- Formulaires Signal Terrain et Idée Kaizen préremplis et progressifs ; informations avancées disponibles sans alourdir la première saisie.
+- Vue analytique transformée en cartes sur téléphone et listes de Control Tower réduites en interface Essentielle.
+
+La simplification ne change ni le modèle de données ni les limites de mise en service : stockage et profils restent locaux, sans authentification serveur, synchronisation entre appareils ou connexion SEQUOIA/ERP/MES active.
+
 ## 7.2.0 — 28 septembre 2026
 
 - Centre d’alertes opérationnelles calculé à partir des signaux critiques, actions en retard, escalades, décisions attendues et relèves non reprises.

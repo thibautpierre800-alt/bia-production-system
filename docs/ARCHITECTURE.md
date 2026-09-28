@@ -1,4 +1,4 @@
-# Architecture réelle — 7.2.0
+# Architecture réelle — 7.3.0
 
 ## Choix de continuité
 
@@ -14,15 +14,15 @@ L’application reste une PWA statique en JavaScript natif. Aucun framework ou s
 | `workflows.js` | Actions, problèmes, signaux, pratiques et transitions |
 | `fieldwork.js` | Gemba et audit historique |
 | `documents-ui.js` | Documents guidés, avant/après, éditeur tabulaire VSM conservé |
-| `dashboards.js` | SQCDP, benchmark et pilotage historique |
+| `dashboards.js` | Pilotage unifié Analyser/Décider, SQCDP, benchmark et historique |
 | `os-core.js` | Migration, registre transverse, intégrité, calculs et règles |
-| `os-views.js` | Formulaires et vues Control Tower, Hoshin, Kaizen, maturité, administration |
+| `os-views.js` | Vue analytique, Aujourd’hui, formulaires et vues Hoshin, Kaizen, maturité, administration |
 | `os-audits.js` | Questionnaires paramétrables et audits |
 | `os-vsm.js` | Éditeur SVG, déplacement, flux et calculs |
 | `os-app.js` | Intégration des parcours, profils, liens, commandes et scénario fictif |
 | `boot.js` | Initialisation après chargement des fonctions |
 
-Les trois feuilles CSS partagent boutons, champs, cartes, statuts et comportements responsive. Les classes historiques restent compatibles. La navigation regroupe les entrées par espace ; les vues utilisent des ancres, par exemple `#hoshin` et `#pilotage`.
+Les trois feuilles CSS partagent boutons, champs, cartes, statuts et comportements responsive. Les classes historiques restent compatibles. La navigation est filtrée par rôle et par mode Essentiel/Complet ; ce filtre ne change pas les permissions. Les vues utilisent des ancres, par exemple `#hoshin`, `#pilotage` et l’ancienne ancre `#sqcdp` conservée.
 
 ## Écriture et lecture
 

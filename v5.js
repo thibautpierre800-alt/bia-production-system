@@ -45,6 +45,20 @@ const NAV=[
   {id:"account",icon:"●",label:"Compte",group:"Administration"},
   {id:"settings",icon:"⚙",label:"Paramètres",group:"Administration"}
 ];
+const ESSENTIAL_NAV={
+  dg:["home","pilotage","roadmap","actions","account"],
+  lean:["home","pilotage","daily","actions","terrain","roadmap","maturity","account"],
+  director:["home","pilotage","daily","actions","terrain","projects","account"],
+  teamlead:["home","daily","sqcdp","actions","terrain","account"],
+  operator:["home","sqcdp","actions","terrain","kaizen","account"]
+};
+const MOBILE_NAV={
+  dg:["home","pilotage","roadmap","account"],
+  lean:["home","pilotage","daily","account"],
+  director:["home","pilotage","daily","account"],
+  teamlead:["home","daily","terrain","account"],
+  operator:["home","terrain","actions","account"]
+};
 const SIGNAL_STATES=["Nouveau","Pris en compte","Action en cours","Résolu","Vérifié","Clos"];
 const ACTION_STATES=["Ouverte","En cours","À vérifier","Clôturée"];
 const SIGNAL_TYPES=["Sécurité","Qualité","Production","Flux","Maintenance","Standard","Autre"];
@@ -170,10 +184,17 @@ const DEMO={
   legacySnapshot:null
 };
 
+const initialRole=normalizeRoleId(localStorage.getItem("biaRole")||"lean");
+function preferredInterfaceMode(roleId){
+  return localStorage.getItem(`biaInterfaceMode:${roleId}`)||("lean"===roleId?"complete":"essential");
+}
+function defaultDailyLevel(roleId=state?.role||initialRole){return ({operator:1,teamlead:1,director:3,lean:4,dg:4})[roleId]||1}
 let state={
-  role:normalizeRoleId(localStorage.getItem("biaRole")||"lean"),
+  role:initialRole,
   site:localStorage.getItem("biaSite")||"marzin",
   view:localStorage.getItem("biaView")||"home",
+  interfaceMode:preferredInterfaceMode(initialRole),
+  pilotageMode:"analysis",
   terrainTab:"signals",
   resolutionTab:"problems",
   actionFilter:"all",
@@ -183,7 +204,8 @@ let state={
   selectedProblemId:null,
   trainingTab:"catalog",
   selectedPersonId:null,
-  timerStarted:null
+  timerStarted:null,
+  dailyLevel:defaultDailyLevel(initialRole)
 };
 let data=loadData();
 
@@ -230,7 +252,31 @@ function scoped(rows,{groupAllowed=true}={}){
   return rows.filter(r=>r.site_id===state.site);
 }
 function role(){return ROLES[state.role]||ROLES.lean}
-function visibleNav(){return NAV.filter(n=>role().nav.includes(n.id))}
+function interfaceMode(){return state.interfaceMode==="complete"?"complete":"essential"}
+function setInterfaceMode(mode){
+  state.interfaceMode=mode==="complete"?"complete":"essential";
+  localStorage.setItem(`biaInterfaceMode:${state.role}`,state.interfaceMode);
+  if(!visibleNav().some(item=>item.id===state.view))state.view="home";
+  render();
+}
+function visibleNav(){
+  const essential=new Set(ESSENTIAL_NAV[state.role]||["home","account"]);
+  return NAV.filter(n=>role().nav.includes(n.id)&&!(n.id==="sqcdp"&&["dg","lean","director"].includes(state.role))&&(interfaceMode()==="complete"||essential.has(n.id)));
+}
+function navIconSvg(id){
+  const paths={
+    home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5M9 20v-6h6v6"/>',
+    pilotage:'<path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/>',
+    daily:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18m-13 5 2 2 5-5"/>',
+    sqcdp:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    actions:'<path d="m5 12 4 4L19 6"/><path d="M4 4h10M4 20h16"/>',
+    terrain:'<path d="M12 21s7-6 7-12a7 7 0 1 0-14 0c0 6 7 12 7 12Z"/><path d="M12 7v4m0 3h.01"/>',
+    kaizen:'<path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="8"/>',
+    roadmap:'<path d="M5 20V5m0 0h8l-2 3 2 3H5m6 9 4-4 4 4"/>',
+    account:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'
+  };
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${paths[id]||'<circle cx="12" cy="12" r="8"/><path d="M8 12h8"/>'}</svg>`;
+}
 function isOpenSignal(s){return !s.archived_at&&s.state!=="Clos"}
 function isOpenAction(a){return !a.archived_at&&a.status!=="Clôturée"}
 function isLate(a){return a.due_date&&isOpenAction(a)&&a.due_date<today()}
@@ -253,9 +299,10 @@ function canGroup(){return role().scope==="group"}
 function renderNav(){
   const nav=visibleNav();
   const groups=[...new Set(nav.map(n=>n.group))];
-  const html=groups.map(group=>`<details class="nav-section" ${nav.some(n=>n.group===group&&n.id===state.view)?"open":""}><summary>${esc(group)}</summary>${nav.filter(n=>n.group===group).map(n=>`<button class="nav-button ${state.view===n.id?"active":""}" data-nav="${n.id}"><span class="nav-icon">${n.icon}</span>${esc(n.label)}</button>`).join("")}</details>`).join("");
+  const html=groups.map(group=>`<details class="nav-section" ${nav.some(n=>n.group===group&&n.id===state.view)?"open":""}><summary>${esc(group)}</summary>${nav.filter(n=>n.group===group).map(n=>`<button class="nav-button ${state.view===n.id?"active":""}" data-nav="${n.id}"><span class="nav-icon">${navIconSvg(n.id)}</span>${esc(n.label)}</button>`).join("")}</details>`).join("");
   $("desktopNav").innerHTML=html;
-  $("mobileNav").innerHTML=nav.filter(n=>["home","pilotage","sqcdp","actions","terrain","account"].includes(n.id)).map(n=>`<button class="nav-button ${state.view===n.id?"active":""}" data-nav="${n.id}"><span class="nav-icon">${n.icon}</span>${esc(n.label)}</button>`).join("");
+  const mobileIds=new Set(MOBILE_NAV[state.role]||["home","terrain","actions","account"]);
+  $("mobileNav").innerHTML=NAV.filter(n=>role().nav.includes(n.id)&&mobileIds.has(n.id)).slice(0,4).map(n=>`<button class="nav-button ${state.view===n.id?"active":""}" data-nav="${n.id}"><span class="nav-icon">${navIconSvg(n.id)}</span>${esc(n.id==="daily"?"Aujourd’hui":n.label)}</button>`).join("");
 }
 function renderContexts(){
   const assignedSite=state.site==="group"?"marzin":state.site;
@@ -270,7 +317,7 @@ function renderContexts(){
 }
 function switchView(id){
   if(!requestCloseModal())return;
-  if(!visibleNav().some(n=>n.id===id))id=visibleNav()[0]?.id||"home";
+  if(!role().nav.includes(id))id=visibleNav()[0]?.id||"home";
   state.view=id;state.receipt=null;localStorage.setItem("biaView",id);if(location.hash!==`#${id}`)history.pushState(null,"",`#${id}`);render();
   window.scrollTo({top:0,behavior:"smooth"});$("main").focus({preventScroll:true});
   $("sidebar").classList.remove("open");$("menuButton").setAttribute("aria-expanded","false");
@@ -278,17 +325,18 @@ function switchView(id){
 function render(){
   osInit();
   renderContexts();
-  if(!visibleNav().some(n=>n.id===state.view))state.view=visibleNav()[0]?.id||"home";
+  if(!role().nav.includes(state.view))state.view=visibleNav()[0]?.id||"home";
   renderNav();
-  document.body.classList.toggle("presentation",state.presentation && state.view==="sqcdp");
-  document.body.classList.toggle("group-presentation",state.presentation && state.view==="sqcdp" && state.site==="group");
-  const renderer={home:renderHome,pilotage:()=>state.osTab==="detail"?osButton("Retour à la Control Tower","tower")+renderPilotage():renderOSTower(),hoshin:renderOSHoshin,kaizen:renderOSKaizen,deployment:renderOSDeployment,maturity:renderOSMaturity,daily:renderOSDaily,analysis:renderOSAnalysis,activity:renderOSActivity,connectors:renderOSConnectors,roadmap:renderRoadmap,sqcdp:renderSqcdp,actions:renderActions,terrain:renderTerrain,audits:renderAudits,resolution:renderResolution,projects:renderProjects,practices:renderPractices,documents:renderDocuments,tools:renderTools,training:renderTraining,account:renderAccount,settings:renderOSAdmin}[state.view];
+  const sqcdpView=state.view==="sqcdp"||state.view==="pilotage"&&state.pilotageMode==="ritual";
+  document.body.classList.toggle("presentation",state.presentation && sqcdpView);
+  document.body.classList.toggle("group-presentation",state.presentation && sqcdpView && state.site==="group");
+  const renderer={home:renderHome,pilotage:renderUnifiedPilotage,hoshin:renderOSHoshin,kaizen:renderOSKaizen,deployment:renderOSDeployment,maturity:renderOSMaturity,daily:renderOSDaily,analysis:renderOSAnalysis,activity:renderOSActivity,connectors:renderOSConnectors,roadmap:renderRoadmap,sqcdp:renderSqcdp,actions:renderActions,terrain:renderTerrain,audits:renderAudits,resolution:renderResolution,projects:renderProjects,practices:renderPractices,documents:renderDocuments,tools:renderTools,training:renderTraining,account:renderAccount,settings:renderOSAdmin}[state.view];
   $("appView").innerHTML=(window.biaUnreadable?'<div class="alert critical">La sauvegarde locale n’est pas lisible. Elle est conservée sans modification. <button class="btn secondary" data-export-raw>Récupérer le fichier original</button> Restaurez une sauvegarde valide depuis Compte.</div>':"")+receiptView()+(renderer?renderer():"");
-  if(state.view==="home")$("appView").insertAdjacentHTML("beforeend",resumeWork());
+  if(state.view==="home"&&interfaceMode()==="complete")$("appView").insertAdjacentHTML("beforeend",resumeWork());
   if(state.view==="tools"&&state.toolId)$("appView").insertAdjacentHTML("afterbegin",toolLaunch(state.toolId));
   $("appView").insertAdjacentHTML("beforeend",quickActionDock());
   $("pageLocation").textContent=`${site().name} / ${NAV.find(n=>n.id===state.view)?.label||"Accueil"}`;
-  $("dataMode").innerHTML=`<b>BIA LEAN OS ${APP_VERSION}</b> · Données locales sur cet appareil · Profils locaux sans authentification · SEQUOIA : non connecté · ${data.meta.demo?"Exemples fictifs clairement identifiés":"Saisies locales"}`;
+  $("dataMode").innerHTML=`<span><b>BIA LEAN OS ${APP_VERSION}</b> · ${data.meta.demo?"Exemples fictifs":"Saisies locales"} · Données sur cet appareil · SEQUOIA non connecté</span><button type="button" class="mode-toggle" data-interface-mode-toggle>Interface ${interfaceMode()==="essential"?"Essentielle":"Complète"}</button>`;
   renderNotificationButton();
   bind();
   bindExperience();
@@ -299,45 +347,74 @@ function render(){
 
 function quickActionDock(){
   if(role().readonly||state.presentation)return "";
-  const kaizenArgs=esc(JSON.stringify({key:"kaizens"}));
-  return `<aside class="quick-action-dock" aria-label="Actions terrain rapides"><button class="quick-action signal" data-new-signal aria-label="Créer un signal terrain" data-label="Signal terrain" title="Créer un signal terrain"><span aria-hidden="true">!</span></button><button class="quick-action idea" data-os="new" data-args="${kaizenArgs}" aria-label="Proposer une idée" data-label="Proposer une idée" title="Proposer une idée"><span aria-hidden="true">＋</span></button></aside>`;
+  return `<aside class="quick-action-dock" aria-label="Créer"><button class="quick-action create" data-create-menu aria-label="Créer un dossier" data-label="Créer" title="Créer"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></button></aside>`;
+}
+function openCreateMenu(){
+  const items=[];
+  if(role().nav.includes("terrain"))items.push(`<button class="create-choice signal" type="button" data-new-signal><span>${navIconSvg("terrain")}</span><b>Signal Terrain</b><small>Remonter immédiatement un fait observé</small></button>`);
+  if(role().nav.includes("kaizen"))items.push(`<button class="create-choice idea" type="button" data-os="new" data-args="${esc(JSON.stringify({key:"kaizens"}))}"><span>${navIconSvg("kaizen")}</span><b>Idée Kaizen</b><small>Proposer une amélioration simple</small></button>`);
+  if(role().nav.includes("actions"))items.push(`<button class="create-choice" type="button" data-new-action><span>${navIconSvg("actions")}</span><b>Action</b><small>Attribuer un résultat, un responsable et une date</small></button>`);
+  if(role().nav.includes("daily")&&osManager())items.push(`<button class="create-choice" type="button" data-new-handover><span>${navIconSvg("daily")}</span><b>Relève d’équipe</b><small>Transmettre les faits et priorités utiles</small></button>`);
+  modal("Créer",`<p class="hint">Choisissez le point de départ. Les informations avancées pourront être complétées ensuite.</p><div class="create-menu">${items.join("")}</div>`);
 }
 
+function homeRoleConfig(){
+  return {
+    dg:{kicker:"Accueil Direction Générale",title:"Décider et débloquer",lead:"Les décisions attendues, les risques critiques et la trajectoire Groupe."},
+    lean:{kicker:"Accueil Responsable Lean",title:"Piloter la transformation",lead:"Les écarts multisites, les priorités de transformation et les points à accompagner."},
+    director:{kicker:"Accueil Direction de site",title:`Tenir le cap de ${site().name}`,lead:"Les décisions, risques et actions qui conditionnent la journée du site."},
+    teamlead:{kicker:"Accueil Chef d’équipe",title:"Faire avancer l’équipe aujourd’hui",lead:"La relève, les écarts SQCDP et les engagements à tenir sur le terrain."},
+    operator:{kicker:"Accueil Opérateur",title:"Voir, signaler, agir",lead:"Les informations utiles au poste, sans chercher dans toute l’application."}
+  }[state.role];
+}
+function homePriorityItems(){
+  const signals=scoped(data.signals).filter(s=>isOpenSignal(s)&&(s.severity==="Critique"||s.state==="Nouveau")).map(s=>({id:s.id,kind:"signal",score:s.severity==="Critique"?0:3,label:s.severity==="Critique"?"Risque critique":"Nouveau signal",title:s.description,meta:`${getSiteName(s.site_id)} · ${s.type} · ${s.owner||"responsable à attribuer"}`,tone:s.severity==="Critique"?"critical":"open"}));
+  const decisions=scoped(data.decisions).filter(d=>d.status!=="Clos").map(d=>({id:d.id,kind:"decision",score:1,label:"Décision attendue",title:d.title,meta:`${getSiteName(d.site_id)} · ${d.owner||"décideur à préciser"} · ${shortDate(d.due_date)}`,tone:"progress"}));
+  const actions=scoped(data.actions).filter(a=>isOpenAction(a)&&(isLate(a)||a.status==="À vérifier"||["Critique","Haute"].includes(a.priority))).map(a=>({id:a.id,kind:"action",score:isLate(a)?1:2,label:isLate(a)?"Action en retard":"Action prioritaire",title:a.title,meta:`${a.owner||"responsable à attribuer"} · ${a.status} · ${shortDate(a.due_date)}`,tone:isLate(a)?"open":actionTone(a)}));
+  const handovers=(data.handovers||[]).filter(h=>!h.archived_at&&h.status!=="Reprise"&&(state.site==="group"||h.site_id===state.site)&&(!state.workshop||!h.workshop_id||h.workshop_id===state.workshop)).map(h=>({id:h.id,kind:"handover",score:1,label:"Relève à reprendre",title:h.title,meta:`${getSiteName(h.site_id)} · ${h.author||"auteur à préciser"} · ${shortDate(h.period)}`,tone:"info"}));
+  const kaizens=(data.kaizens||[]).filter(k=>!k.archived_at&&!["Bonne pratique","Déploiement"].includes(k.status)&&(state.site==="group"||k.site_id===state.site)&&(!state.workshop||!k.workshop_id||k.workshop_id===state.workshop)).map(k=>({id:k.id,kind:"kaizen",score:4,label:"Idée en cours",title:k.title,meta:`${k.status} · ${k.owner||"pilote à préciser"}`,tone:"neutral"}));
+  const allowed={dg:["decision","signal"],lean:["signal","decision","action"],director:["decision","signal","action"],teamlead:["handover","signal","action"],operator:["signal","action","kaizen"]}[state.role]||["signal","action"];
+  return [...signals,...decisions,...actions,...handovers,...kaizens].filter(item=>allowed.includes(item.kind)).sort((a,b)=>a.score-b.score).slice(0,5);
+}
 function homeCards(){
-  const signals=scoped(data.signals).filter(isOpenSignal);
-  const actions=scoped(data.actions).filter(isOpenAction);
-  const problems=scoped(data.problems).filter(p=>p.status!=="Clos");
-  const critical=signals.filter(s=>s.severity==="Critique");
-  return `<div class="grid cols-4 section">
-    <article class="card"><div class="metric-label">Nouveaux signaux</div><div class="metric-value">${signals.filter(s=>s.state==="Nouveau").length}</div><div class="metric-foot">À prendre en compte</div></article>
-    <article class="card"><div class="metric-label">Signaux ouverts</div><div class="metric-value">${signals.length}</div><div class="metric-foot ${critical.length?"bad":""}">${critical.length} critique(s)</div></article>
-    <article class="card"><div class="metric-label">Actions prioritaires</div><div class="metric-value">${actions.filter(a=>["Critique","Haute"].includes(a.priority)).length}</div><div class="metric-foot">${actions.filter(isLate).length} en retard</div></article>
-    <article class="card"><div class="metric-label">Problèmes ouverts</div><div class="metric-value">${problems.length}</div><div class="metric-foot">A3 / 8D / QRQC</div></article>
-  </div>`;
+  const signals=scoped(data.signals).filter(isOpenSignal),actions=scoped(data.actions).filter(isOpenAction),decisions=scoped(data.decisions).filter(d=>d.status!=="Clos"),handovers=(data.handovers||[]).filter(h=>h.status!=="Reprise"&&(state.site==="group"||h.site_id===state.site)),kaizens=(data.kaizens||[]).filter(k=>!k.archived_at&&(state.site==="group"||k.site_id===state.site));
+  const values={critical:signals.filter(s=>s.severity==="Critique").length,newSignals:signals.filter(s=>s.state==="Nouveau").length,late:actions.filter(isLate).length,verify:actions.filter(a=>a.status==="À vérifier").length,decisions:decisions.length,handovers:handovers.length,ideas:kaizens.filter(k=>k.status==="Idée").length,top:state.site==="group"?0:topSubjects().length};
+  const metrics={
+    dg:[["Décisions attendues",values.decisions,"À arbitrer"],["Risques critiques",values.critical,"Ouverts"],["Actions en retard",values.late,"Tous sites"]],
+    lean:[["Risques critiques",values.critical,"À accompagner"],["Actions en retard",values.late,"À débloquer"],["À vérifier",values.verify,"Résultat terrain"]],
+    director:[["Décisions attendues",values.decisions,"Sur le site"],["Risques critiques",values.critical,"À sécuriser"],["Actions en retard",values.late,"À débloquer"]],
+    teamlead:[["Nouveaux signaux",values.newSignals,"À prendre en compte"],["Relèves à reprendre",values.handovers,"Continuité d’équipe"],["Sujets SQCDP",values.top,"Aujourd’hui"]],
+    operator:[["Signaux ouverts",signals.length,"Sur le périmètre"],["Actions à vérifier",values.verify,"Preuve attendue"],["Idées nouvelles",values.ideas,"À examiner"]]
+  }[state.role];
+  return `<div class="grid cols-3 home-metrics section">${metrics.map(([label,value,foot])=>`<article class="card"><div class="metric-label">${esc(label)}</div><div class="metric-value">${value}</div><div class="metric-foot">${esc(foot)}</div></article>`).join("")}</div>`;
+}
+function homeRoleActions(){
+  const actions={
+    dg:[['Analyser les écarts','data-home-pilotage="analysis"'],['Préparer les décisions','data-home-pilotage="ritual"'],['Voir la roadmap','data-nav="roadmap"']],
+    lean:[['Analyser les écarts','data-home-pilotage="analysis"'],['Voir aujourd’hui','data-nav="daily"'],['Suivre la maturité','data-nav="maturity"']],
+    director:[['Voir aujourd’hui','data-nav="daily"'],['Préparer le SQCDP','data-home-pilotage="ritual"'],['Suivre les actions','data-nav="actions"']],
+    teamlead:[['Voir aujourd’hui','data-nav="daily"'],['Ouvrir le SQCDP','data-nav="sqcdp"'],['Voir le terrain','data-nav="terrain"']],
+    operator:[['Créer','data-create-menu'],['Voir mes priorités','data-nav="actions"'],['Ouvrir le SQCDP','data-nav="sqcdp"']]
+  }[state.role]||[];
+  return `<nav class="home-role-actions" aria-label="Actions principales">${actions.map(([label,attr],index)=>`<button type="button" class="btn ${index?"secondary":""}" ${attr}>${esc(label)}</button>`).join("")}</nav>`;
 }
 function renderHome(){
-  if(state.site==="group"||role().readonly){
-    const decisions=data.decisions.filter(d=>d.status!=="Clos");
-    return `${pageHead("Accueil Groupe","Les décisions du Groupe","Une synthèse volontairement courte : risques, décisions et accompagnement des six entités.",'<button class="btn" data-nav="pilotage">Ouvrir le pilotage</button>')}
-      <section class="hero home-alert-hero"><p class="eyebrow">BIA Holding · Aujourd’hui</p><p class="group-ambition">D’artisan industriel à industriel artisan.</p><h1><span class="home-alert-count">${decisions.length}<small>décision(s) attendue(s)</small></span><span class="home-alert-count critical-count">${data.signals.filter(s=>s.severity==="Critique"&&isOpenSignal(s)).length}<small>risque(s) critique(s) ouvert(s)</small></span></h1><p class="home-alert-note">Les indicateurs Groupe ne seront consolidés qu’après validation de leurs définitions, périmètres et pondérations.</p><div class="hero-actions"><button class="btn" data-nav="pilotage">Analyser les écarts</button><button class="btn secondary" data-nav="sqcdp">Ouvrir le SQCDP Groupe</button></div></section>
-      ${homeCards()}
-      <div class="grid main-aside section"><section><div class="section-title"><h2>Décider et débloquer</h2><span class="badge">${decisions.length} ouverts</span></div><div class="list">${decisions.map(decision=>`<article class="row"><div class="row-top"><div><div class="row-title">${esc(decision.title)}</div><div class="row-meta">${esc(getSiteName(decision.site_id))} · ${esc(decision.owner)} · ${shortDate(decision.due_date)}</div></div>${recordLink(decision.id,"Décider")}</div></article>`).join("")||empty("Aucune décision ouverte.")}</div></section>
-      <section class="panel"><div class="section-title"><h2>Réseau des six entités</h2></div><div class="list">${OPERATIONAL_SITES.map(s=>`<button class="row" data-set-site="${s.id}" style="text-align:left;border:1px solid var(--line)"><b>${esc(s.name)}</b><span class="row-meta" style="display:block">Ouvrir le site →</span></button>`).join("")}</div></section></div>`;
-  }
-  const signals=scoped(data.signals).filter(isOpenSignal);
-  const actions=scoped(data.actions).filter(isOpenAction);
-  const priorities=[...signals.filter(s=>s.severity==="Critique").map(s=>({id:s.id,title:s.description,meta:`Signal · ${s.type} · ${s.state}`,tone:"critical"})),...actions.filter(a=>["Critique","Haute"].includes(a.priority)).map(a=>({id:a.id,title:a.title,meta:`Action · ${a.owner} · ${a.status}`,tone:actionTone(a)}))].slice(0,5);
-  return `${pageHead("Accueil Site",`Aujourd’hui à ${site().name}`,"Priorités, signaux et décisions du périmètre autorisé.",'<button class="btn" data-new-signal>＋ SIGNAL TERRAIN</button>')}
-    <section class="hero"><p class="eyebrow">${esc(site().name)} · ${esc(workshop()?.name||"Tous les ateliers")}</p><p class="group-ambition">D’artisan industriel à industriel artisan.</p><h1>${priorities.length} sujet(s) demandent une réaction aujourd’hui</h1><p>Un signal est capturé une seule fois, puis suit son cycle jusqu’à la vérification d’efficacité.</p><div class="hero-actions"><button class="btn" data-new-signal>＋ NOUVEAU SIGNAL TERRAIN</button><button class="btn secondary" data-os="new" data-args="${esc(JSON.stringify({key:"kaizens"}))}">＋ PROPOSER UNE IDÉE</button><button class="btn ghost hero-link" data-nav="sqcdp">Ouvrir SQCDP / TOP 15</button></div></section>
+  const config=homeRoleConfig(),priorities=homePriorityItems(),decisions=scoped(data.decisions).filter(d=>d.status!=="Clos"),critical=scoped(data.signals).filter(s=>s.severity==="Critique"&&isOpenSignal(s)),groupView=state.site==="group";
+  const alertHeadline=["dg","lean"].includes(state.role)&&groupView
+    ? `<h1 class="home-alerts"><span class="home-alert-count">${decisions.length}<small>décision(s) attendue(s)</small></span><span class="home-alert-count critical-count">${critical.length}<small>risque(s) critique(s) ouvert(s)</small></span></h1>`
+    : `<h1>${priorities.length} priorité(s) à regarder maintenant</h1>`;
+  const network=groupView&&interfaceMode()==="complete"?`<details class="panel section home-network"><summary>Accéder aux six entités</summary><div class="grid cols-3 section">${OPERATIONAL_SITES.map(s=>`<button class="row" data-set-site="${s.id}"><b>${esc(s.name)}</b><span class="row-meta">Ouvrir le site →</span></button>`).join("")}</div></details>`:"";
+  return `<div class="role-home role-${state.role}">${pageHead(config.kicker,config.title,config.lead)}
+    <section class="hero home-alert-hero"><p class="eyebrow">${esc(groupView?"BIA Holding":`${site().name} · ${workshop()?.name||"Tous les ateliers"}`)} · Aujourd’hui</p><p class="group-ambition">D’artisan industriel à industriel artisan.</p>${alertHeadline}<p class="home-alert-note">Une information n’est saisie qu’une fois, puis suivie jusqu’au résultat vérifié.</p>${homeRoleActions()}</section>
     ${homeCards()}
-    <div class="grid main-aside section"><section><div class="section-title"><h2>Ce qui demande une réaction</h2></div><div class="list">${priorities.map(p=>`<article class="row"><div class="row-top"><div><div class="row-title">${esc(p.title)}</div><div class="row-meta">${esc(p.meta)}</div></div>${recordLink(p.id,"Traiter")}</div></article>`).join("")||empty("Aucun sujet prioritaire.")}</div></section>
-    <section class="panel"><h2>Prochain point quotidien</h2><p class="hint">${esc(workshop()?.name||"Atelier à sélectionner")}</p><div class="metric-value">${topSubjects().length} sujets</div><button class="btn" data-nav="sqcdp">Ouvrir SQCDP / TOP 15</button><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>Raccourcis</h3><div class="row-actions"><button class="btn secondary small" data-nav="terrain">Gemba / Signal</button><button class="btn secondary small" data-nav="audits">Audit Terrain · 50</button>${role().nav.includes("resolution")?'<button class="btn secondary small" data-nav="resolution">A3 / 8D</button>':""}</div></section></div>`;
+    <section class="section home-priorities"><div class="section-title"><div><h2>${state.role==="dg"?"Décider et débloquer":"À traiter en priorité"}</h2><p class="hint">Cinq dossiers maximum, classés par urgence opérationnelle.</p></div><span class="badge">${priorities.length}</span></div><div class="list">${priorities.map(item=>`<article class="row home-priority-row"><div><span class="pill ${item.tone}">${esc(item.label)}</span><div class="row-title">${esc(item.title)}</div><div class="row-meta">${esc(item.meta)}</div></div>${recordLink(item.id,item.kind==="decision"?"Décider":"Ouvrir")}</article>`).join("")||empty("Aucune priorité urgente sur ce périmètre.")}</div></section>
+    ${network}</div>`;
 }
 
 
 function renderRoadmap(){
   const horizons=["0-30 jours","31-60 jours","61-90 jours","3-12 mois"],rows=(data.roadmap||[]).filter(item=>state.site==="group"||item.site_id==="group"||item.site_id===state.site),canEdit=osManager();
-  return `${pageHead("Roadmap de transformation",state.site==="group"?"Trajectoire Groupe":"Trajectoire Groupe et Site","Une roadmap n’est pas une liste d’idées : chaque priorité possède un résultat attendu, un propriétaire, un indicateur et une date.",canEdit?'<button class="btn" data-new-roadmap>＋ Ajouter une priorité</button>':"")}
+  return `${pageHead("Roadmap de transformation",state.site==="group"?"Trajectoire Groupe":"Trajectoire Groupe et Site","Une roadmap n’est pas une liste d’idées : chaque priorité possède un résultat attendu, un propriétaire, un indicateur et une date.",canEdit?'<button class="btn" data-new-roadmap>+ Ajouter une priorité</button>':"")}
     <div class="roadmap-principles"><div><b>1 · NORD VRAI</b><span>Ce que le Groupe veut rendre durable</span></div><div><b>2 · ÉCART</b><span>Situation actuelle prouvée</span></div><div><b>3 · PERCÉE</b><span>Peu de priorités réellement décisives</span></div><div><b>4 · EXÉCUTION</b><span>PDCA, résultats et arbitrages</span></div></div>
     <div class="alert section"><b>Règle de gouvernance :</b> la Direction fixe l’ambition et arbitre ; les sites challengent la faisabilité par catchball ; le Responsable Lean rend visibles les dépendances et les résultats.</div>
     <div class="roadmap-board section">${horizons.map(horizon=>`<section class="roadmap-horizon"><header><h2>${horizon}</h2><span>${rows.filter(x=>x.horizon===horizon).length}</span></header>${rows.filter(x=>x.horizon===horizon).map(item=>`<article class="roadmap-item"><div class="row-top"><span class="eyebrow">${esc(item.id)} · ${esc(getSiteName(item.site_id))}</span>${pill(item.status,item.status==="Terminé"?"done":item.status==="Bloqué"?"open":"progress")}</div><h3>${esc(item.title)}</h3><p>${esc(item.outcome)}</p><div class="progress"><span style="width:${item.progress}%"></span></div><small>${item.progress} % · ${esc(item.owner)}<br>KPI : ${esc(item.kpi)} · ${shortDate(item.target_date)}</small>${canEdit&&allowedSite(item.site_id,true)?`<button class="btn small secondary" data-edit-roadmap="${item.id}">Mettre à jour</button><button class="btn ghost small" data-new-action data-origin-type="Roadmap" data-origin-id="${item.id}">Ajouter une action</button>`:""}</article>`).join("")||'<div class="empty compact">Aucune priorité.</div>'}</section>`).join("")}</div>
@@ -351,7 +428,7 @@ function renderActions(){
   if(state.actionFilter==="late")actions=actions.filter(isLate);
   if(state.actionFilter==="verify")actions=actions.filter(a=>a.status==="À vérifier");
   if(state.actionFilter==="open")actions=actions.filter(isOpenAction);
-  return `${pageHead("Plan d’actions","Une action unique, quelle que soit son origine","Une action créée depuis un signal, un audit ou un A3 reste visible ici avec son lien d’origine.",role().readonly?"":'<button class="btn" data-new-action>＋ Nouvelle action</button>')}
+  return `${pageHead("Plan d’actions","Une action unique, quelle que soit son origine","Une action créée depuis un signal, un audit ou un A3 reste visible ici avec son lien d’origine.",role().readonly?"":'<button class="btn" data-new-action>+ Nouvelle action</button>')}
     <div class="filters">${[["all","Toutes"],["late","En retard"],["verify","À vérifier"],["open","Ouvertes"]].map(([id,label])=>`<button class="chip ${state.actionFilter===id?"active":""}" data-action-filter="${id}">${label}</button>`).join("")}</div>
     ${listSearch("Rechercher une action")}<div class="kanban">${ACTION_STATES.map(status=>{const rows=actions.filter(a=>a.status===status);return `<section class="kanban-col"><h3>${status}<span class="badge">${rows.length}</span></h3><div class="list">${rows.map(a=>actionCard(a)).join("")||empty("Aucune action")}</div></section>`}).join("")}</div>`;
 }
@@ -366,7 +443,7 @@ function signalCard(s){return `<article class="row signal-row" data-search-row><
 function renderAudits(){
   const rows=scoped(data.audits).sort((a,b)=>String(b.updated_at||b.performed_at).localeCompare(String(a.updated_at||a.performed_at)));
   const completed=rows.filter(a=>a.status==="Terminé"&&a.audit_data?.domain_scores),drafts=rows.filter(a=>a.status==="Brouillon"),last=completed[0],domains=last?Object.entries(last.audit_data.domain_scores):[];
-  return `${pageHead("Audits","Audit Terrain BIA · 50 critères","Dix domaines, cinq critères par domaine et une preuve obligatoire pour chaque note.",'<button class="btn" data-new-audit>＋ DÉMARRER L’AUDIT 50 CRITÈRES</button>')}
+  return `${pageHead("Audits","Audit Terrain BIA · 50 critères","Dix domaines, cinq critères par domaine et une preuve obligatoire pour chaque note.",'<button class="btn" data-new-audit>+ DÉMARRER L’AUDIT 50 CRITÈRES</button>')}
     ${drafts.length?`<section class="attention-strip"><div><b>${drafts.length} audit(s) à reprendre</b><span>Les brouillons sont enregistrés sur cet appareil.</span></div><button class="btn" data-edit-audit="${drafts[0].id}">Continuer ${esc(drafts[0].id)}</button></section>`:""}
     <div class="grid cols-4"><article class="card"><div class="metric-label">Audits 50 critères terminés</div><div class="metric-value">${completed.length}</div></article><article class="card"><div class="metric-label">Brouillons à reprendre</div><div class="metric-value">${drafts.length}</div></article><article class="card"><div class="metric-label">Dernier score détaillé</div><div class="metric-value">${last?.score??"—"} <small>/ 100</small></div></article><article class="card"><div class="metric-label">Actions issues d’audit</div><div class="metric-value">${scoped(data.actions).filter(a=>a.origin_type==="Audit").length}</div></article></div>
     ${last?`<section class="panel section"><div class="section-title"><div><h2>Dernier Audit Terrain · ${esc(last.scope)}</h2><p class="hint">${shortDate(last.performed_at)} · ${esc(last.owner)}</p></div>${pill(`${last.score}/100`,last.score>=80?"done":last.score>=60?"progress":"open")}</div><div class="audit-domain-grid">${domains.map(([name,score])=>`<div class="audit-score-card"><div class="section-title"><b>${esc(name)}</b><span>${Number(score).toFixed(1)}/5</span></div><div class="progress"><span style="width:${score/5*100}%"></span></div></div>`).join("")}</div></section>`:""}
@@ -376,7 +453,7 @@ function renderAudits(){
 
 function renderProjects(){
   const rows=scoped(data.projects||[]),methods=["SMED","VSM","DMAIC","Kaizen","PDCA","TPM","Industrialisation"];
-  return `${pageHead("Portefeuille d’amélioration","Chantiers Lean et industriels","Chaque chantier part d’un problème, suit une méthode proportionnée et ne déclare un gain qu’après vérification.",'<button class="btn" data-new-project>＋ Nouveau chantier</button>')}
+  return `${pageHead("Portefeuille d’amélioration","Chantiers Lean et industriels","Chaque chantier part d’un problème, suit une méthode proportionnée et ne déclare un gain qu’après vérification.",'<button class="btn" data-new-project>+ Nouveau chantier</button>')}
     <div class="grid cols-4"><article class="card"><div class="metric-label">Chantiers actifs</div><div class="metric-value">${rows.filter(p=>p.status!=="Clos").length}</div></article><article class="card"><div class="metric-label">Bloqués</div><div class="metric-value">${rows.filter(p=>p.status==="Bloqué").length}</div></article><article class="card"><div class="metric-label">Gains vérifiés</div><div class="metric-value">${rows.filter(p=>p.result&&p.result!=="Non vérifié").length}</div></article><article class="card"><div class="metric-label">Méthodes disponibles</div><div class="metric-value">${methods.length}</div></article></div>
     <div class="grid cols-2 section">${rows.map(p=>`<article class="card"><div class="row-top"><div>${pill(p.method,"info")} ${pill(p.status,p.status==="Clos"?"done":p.status==="Bloqué"?"open":"progress")}</div><b>${esc(p.id)}</b></div><h2 style="font-size:17px">${esc(p.title)}</h2><p class="hint">${esc(p.owner)} · cible ${shortDate(p.target_date)}${p.problem_id?` · problème ${esc(p.problem_id)}`:""}</p><div class="progress"><span style="width:${Math.max(0,Math.min(100,p.progress||0))}%"></span></div><div class="grid cols-3 section"><div><div class="metric-label">Référence</div><b>${esc(p.baseline||"À mesurer")}</b></div><div><div class="metric-label">Cible</div><b>${esc(p.target||"À définir")}</b></div><div><div class="metric-label">Résultat</div><b>${esc(p.result||"Non vérifié")}</b></div></div><div class="row-actions"><button class="btn small secondary" data-edit-project="${p.id}">Mettre à jour</button><button class="btn small ghost" data-action-from-project="${p.id}">Ajouter une action</button></div></article>`).join("")||empty("Aucun chantier sur ce périmètre.")}</div>`;
 }
@@ -530,14 +607,14 @@ function trainingPeople(){const rows=scoped(data.people);return ["teamlead","ope
 function trainingRecordStatus(r){if(r.status==="Validé"){if(r.expires_at&&r.expires_at<today())return {text:"Expiré",tone:"open"};return {text:"Valide",tone:"done"}}return {text:r.status||"À former",tone:r.status==="Non validé"?"open":r.status==="En cours"?"progress":r.status==="Formé"?"info":"neutral"}}
 function renderTraining(){
   const people=trainingPeople(),records=data.trainingRecords.filter(r=>people.some(p=>p.id===r.person_id)),canManage=osManager(),tabs=`<div class="tabs"><button class="tab ${state.trainingTab==="catalog"?"active":""}" data-training-tab="catalog">Catalogue</button><button class="tab ${state.trainingTab==="application"?"active":""}" data-training-tab="application">Formation à l’application</button><button class="tab ${state.trainingTab==="people"?"active":""}" data-training-tab="people">Personnes</button><button class="tab ${state.trainingTab==="matrix"?"active":""}" data-training-tab="matrix">Matrice de compétences</button></div>`;
-  const head=pageHead("Développement des compétences","Formation et qualification","Tracer séparément la présence, l’évaluation, la pratique et la validation du niveau.",canManage?'<button class="btn" data-new-training-record>＋ Enregistrer une formation</button>':"");
+  const head=pageHead("Développement des compétences","Formation et qualification","Tracer séparément la présence, l’évaluation, la pratique et la validation du niveau.",canManage?'<button class="btn" data-new-training-record>+ Enregistrer une formation</button>':"");
   if(state.trainingTab==="application"){
     const appRecords=people.map(p=>({person:p,record:latestTrainingRecord(p.id,APP_TRAINING_ID)})),valid=appRecords.filter(x=>trainingRecordStatus(x.record||{}).text==="Valide").length,inProgress=appRecords.filter(x=>x.record&&["En cours","Formé"].includes(x.record.status)).length;
     return `${head}${tabs}<section class="app-training-hero"><div><p class="eyebrow">BIA-APP-01</p><h2>Utiliser BIA Lean OS selon son rôle</h2><p>Un parcours pratique, une validation nominative et une matrice qui rend visibles les compétences réellement démontrées.</p></div><div class="row-actions"><button class="btn" data-training-guide>Ouvrir le livret</button>${canManage?`<button class="btn secondary" data-new-training-record data-training-id="${APP_TRAINING_ID}">Enregistrer une qualification</button>`:""}</div></section><div class="grid cols-3 section"><article class="card"><div class="metric-label">Personnes suivies</div><div class="metric-value">${people.length}</div></article><article class="card"><div class="metric-label">Application validée</div><div class="metric-value">${valid}</div></article><article class="card"><div class="metric-label">Parcours en cours</div><div class="metric-value">${inProgress}</div></article></div><section class="panel section"><div class="section-title"><div><h2>Grille de formation au logiciel</h2><p class="hint">Le chiffre indique le niveau démontré ; la cible du profil est affichée au survol.</p></div><span class="badge">${APP_SKILLS.length} compétences</span></div><div class="table-wrap"><table class="data-table training-matrix app-skill-matrix"><thead><tr><th>Personne / profil</th>${APP_SKILLS.map(s=>`<th title="${esc(s.label)}">${esc(s.label)}</th>`).join("")}</tr></thead><tbody>${appRecords.map(({person,record})=>{const profile=appProfileFor(person);return `<tr><td><button class="link-button" data-training-person="${person.id}">${esc(person.name)}</button><small class="row-meta">${esc(APP_PROFILES[profile])} · ${esc(getSiteName(person.site_id))}</small></td>${APP_SKILLS.map(skill=>{const level=appSkillLevel(record,skill),expected=skill.expected[profile]??0,ok=level>=expected&&expected>0;return `<td title="Niveau ${level} / attendu ${expected}"><span class="skill-level level-${level} ${ok?"skill-ok":""}">${level}</span><small class="skill-target">/${expected}</small></td>`}).join("")}</tr>`}).join("")||'<tr><td colspan="11">Aucune personne sur ce périmètre.</td></tr>'}</tbody></table></div><div class="level-legend section">${TRAINING_LEVELS.map((x,i)=>`<span><b class="skill-level level-${i}">${i}</b>${esc(x.split(" · ")[1])}</span>`).join("")}</div></section>`;
   }
-  if(state.trainingTab==="people")return `${head}${tabs}${listSearch("Retrouver une personne")}<div class="grid cols-3">${people.map(p=>{const rows=records.filter(r=>r.person_id===p.id),valid=rows.filter(r=>trainingRecordStatus(r).text==="Valide").length;return `<article class="card training-person" data-search-row><div class="row-top"><span class="person-avatar">${esc(p.name.split(" ").map(x=>x[0]).join("").slice(0,2))}</span>${pill(p.status,p.status==="Actif"?"done":"neutral")}</div><h3>${esc(p.name)}</h3><p class="hint">${esc(p.employee_id)} · ${esc(p.job)}<br>${esc(getSiteName(p.site_id))} · ${esc(p.workshop||"Périmètre non précisé")}</p><div class="metric-value">${valid}<small> validation(s)</small></div><div class="row-actions"><button class="btn secondary" data-training-person="${p.id}">Ouvrir le dossier</button></div></article>`}).join("")||empty("Aucune personne sur ce périmètre.")}</div>${canManage?'<button class="btn secondary section" data-new-training-person>＋ Ajouter une personne</button>':""}`;
+  if(state.trainingTab==="people")return `${head}${tabs}${listSearch("Retrouver une personne")}<div class="grid cols-3">${people.map(p=>{const rows=records.filter(r=>r.person_id===p.id),valid=rows.filter(r=>trainingRecordStatus(r).text==="Valide").length;return `<article class="card training-person" data-search-row><div class="row-top"><span class="person-avatar">${esc(p.name.split(" ").map(x=>x[0]).join("").slice(0,2))}</span>${pill(p.status,p.status==="Actif"?"done":"neutral")}</div><h3>${esc(p.name)}</h3><p class="hint">${esc(p.employee_id)} · ${esc(p.job)}<br>${esc(getSiteName(p.site_id))} · ${esc(p.workshop||"Périmètre non précisé")}</p><div class="metric-value">${valid}<small> validation(s)</small></div><div class="row-actions"><button class="btn secondary" data-training-person="${p.id}">Ouvrir le dossier</button></div></article>`}).join("")||empty("Aucune personne sur ce périmètre.")}</div>${canManage?'<button class="btn secondary section" data-new-training-person>+ Ajouter une personne</button>':""}`;
   if(state.trainingTab==="matrix")return `${head}${tabs}<section class="panel"><div class="section-title"><div><h2>Matrice de compétences</h2><p class="hint">Le niveau est affiché seulement après évaluation et validation nominative.</p></div><span class="badge">${people.length} personne(s)</span></div><div class="table-wrap"><table class="data-table training-matrix"><thead><tr><th>Personne</th>${data.trainingCatalog.map(t=>`<th title="${esc(t.title)}">${esc(t.code.replace("BIA-",""))}</th>`).join("")}</tr></thead><tbody>${people.map(p=>`<tr><td><button class="link-button" data-training-person="${p.id}">${esc(p.name)}</button><small class="row-meta">${esc(p.employee_id)}</small></td>${data.trainingCatalog.map(t=>{const r=records.filter(x=>x.person_id===p.id&&x.training_id===t.id).sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];return `<td>${r&&trainingRecordStatus(r).text==="Valide"?`<span class="skill-level level-${r.level}" title="${esc(TRAINING_LEVELS[r.level])}">${r.level}</span>`:r?`<span class="pill neutral">${esc(trainingRecordStatus(r).text)}</span>`:"—"}</td>`}).join("")}</tr>`).join("")}</tbody></table></div><div class="level-legend section">${TRAINING_LEVELS.map((x,i)=>`<span><b class="skill-level level-${i}">${i}</b>${esc(x.split(" · ")[1])}</span>`).join("")}</div></section>`;
-  return `${head}${tabs}<div class="grid cols-4"><article class="card"><div class="metric-label">Formations publiées</div><div class="metric-value">${data.trainingCatalog.filter(t=>t.status==="Publié").length}</div></article><article class="card"><div class="metric-label">Validations enregistrées</div><div class="metric-value">${records.filter(r=>r.status==="Validé").length}</div></article><article class="card"><div class="metric-label">Qualifications expirées</div><div class="metric-value">${records.filter(r=>trainingRecordStatus(r).text==="Expiré").length}</div></article><article class="card"><div class="metric-label">Personnes suivies</div><div class="metric-value">${people.length}</div></article></div><section class="section"><div class="section-title"><div><h2>Catalogue BIA</h2><p class="hint">Chaque contenu précise objectifs, séquence, durée et mode d’évaluation.</p></div>${canManage?'<button class="btn secondary" data-new-training>＋ Nouvelle formation</button>':""}</div>${listSearch("Rechercher une formation")}<div class="grid cols-3">${data.trainingCatalog.map(t=>`<article class="card training-card" data-search-row><div class="row-top"><span class="eyebrow">${esc(t.code)} · ${esc(t.category)}</span>${pill(t.status,t.status==="Publié"?"done":"progress")}</div><h3>${esc(t.title)}</h3><p>${esc(t.objectives)}</p><p class="hint">${t.duration} h · évaluation : ${esc(t.evaluation)}${t.validity_months?` · validité ${t.validity_months} mois`:""}</p><button class="btn secondary" data-open-training="${t.id}">Voir le contenu</button></article>`).join("")}</div></section>`;
+  return `${head}${tabs}<div class="grid cols-4"><article class="card"><div class="metric-label">Formations publiées</div><div class="metric-value">${data.trainingCatalog.filter(t=>t.status==="Publié").length}</div></article><article class="card"><div class="metric-label">Validations enregistrées</div><div class="metric-value">${records.filter(r=>r.status==="Validé").length}</div></article><article class="card"><div class="metric-label">Qualifications expirées</div><div class="metric-value">${records.filter(r=>trainingRecordStatus(r).text==="Expiré").length}</div></article><article class="card"><div class="metric-label">Personnes suivies</div><div class="metric-value">${people.length}</div></article></div><section class="section"><div class="section-title"><div><h2>Catalogue BIA</h2><p class="hint">Chaque contenu précise objectifs, séquence, durée et mode d’évaluation.</p></div>${canManage?'<button class="btn secondary" data-new-training>+ Nouvelle formation</button>':""}</div>${listSearch("Rechercher une formation")}<div class="grid cols-3">${data.trainingCatalog.map(t=>`<article class="card training-card" data-search-row><div class="row-top"><span class="eyebrow">${esc(t.code)} · ${esc(t.category)}</span>${pill(t.status,t.status==="Publié"?"done":"progress")}</div><h3>${esc(t.title)}</h3><p>${esc(t.objectives)}</p><p class="hint">${t.duration} h · évaluation : ${esc(t.evaluation)}${t.validity_months?` · validité ${t.validity_months} mois`:""}</p><button class="btn secondary" data-open-training="${t.id}">Voir le contenu</button></article>`).join("")}</div></section>`;
 }
 function openTraining(id){
   const t=data.trainingCatalog.find(x=>x.id===id);if(!t)return;const pedagogy=trainingPedagogy(t);
@@ -552,9 +629,9 @@ function openTrainingPerson(id){const p=data.people.find(x=>x.id===id);if(!p)ret
 
 function renderAccount(){
   const caps={dg:["Voir la synthèse Groupe","Consulter les décisions attendues","Consulter les KPI et bonnes pratiques"],lean:["Accéder aux six sites","Animer le système Lean","Configurer les référentiels fonctionnels"],director:["Piloter le site attribué","Décider et escalader","Consulter les données de son site"],teamlead:["Animer le SQCDP de l’équipe","Prendre en charge les signaux","Suivre les actions du périmètre"],operator:["Créer un Signal Terrain","Proposer une idée","Suivre les dossiers de son périmètre"]}[state.role]||[role().readonly?"Consulter les dossiers accessibles":"Piloter et contribuer sur le périmètre attribué"];
-  return `${pageHead("Compte","Profil et habilitations","Les profils adaptent l’interface locale. L’authentification et le partage entre appareils ne sont pas encore connectés.",osIsAdmin()?'<button class="btn" data-new-account>＋ Ajouter un compte</button>':"")}
+  return `${pageHead("Compte","Profil et habilitations","Les profils adaptent l’interface locale. L’authentification et le partage entre appareils ne sont pas encore connectés.",osIsAdmin()?'<button class="btn" data-new-account>+ Ajouter un compte</button>':"")}
     <div class="grid main-aside"><section class="panel account-role"><p class="eyebrow">Profil actif</p><h2>Profil de démonstration</h2><p>${esc(role().label)}</p><p class="hint">Périmètre : ${esc(site().name)}${workshop()?` · ${esc(workshop().name)}`:""}</p><div class="check-list section">${caps.map(c=>`<div class="check">✓ ${esc(c)}</div>`).join("")}</div></section>
-    <aside class="panel"><h2>Les profils fonctionnels</h2><div class="list section">${Object.values(ROLES).map(r=>`<div class="row"><b>${esc(r.label)}</b><span class="row-meta" style="display:block">Périmètre ${esc(r.scope)}</span></div>`).join("")}</div></aside></div>
+    <aside class="panel"><h2>Affichage de l’application</h2><p class="hint">Le mode essentiel réduit la navigation sans retirer aucun droit ni aucune donnée.</p><div class="interface-choice section"><button type="button" class="btn ${interfaceMode()==="essential"?"":"secondary"}" data-set-interface-mode="essential">Essentielle</button><button type="button" class="btn ${interfaceMode()==="complete"?"":"secondary"}" data-set-interface-mode="complete">Complète</button></div><details class="section"><summary>Voir les profils fonctionnels</summary><div class="list section">${Object.values(ROLES).map(r=>`<div class="row"><b>${esc(r.label)}</b><span class="row-meta" style="display:block">Périmètre ${esc(r.scope)}</span></div>`).join("")}</div></details></aside></div>
     ${osIsAdmin()?`<section class="section"><div class="section-title"><h2>Comptes déclarés</h2><span class="badge">${data.users.length}</span></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Nom</th><th>Rôle</th><th>Périmètre</th><th>Statut</th></tr></thead><tbody>${data.users.map(a=>`<tr><td><b>${esc(a.name)}</b></td><td>${esc(ROLES[a.role]?.label||a.role)}</td><td>${esc(getSiteName(a.site_id))}</td><td>${pill(a.active?"Actif":"Inactif",a.active?"done":"neutral")}</td></tr>`).join("")}</tbody></table></div></section>`:""}
     ${role().nav.includes("terrain")?`<section class="panel section terrain-access"><div><p class="eyebrow">Accès atelier</p><h2>Lien direct vers Signal Terrain</h2><p class="hint">Le lien ouvre le site et l’atelier actifs. Il ne modifie pas le profil local de l’appareil et ne remplace pas une authentification.</p><code>${esc(terrainAccessUrl())}</code></div><div class="row-actions"><button class="btn" type="button" data-share-terrain-link>Partager le lien</button><button class="btn secondary" type="button" data-copy-terrain-link>Copier</button><a class="btn ghost" href="${esc(terrainAccessUrl())}">Tester l’accès</a></div></section>`:""}
     <section class="panel section"><h2>Sauvegarde locale</h2><p class="hint">Exportez un fichier avant de changer d’appareil. L’import contrôle le schéma et conserve une sauvegarde avant remplacement.</p><div class="row-actions"><button class="btn secondary" data-export>Exporter les données</button>${osIsAdmin()?`<label class="btn secondary" style="display:inline-flex;align-items:center">Restaurer une sauvegarde<input type="file" id="importFile" accept=".json,application/json" hidden></label>${localStorage.getItem(`${STORAGE_KEY}-before-import`)?'<button class="btn secondary" data-export-previous>Télécharger la version avant import</button>':""}`:""}</div></section>`;
@@ -602,6 +679,7 @@ function updateToolCheck(input){
 function bindModal(){
   document.querySelectorAll("[data-close-modal]").forEach(b=>b.onclick=requestCloseModal);
   document.querySelectorAll("[data-print]").forEach(b=>b.onclick=()=>window.print());
+  document.querySelectorAll("[data-new-signal]").forEach(b=>b.onclick=()=>newSignalForm());
   document.querySelectorAll("[data-new-action]").forEach(b=>b.onclick=()=>{launchAction(b);});
   document.querySelectorAll("[data-advance-signal]").forEach(b=>b.onclick=()=>advanceSignal(b.dataset.advanceSignal));
   document.querySelectorAll("[data-problem-from-signal]").forEach(b=>b.onclick=()=>problemFromSignal(b.dataset.problemFromSignal));
@@ -609,6 +687,10 @@ function bindModal(){
 }
 function bind(){
   document.querySelectorAll("[data-nav]").forEach(b=>b.onclick=()=>switchView(b.dataset.nav));
+  document.querySelectorAll("[data-home-pilotage]").forEach(b=>b.onclick=()=>{state.pilotageMode=b.dataset.homePilotage;switchView("pilotage")});
+  document.querySelectorAll("[data-create-menu]").forEach(b=>b.onclick=openCreateMenu);
+  document.querySelectorAll("[data-interface-mode-toggle]").forEach(b=>b.onclick=()=>setInterfaceMode(interfaceMode()==="essential"?"complete":"essential"));
+  document.querySelectorAll("[data-set-interface-mode]").forEach(b=>b.onclick=()=>setInterfaceMode(b.dataset.setInterfaceMode));
   document.querySelectorAll("[data-set-site]").forEach(b=>b.onclick=()=>{state.site=b.dataset.setSite;localStorage.setItem("biaSite",state.site);if(state.view==="home")state.view=role().readonly?"pilotage":"home";render()});
   document.querySelectorAll("[data-new-signal]").forEach(b=>b.onclick=()=>newSignalForm());
   document.querySelectorAll("[data-open-signal]").forEach(b=>b.onclick=()=>openSignal(b.dataset.openSignal));

@@ -304,8 +304,8 @@ test("G · benchmark → site en difficulté → pratique validée ailleurs, san
   a.run('state.view="pilotage";state.osTab="tower";render()');
   assert.equal(a.all(".os-kpi-cell").length, 0);
   assert.ok(a.all(".control-analysis-table tbody tr").length >= 5);
-  assert.match(a.q("#appView").textContent, /Control Tower/);
-  assert.match(a.q("#appView").textContent, /SQCDP/);
+  assert.match(a.q("#appView").textContent, /Pilotage · Analyser/);
+  assert.match(a.q("#appView").textContent, /Décider/);
   const result = JSON.parse(
     a.run(
       'JSON.stringify(osSuggestions("marzin").find(s=>s.kpi_id==="KPI-trs"))',

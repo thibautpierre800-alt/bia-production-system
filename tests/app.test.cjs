@@ -36,26 +36,40 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.equal(q('#gembaSite').options.length,1);
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-2-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.2.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-3-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.3.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
+});
+test('Interface essentielle, accueil par rôle et commande Créer réduisent le parcours sans retirer les droits',t=>{
+  const a=app(t),{run,q,all,click,fill}=a;
+  run('state.role="operator";state.site="marzin";state.interfaceMode=preferredInterfaceMode("operator");state.view="home";render()');
+  assert.equal(run('interfaceMode()'),'essential');
+  assert.equal(all('#mobileNav .nav-button').length,4);
+  assert.match(q('#appView').textContent,/Voir, signaler, agir/);
+  assert.equal(run('visibleNav().some(item=>item.id==="training")'),false);
+  click('[data-interface-mode-toggle]');assert.equal(run('interfaceMode()'),'complete');assert.equal(run('visibleNav().some(item=>item.id==="training")'),true);
+  fill('#roleSelect','teamlead');assert.equal(run('interfaceMode()'),'essential');assert.equal(run('state.dailyLevel'),1);
+  run('state.view="daily";render()');assert.equal(all('[data-os="level"]').length,2);assert.match(q('.page-head h1').textContent,/N1 · Équipe/);
+  run('state.role="operator";state.view="home";render()');click('[data-create-menu]');click('.create-choice.idea');
+  assert.ok(q('.form-advanced'));assert.equal(q('.form-advanced').open,false);assert.equal(q('#osForm [name="owner"]').value,'Opérateur');assert.ok(q('#osForm [name="problem"]'));
 });
 test('Accueil, raccourcis terrain et écran SQCDP Groupe vertical sont explicites',t=>{
   const a=app(t),{run,q,all,click}=a;
   run('state.role="lean";state.site="group";state.view="home";render()');
   assert.match(q('#appView').textContent,/D’artisan industriel à industriel artisan\./);
   assert.deepEqual(all('.home-alert-count').map(x=>x.textContent.trim()),['2décision(s) attendue(s)','1risque(s) critique(s) ouvert(s)']);
-  assert.equal(all('.quick-action-dock .quick-action').length,2);
-  assert.deepEqual(all('.quick-action-dock .quick-action').map(x=>x.getAttribute('aria-label')),['Créer un signal terrain','Proposer une idée']);
+  assert.equal(all('.quick-action-dock .quick-action').length,1);
+  assert.deepEqual(all('.quick-action-dock .quick-action').map(x=>x.getAttribute('aria-label')),['Créer un dossier']);
   assert.equal(all('.quick-action-dock b,.quick-action-dock small').length,0);
   assert.match(fs.readFileSync('experience.css','utf8'),/\.quick-action\{[^}]*width:44px;height:44px/);
-  click('.quick-action.idea');assert.match(q('#modalContent').textContent,/Une idée courte suffit/);run('closeModal()');
+  click('.quick-action.create');assert.match(q('#modalContent').textContent,/Signal Terrain/);assert.match(q('#modalContent').textContent,/Idée Kaizen/);click('.create-choice.idea');assert.match(q('#modalContent').textContent,/Une idée courte suffit/);run('closeModal()');
   run('state.view="sqcdp";render()');click('[data-display-mode]');
   assert.equal(q('body').classList.contains('group-presentation'),true);
   assert.ok(q('.group-display-exit'));click('.group-display-exit');
   assert.equal(q('body').classList.contains('group-presentation'),false);
   run('state.view="pilotage";state.osTab="tower";render()');
+  assert.equal(all('[data-pilotage-mode]').length,2);
   assert.match(q('.control-analysis-table').textContent,/73,3 % défavorable/);
   run('state.role="dg";state.view="home";render()');assert.equal(q('.quick-action-dock'),null);
 });
@@ -109,7 +123,7 @@ test('Le scénario de démonstration est actualisé avec sauvegarde sans toucher
 });
 test('Signal → prise en compte → action vérifiée → résolution → clôture et reprise',t=>{
   const a=app(t),{run,fill,submit,q,click}=a;
-  click('[data-new-signal]');fill('#signalDescription','Guide de scie desserré');submit('#signalForm');
+  click('[data-create-menu]');click('[data-new-signal]');fill('#signalDescription','Guide de scie desserré');submit('#signalForm');
   const id=run('data.signals[0].id');assert.equal(run('data.signals[0].state'),'Nouveau');
   run(`advanceSignal('${id}')`);fill('#transitionOwner','Responsable terrain');submit('#signalTransition');
   assert.equal(run('data.signals[0].state'),'Pris en compte');
