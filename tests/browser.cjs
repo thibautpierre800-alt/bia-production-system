@@ -118,6 +118,17 @@ async function main() {
     );
     const quickDock = await page.locator(".quick-action-dock").boundingBox();
     assert.ok(quickDock.width <= 110 && quickDock.height <= 60, "Raccourcis terrain compacts");
+    assert.ok(Number(await page.locator("#notificationCount").innerText()) > 0);
+    await page.locator("#notificationButton").click();
+    assert.match(
+      await page.locator("#modalContent").innerText(),
+      /Signal critique ouvert/,
+    );
+    assert.match(
+      await page.locator("#modalContent").innerText(),
+      /Relève d’équipe à reprendre/,
+    );
+    await page.locator("[data-close-modal]").click();
     report.initialRenderMs = Date.now() - start;
     await page.screenshot({
       path: path.join(output, "control-tower-desktop.png"),
@@ -149,6 +160,25 @@ async function main() {
       state.site = "group";
       state.workshop = null;
       closeModal();
+    });
+    await page.evaluate(() => {
+      state.role = "teamlead";
+      state.site = "marzin";
+      state.workshop = "marzin-pilot";
+      state.view = "daily";
+      render();
+    });
+    assert.equal(await page.locator(".handover-card").count(), 1);
+    await page.screenshot({
+      path: path.join(output, "daily-handover-desktop.png"),
+      fullPage: true,
+      animations: "disabled",
+    });
+    await page.evaluate(() => {
+      state.role = "lean";
+      state.site = "group";
+      state.workshop = null;
+      render();
     });
     for (const [width, height] of [
       [390, 844],

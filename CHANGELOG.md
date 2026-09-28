@@ -1,5 +1,15 @@
 # Changelog
 
+## 7.2.0 — 28 septembre 2026
+
+- Centre d’alertes opérationnelles calculé à partir des signaux critiques, actions en retard, escalades, décisions attendues et relèves non reprises.
+- Relève d’équipe structurée dans le management quotidien, avec situation, sécurité, qualité, effectif, priorités, dossiers liés et confirmation de reprise.
+- Équipes de relève configurables dans Administration et exemple industriel cohérent intégré au scénario de démonstration.
+- Lien profond partageable vers Signal Terrain, prépositionné sur le site et l’atelier actifs.
+- File locale et paquet JSON d’échanges pour préparer une future synchronisation serveur sans prétendre qu’elle est déjà active.
+
+La persistance, les lectures d’alertes et la file d’échanges restent locales. Aucune notification poussée, authentification serveur, synchronisation entre appareils ou connexion ERP réelle n’est activée.
+
 ## 7.1.1 — 27 septembre 2026
 
 - Raccourcis Signal Terrain et Idée Kaizen réduits à deux commandes compactes, avec libellé accessible et infobulle.

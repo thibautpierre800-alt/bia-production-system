@@ -16,7 +16,7 @@ const scripts = [
   "os-app.js",
   "boot.js",
 ];
-function app(t, stored) {
+function app(t, stored, url = "https://bia.example/bia-production-system/") {
   const errors = [],
     vc = new VirtualConsole();
   vc.on("jsdomError", (e) => errors.push(e));
@@ -25,7 +25,7 @@ function app(t, stored) {
     .replace(/<script[\s\S]*?<\/script>/g, "")
     .replace(/<link[^>]*>/g, "");
   const dom = new JSDOM(html, {
-    url: "https://bia.example/bia-production-system/",
+    url,
     runScripts: "dangerously",
     pretendToBeVisual: true,
     virtualConsole: vc,

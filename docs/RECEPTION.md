@@ -1,18 +1,20 @@
-# Réception — BIA Lean Operating System 7.1.1
+# Réception — BIA Lean Operating System 7.2.0
 
-Date : 27 septembre 2026. Version précédente sauvegardée : 7.1.0, commit `1180497`, branche distante `backup/before-7.1.1-2026-09-27`.
+Date : 28 septembre 2026. Version précédente sauvegardée : 7.1.1, commit `6dc3fab`, branche distante `backup/before-7.2.0-2026-09-28`.
 
 ## Changements réceptionnés
 
 Le cœur transversal relie les modules conservés et nouveaux : identifiants, relations, base d’actions, mesures canoniques, résultats, preuves, commentaires et historique. La migration conserve les données compatibles et le JSON antérieur. Les écrans sont alimentés par les dossiers enregistrés ; les scénarios fictifs restent explicitement identifiés.
 
-Les nouveaux parcours comprennent Control Tower, Hoshin/X-Matrix, routines/escalades, VSM graphique, Kaizen/gains, déploiement et maturité. Les audits deviennent paramétrables. A3, PDCA et DMAIC partagent le module de résolution. Les formations, guides et documents historiques restent disponibles.
+La version 7.2.0 ajoute les alertes opérationnelles, les passages d’équipe reliés aux dossiers actifs, l’accès direct Signal Terrain et une file d’échanges exportable. Ces fonctions restent cohérentes avec le fonctionnement local : aucun écran ne prétend qu’un serveur, une notification poussée ou un ERP est connecté.
+
+Les parcours existants comprennent Control Tower, Hoshin/X-Matrix, routines/escalades, VSM graphique, Kaizen/gains, déploiement et maturité. Les audits restent paramétrables. A3, PDCA et DMAIC partagent le module de résolution. Les formations, guides et documents historiques restent disponibles.
 
 ## Vérifications exécutées
 
 | Contrôle | Résultat et portée |
 |---|---|
-| Tests métier/DOM | 39 tests réussis : intégrité, formulaires, relecture, migration, scénario réaliste, formation logicielle, maturité historique et non-régression |
+| Tests métier/DOM | 40 tests réussis : intégrité, formulaires, relecture, migration, scénario réaliste, alertes, relève, accès terrain, paquet d’échanges et non-régression |
 | A — Gemba → action → SQCDP → escalade → clôture | Réussi ; une seule action et pas de double escalade |
 | B — KPI → problème → A3 → action → résultat | Réussi ; douze rubriques et résultat conservé après rechargement |
 | C — VSM → opportunité → projet/action → résultat | Réussi ; calculs numériques et liens persistants |
@@ -25,8 +27,8 @@ Les nouveaux parcours comprennent Control Tower, Hoshin/X-Matrix, routines/escal
 | Saisie navigateur | Gemba créé par formulaire puis retrouvé après rechargement |
 | VSM navigateur | Déplacement souris persistant, sélection tactile, édition et lecture seule |
 | Navigation/cache | Sous-chemin réel de déploiement, ancre Hoshin directe et rechargement hors connexion |
-| Build | 20 ressources statiques, 530 Kio avant compression, syntaxe et chemins contrôlés |
-| Performance observée | Premier rendu local du scénario inférieur à 0,5 s dans l’environnement de test ; ce n’est pas une mesure de latence réseau en production |
+| Build | 20 ressources statiques, 556 Kio avant compression, syntaxe et chemins contrôlés |
+| Performance observée | Premier rendu local du scénario mesuré à 0,405 s dans l’environnement de test ; ce n’est pas une mesure de latence réseau en production |
 
 Les scénarios A–G sont des tests d’intégration DOM avec sauvegarde et relecture. Le contrôle Chromium complète ces tests sur les interactions et le rendu. Il ne constitue pas une certification sur tous les navigateurs ou un test de charge multisession. Le script `tests/browser.cjs` reproduit les contrôles et génère les captures.
 
@@ -40,6 +42,9 @@ Les scénarios A–G sont des tests d’intégration DOM avec sauvegarde et rele
 - Clôture des projets tenant compte de leurs actions liées.
 - Escalades N+1 avec délai depuis l’escalade précédente, sans saut de niveaux.
 - Cache des ressources cohérent par version et noms PWA actualisés.
+- Centre d’alertes filtré par profil/périmètre, sans doublonner les dossiers métier.
+- Relève d’équipe avec dossiers liés et confirmation distincte de la clôture des actions.
+- Accès Terrain partageable et paquet d’échanges explicitement limités au fonctionnement local/export.
 
 ## Mise en service partagée : éléments non activés
 

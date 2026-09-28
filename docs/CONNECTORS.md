@@ -6,6 +6,12 @@ Le CSV passe par prévisualisation et confirmation. Toutes les lignes sont valid
 
 Excel peut exporter un CSV UTF-8 compatible. La lecture native `.xlsx` n’est pas incluse. L’écran Connecteurs enregistre la configuration nécessaire sans prétendre qu’elle reçoit déjà des données.
 
+## Paquet d’échanges local
+
+Chaque écriture métier journalisée ajoute un élément à la file locale. Le bouton **Exporter le paquet de synchronisation** produit un JSON `bia-lean-os-sync-bundle/v1` contenant la révision de l’appareil, les événements en attente et les dossiers concernés. Son mode vaut explicitement `export-only`.
+
+Ce paquet prépare le mapping d’un futur service partagé. Il n’est envoyé à aucune URL, ne contient aucun secret, ne prouve pas qu’une donnée a été reçue et ne retire pas les éléments de la file. Un connecteur serveur devra définir l’identité de l’appareil, l’idempotence, les conflits, l’acquittement et la reprise.
+
 ## Contrat BIA version 1
 
 `connectors/measure.schema.json` décrit **le format d’entrée BIA**, pas une API SEQUOIA supposée.

@@ -23,6 +23,7 @@ const OS_COLLECTIONS = {
   gains: ["Gains", "kaizen"],
   maturity: ["Maturité", "maturity"],
   routines: ["Routines", "daily"],
+  handovers: ["Relèves d’équipe", "daily"],
   escalations: ["Escalades", "daily"],
   decisions: ["Décisions", "daily"],
   topics: ["SQCDP", "sqcdp"],
@@ -45,6 +46,7 @@ const OS_PREFIX = {
   gains: "GAIN",
   maturity: "MAT",
   routines: "RIT",
+  handovers: "REL",
   escalations: "ESC",
   auditTemplates: "QST",
   connectors: "CON",
@@ -338,6 +340,7 @@ function migrateOS(source) {
         4: "Responsable Lean Groupe",
       },
       categories: clone(SIGNAL_TYPES),
+      shifts: ["Matin", "Après-midi", "Nuit"],
       pillars: Object.keys(AUDIT_CRITERIA),
       levels: ["Initial", "Défini", "Appliqué", "Maîtrisé", "Amélioré"],
       ...out.settings,
@@ -418,6 +421,8 @@ function migrateOS(source) {
       site_id: "group",
     });
   }
+  out.settings ||= {};
+  out.settings.shifts = Array.isArray(out.settings.shifts) && out.settings.shifts.length ? out.settings.shifts : ["Matin", "Après-midi", "Nuit"];
   for (const m of out.measures) {
     const k = out.kpis.find((k) => k.code === m.code || k.id === m.kpi_id);
     if (k) {

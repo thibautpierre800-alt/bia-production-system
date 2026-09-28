@@ -18,9 +18,10 @@ Une fiche du registre possède un `id` unique et stable, alphanumérique avec ti
 | `practices`, `deployments` | Pratique d’origine → un dossier de transfert par site destinataire |
 | `maturity` | Évaluations distinctes par date, site/atelier, pilier, niveau, cible et preuve |
 | `routines`, `escalations`, `decisions`, `topics` | Rituels N1–N4, SQCDP et arbitrages |
+| `handovers` | Relèves d’équipe : équipe sortante/entrante, faits, priorités, dossiers liés et accusé de reprise |
 | `comments`, `activity` | Commentaires rattachés aux dossiers et journal transverse |
 | `links` | `from`, `to`, `type`, auteur et date ; navigation dans les deux sens |
-| `connectors`, `syncLog` | Configuration déclarative et journal des imports exécutés |
+| `connectors`, `syncLog`, `syncQueue` | Configuration déclarative, imports exécutés et événements locaux à exporter |
 
 Les collections historiques `people`, `trainingCatalog`, `trainingRecords` et `toolRuns` restent disponibles. Les photos sont des données image filtrées dans les dossiers, sans service distant.
 
@@ -53,6 +54,14 @@ Le document contient `vsm.current` et `vsm.future`, avec objets `nodes`, coordon
 Takt = temps net/demande. Lead time = cycles + attentes observées, pour un flux séquentiel. VA = somme des temps VA ; NVA = lead time − VA. Capacité théorique = temps net × disponibilité/cycle, arrondie à l’entier inférieur ; le minimum donne le goulot. Charge = cycle/takt. Équilibre = somme des cycles/(nombre de processus × cycle maximal). Le WIP additionne les encours saisis : ne pas renseigner deux fois le même stock.
 
 Les métriques incomplètes affichent « — ». Rebuts, changements de série et branches parallèles ne sont pas automatiquement simulés ; les changements de série restent visibles pour l’analyse. Les hypothèses figurent dans l’écran.
+
+## Relèves, alertes et file d’échanges
+
+Une relève porte `shift_from`, `shift_to`, `period`, `author`, `status`, les faits SQCDP utiles et `linked_ids`. Les liens pointent vers les signaux/actions existants. Le statut `Reprise` ajoute `acknowledged_by` et `acknowledged_at` ; il ne clôt pas automatiquement les dossiers transmis.
+
+Les alertes ne forment pas une collection métier supplémentaire. Elles sont recalculées depuis les signaux critiques ou en retard, actions en retard, escalades ouvertes, décisions arrivées à échéance et relèves transmises non reprises. Les clés lues sont stockées localement par profil et sont limitées aux 500 plus récentes.
+
+`syncQueue` référence les nouveaux événements du journal avec l’identifiant du dossier, le site, l’opération, la révision et le statut `pending`. L’export `bia-lean-os-sync-bundle/v1` contient ces références, les événements et une photographie des dossiers concernés. Aucun acquittement distant ou reprise réseau n’est implémenté.
 
 ## Migration et retour
 

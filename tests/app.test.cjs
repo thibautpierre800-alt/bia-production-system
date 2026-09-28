@@ -3,10 +3,10 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
 const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','boot.js'];
-function app(t,stored){
+function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
-  const dom=new JSDOM(html,{url:'https://bia.example/bia-production-system/',runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc});
+  const dom=new JSDOM(html,{url,runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc});
   const w=dom.window;w.scrollTo=()=>{};w.print=()=>w.printed=true;w.HTMLElement.prototype.scrollIntoView=()=>{};
   if(stored)w.localStorage.setItem('biaProductionSystemV5',stored);
   for(const file of scripts){const s=w.document.createElement('script');s.textContent=fs.readFileSync(file,'utf8');w.document.head.append(s);}
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.equal(q('#gembaSite').options.length,1);
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-1-1/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.1.1'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-2-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.2.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -58,6 +58,24 @@ test('Accueil, raccourcis terrain et écran SQCDP Groupe vertical sont explicite
   run('state.view="pilotage";state.osTab="tower";render()');
   assert.match(q('.control-analysis-table').textContent,/73,3 % défavorable/);
   run('state.role="dg";state.view="home";render()');assert.equal(q('.quick-action-dock'),null);
+});
+test('Alertes opérationnelles, relève, accès terrain et paquet de synchronisation restent reliés',t=>{
+  const a=app(t),{run,q,fill,click,submit}=a;
+  run('data=osFreshData(true);osInit();state.role="teamlead";state.site="marzin";state.workshop="marzin-pilot";state.view="daily";render()');
+  assert.ok(Number(q('#notificationCount').textContent)>0);click('#notificationButton');
+  assert.match(q('#modalContent').textContent,/Signal critique ouvert/);assert.match(q('#modalContent').textContent,/Relève d’équipe à reprendre/);
+  click('[data-notification-read-all]');assert.equal(q('#notificationCount').hidden,true);run('closeModal();state.view="daily";render()');
+  assert.ok(q('.handover-card'));assert.match(q('.handover-links').textContent,/Signal · S-041/);click('[data-new-handover]');
+  assert.equal(q('#handoverSituation').required,false);assert.notEqual(q('#handoverFrom').value,q('#handoverTo').value);
+  fill('#handoverStatus','Transmise');fill('#handoverSituation','Ligne disponible avec contrôle renforcé');fill('#handoverPriorities','1. Vérifier le premier lot. 2. Suivre la maintenance.');
+  const linked=q('#handoverLinks input');if(linked)linked.checked=true;submit('#handoverForm');
+  const id=run('data.handovers[0].id');assert.equal(run('data.handovers[0].status'),'Transmise');assert.ok(run(`data.syncQueue.some(item=>item.record_id==='${id}')`));
+  click(`[data-ack-handover="${id}"]`);assert.equal(run('data.handovers[0].status'),'Reprise');assert.ok(run('data.handovers[0].acknowledged_by'));
+  run('state.view="account";render()');assert.match(q('.terrain-access code').textContent,/entry=terrain/);assert.match(q('.terrain-access code').textContent,/workshop=marzin-pilot/);
+  run('window.syncCapture=null;downloadJsonText=(raw,name)=>window.syncCapture={raw,name};exportSyncBundle()');
+  assert.equal(JSON.parse(run('window.syncCapture.raw')).contract,'bia-lean-os-sync-bundle/v1');
+  const b=app(t,a.stored(),'https://bia.example/bia-production-system/?entry=terrain&site=marzin&workshop=marzin-pilot#terrain');
+  assert.equal(b.run('state.view'),'terrain');assert.equal(b.run('state.site'),'marzin');assert.equal(b.run('state.workshop'),'marzin-pilot');
 });
 test('Formation BIA Lean OS : livret, grille par profil et qualification enregistrée',t=>{
   const a=app(t),{run,q,fill,click,submit}=a;
@@ -82,7 +100,7 @@ test('Maturité : campagnes historiques comparables et nouvelle évaluation non 
 });
 test('Le scénario de démonstration est actualisé avec sauvegarde sans toucher un espace réel',t=>{
   const a=app(t),raw=a.run('JSON.stringify(DEMO)'),b=app(t,raw);
-  assert.equal(b.run('data.meta.demo_revision'),3);assert.equal(b.run('data.measures.length'),300);
+  assert.equal(b.run('data.meta.demo_revision'),4);assert.equal(b.run('data.measures.length'),300);assert.equal(b.run('data.handovers.length'),1);
   assert.deepEqual(Array.from(b.run('data.users.map(u=>u.role)')),['lean','dg','director','teamlead','operator']);
   assert.deepEqual(JSON.parse(b.run('JSON.stringify(osIntegrity())')),[]);
   assert.equal(b.run('localStorage.getItem(STORAGE_KEY+"-before-demo-refresh")'),raw);

@@ -447,7 +447,11 @@ function osBind() {
       .split("\n")
       .map((x) => x.trim())
       .filter(Boolean);
-    if (!categories.length) return;
+    const shifts = f.elements.shifts.value
+      .split("\n")
+      .map((x) => x.trim())
+      .filter(Boolean);
+    if (!categories.length || shifts.length < 2) return toast("Précisez les catégories et au moins deux équipes de relève.");
     if (
       !commitData(() => {
         data.settings.escalationDays = Number(f.elements.days.value);
@@ -455,6 +459,7 @@ function osBind() {
           data.settings.escalationOwners[n] =
             f.elements["owner" + n].value.trim();
         data.settings.categories = [...new Set(categories)];
+        data.settings.shifts = [...new Set(shifts)];
         data.settings.levels = [0, 1, 2, 3, 4].map((i) =>
           f.elements["level" + i].value.trim(),
         );
@@ -516,7 +521,7 @@ function osFreshData(demo) {
   base.measures = [];
   base.trends = [];
   base.meta.demo = true;
-  base.meta.demo_revision = 3;
+  base.meta.demo_revision = 4;
   base.meta.demo_story = "Six sites fictifs, écarts reliés aux signaux, actions, problèmes, Kaizen et transferts.";
   const siteIds = base.sites.filter((s) => s.kind === "site").map((s) => s.id),
     periods = [-28, -21, -14, -7, 0];
@@ -1207,6 +1212,31 @@ function osFreshData(demo) {
       minutes:
         "Comparer les tendances, décider des soutiens et suivre les transferts intersites.",
       status: "Prévu",
+    },
+  ];
+  base.handovers = [
+    {
+      id: "REL-MAR-001",
+      site_id: "marzin",
+      workshop_id: "marzin-pilot",
+      title: "Relève Nuit → Matin",
+      shift_from: "Nuit",
+      shift_to: "Matin",
+      period: today() + "T05:50",
+      author: "Lucas Perrin · chef d’équipe nuit",
+      status: "Transmise",
+      situation: "Poste finition 2 consigné ; les autres équipements ont produit selon le programme.",
+      safety: "Ne pas redémarrer la finition 2 avant validation du carter.",
+      quality: "Maintenir le contrôle renforcé sur la famille panneaux.",
+      staffing: "Équipe complète ; maintenance attendue à 07:15.",
+      production: "Ordre OF-245 poursuivi sur la ligne 1.",
+      priorities: "1. Valider le carter. 2. Suivre l’essai support P42. 3. Confirmer le plan de rattrapage.",
+      linked_ids: ["S-041", "A-018", "P-012"],
+      acknowledged_by: null,
+      acknowledged_at: null,
+      created_at: today() + "T05:50:00Z",
+      updated_at: today() + "T05:50:00Z",
+      history: [{status:"Transmise",note:"Relève préparée avec les dossiers critiques.",at:today()+"T05:50:00Z"}],
     },
   ];
   base.escalations = [

@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared interaction rules. All records remain local; roles are UI profiles, not authentication.
-const APP_VERSION = "7.1.1";
+const APP_VERSION = "7.2.0";
 let modalSaver = null, modalDirty = false, modalOpener = null, modalTimer = null;
 let lastStored = localStorage.getItem(STORAGE_KEY);
 let storageConflict = false;
@@ -10,6 +10,7 @@ Object.assign(state, {query:"", documentTab:"mine", documentType:"all", signalFi
 function upgradeData(source) {
   const out = {...source};
   for (const key of ["workshops","measures","trends","signals","actions","problems","projects","decisions","audits","gembas","practices","documents","accounts","people","trainingCatalog","trainingRecords","roadmap","toolRuns","syncLog","topics"]) out[key] = Array.isArray(out[key]) ? out[key] : [];
+  out.syncQueue = Array.isArray(out.syncQueue) ? out.syncQueue : [];
   out.users = (out.users || []).map((user) => ({...user, role: normalizeRoleId(user.role)}));
   out.people = out.people.map((person) => ({...person, app_profile: person.app_profile ? normalizeRoleId(person.app_profile) : person.app_profile}));
   for (const p of out.problems) {p.action_ids ||= []; p.signal_ids ||= []; p.content ||= {};}
@@ -34,8 +35,17 @@ function save() {
 }
 function commitData(change) {
   const backup=clone(data);
-  try {if(role().readonly)throw Error("Ce profil est en lecture seule.");change();osValidate(data);osAuditChanges(backup,data);if(save())return true;} catch(error){toast(error.message||"Enregistrement impossible.");}
+  try {if(role().readonly)throw Error("Ce profil est en lecture seule.");change();osValidate(data);osAuditChanges(backup,data);queueSyncEvents(backup,data);if(save())return true;} catch(error){toast(error.message||"Enregistrement impossible.");}
   data=backup;return false;
+}
+function queueSyncEvents(before,after) {
+  after.syncQueue ||= [];
+  const known=new Set(after.syncQueue.map(item=>item.event_id));
+  for(const event of after.activity.slice(before.activity?.length||0)){
+    if(known.has(event.id))continue;
+    after.syncQueue.push({id:uid("SYNCQ"),event_id:event.id,record_id:event.record_id||null,site_id:event.site_id||"group",operation:event.event,revision:after.meta.revision,created_at:event.at,status:"pending"});
+    known.add(event.id);
+  }
 }
 function recordHistory(record, status, note="") {
   record.history ||= [];
@@ -64,6 +74,7 @@ function openRecord(id) {
   const info=recordMeta(id);if(!info||!allowedSite(info.row.site_id))return toast("Ce dossier n’est pas accessible sur ce périmètre.");
   if(!requestCloseModal())return;
   const {row,key,module}=info;
+  if(key==="handovers"){handoverForm(row);return;}
   if(OS_FORMS[key]||["measures","auditTemplates","comments"].includes(key)){osOpen(key,row);return;}
   if(row.site_id!=="group")state.site=row.site_id;
   if(role().nav.includes(module))state.view=module;
@@ -77,6 +88,40 @@ function receipt(id,module,siteId,next="") {
   toast(`${id} enregistré · ${module} · ${getSiteName(siteId)}${next?` · ${next}`:""}`);
 }
 function receiptView() {const r=state.receipt;return r?`<aside class="save-receipt" role="status"><div><b>${esc(r.id)} enregistré dans ${esc(r.module)}</b><span>${esc(getSiteName(r.siteId))}${r.next?` · ${esc(r.next)}`:""}</span></div>${recordLink(r.id,"Retrouver") }<button class="btn ghost small" type="button" data-dismiss-receipt aria-label="Masquer la confirmation">×</button></aside>`:"";}
+function notificationReadStore(){
+  const key=`biaNotificationReads:${state.role}`;
+  try{return {key,values:new Set(JSON.parse(localStorage.getItem(key)||"[]"))};}catch{return {key,values:new Set()};}
+}
+function operationalNotifications(){
+  const rows=[],priority={critical:0,warn:1,info:2},todayValue=today(),scope=row=>allowedSite(row.site_id)&&(state.site==="group"||row.site_id===state.site)&&(!state.workshop||!row.workshop_id||row.workshop_id===state.workshop),candidates=new Map(osEscalationCandidates().filter(c=>scope(c.action)).map(c=>[c.action.id,c]));
+  for(const signal of data.signals.filter(s=>scope(s)&&isOpenSignal(s))){
+    const due=signal.response_due||signalResponseDue(signal.severity,signal.created_at),late=signal.state==="Nouveau"&&due<todayValue,critical=signal.severity==="Critique";
+    if(!late&&!critical)continue;
+    rows.push({key:`signal:${signal.id}:${signal.updated_at||signal.state}:${due}`,record_id:signal.id,site_id:signal.site_id,tone:critical?"critical":"warn",title:critical?"Signal critique ouvert":"Prise en charge du signal en retard",detail:`${getSiteName(signal.site_id)} · ${signal.description}`,due});
+  }
+  for(const action of data.actions.filter(a=>scope(a)&&isLate(a))){
+    const candidate=candidates.get(action.id);
+    rows.push({key:`action:${action.id}:${action.updated_at||action.status}:${action.due_date}:${candidate?.level||0}`,record_id:action.id,site_id:action.site_id,tone:action.priority==="Critique"?"critical":"warn",title:candidate?`Escalade N${candidate.level} à appliquer`:"Action en retard",detail:`${getSiteName(action.site_id)} · ${action.title}`,due:action.due_date});
+  }
+  for(const escalation of data.escalations.filter(e=>scope(e)&&e.status!=="Clos"))rows.push({key:`escalation:${escalation.id}:${escalation.updated_at||escalation.status}:${escalation.level}`,record_id:escalation.id,site_id:escalation.site_id,tone:"warn",title:`Escalade N${escalation.level} ouverte`,detail:`${getSiteName(escalation.site_id)} · ${escalation.title}`,due:escalation.due_date});
+  for(const handover of data.handovers.filter(h=>scope(h)&&h.status==="Transmise"&&!h.acknowledged_at))rows.push({key:`handover:${handover.id}:${handover.updated_at||handover.period}`,record_id:handover.id,site_id:handover.site_id,tone:"warn",title:"Relève d’équipe à reprendre",detail:`${getSiteName(handover.site_id)} · ${handover.shift_from} → ${handover.shift_to}`,due:handover.period});
+  for(const decision of data.decisions.filter(d=>scope(d)&&d.status!=="Clos"&&d.due_date&&d.due_date<=todayValue))rows.push({key:`decision:${decision.id}:${decision.updated_at||decision.status}:${decision.due_date}`,record_id:decision.id,site_id:decision.site_id,tone:decision.due_date<todayValue?"critical":"warn",title:decision.due_date<todayValue?"Décision en retard":"Décision attendue aujourd’hui",detail:`${getSiteName(decision.site_id)} · ${decision.title}`,due:decision.due_date});
+  return rows.filter(item=>{const info=recordMeta(item.record_id);return info&&role().nav.includes(info.module)}).sort((a,b)=>priority[a.tone]-priority[b.tone]||String(a.due||"").localeCompare(String(b.due||""))||a.title.localeCompare(b.title,"fr"));
+}
+function markNotifications(keys){
+  const store=notificationReadStore();
+  for(const key of keys)store.values.add(key);
+  localStorage.setItem(store.key,JSON.stringify([...store.values].slice(-500)));
+}
+function renderNotificationButton(){
+  const button=$("notificationButton");if(!button)return;
+  const rows=operationalNotifications(),read=notificationReadStore().values,unread=rows.filter(row=>!read.has(row.key)).length,count=$("notificationCount");
+  count.textContent=String(unread);count.hidden=!unread;button.classList.toggle("has-alerts",unread>0);button.setAttribute("aria-label",unread?`Ouvrir les alertes opérationnelles · ${unread} non lue(s)`:"Ouvrir les alertes opérationnelles");
+}
+function openNotificationCenter(){
+  const rows=operationalNotifications(),read=notificationReadStore().values,unread=rows.filter(row=>!read.has(row.key)).length;
+  modal("Alertes opérationnelles",`<div class="notification-head"><div><p class="eyebrow">Périmètre actif</p><h3>${unread} alerte(s) non lue(s) · ${rows.length} active(s)</h3><p class="hint">Calculées à partir des signaux, actions, décisions et escalades enregistrés. Aucun envoi automatique ne s’exécute lorsque l’application est fermée.</p></div>${rows.length?'<button class="btn secondary" type="button" data-notification-read-all>Tout marquer comme lu</button>':""}</div><div class="notification-list section">${rows.map(item=>`<article class="notification-row ${item.tone} ${read.has(item.key)?"read":"unread"}"><span class="notification-dot" aria-hidden="true"></span><div><b>${esc(item.title)}</b><p>${esc(item.detail)}</p><small>Échéance ${shortDate(item.due)}</small></div><div class="row-actions"><button class="btn secondary small" type="button" data-notification-open="${esc(item.record_id)}" data-notification-key="${esc(item.key)}">Ouvrir</button>${read.has(item.key)?"":`<button class="btn ghost small" type="button" data-notification-read="${esc(item.key)}">Lu</button>`}</div></article>`).join("")||empty("Aucune alerte active sur ce périmètre.")}</div>`);
+}
 function setModalSaver(fn) {modalSaver=fn;}
 function scheduleModalSave() {
   if(!modalSaver)return;clearTimeout(modalTimer);
@@ -151,6 +196,16 @@ function bindExperience() {
   document.querySelectorAll("[data-export-raw]").forEach(b=>b.onclick=()=>downloadJsonText(localStorage.getItem(STORAGE_KEY),"bia-donnees-a-recuperer.json"));
   document.querySelectorAll("[data-search-all]").forEach(b=>b.onclick=searchForm);
   document.querySelectorAll("[data-dismiss-receipt]").forEach(b=>b.onclick=()=>{state.receipt=null;render();});
+  if($("notificationButton"))$("notificationButton").onclick=openNotificationCenter;
+  document.querySelectorAll("[data-notification-open]").forEach(b=>b.onclick=()=>{markNotifications([b.dataset.notificationKey]);closeModal();openRecord(b.dataset.notificationOpen);renderNotificationButton();});
+  document.querySelectorAll("[data-notification-read]").forEach(b=>b.onclick=()=>{markNotifications([b.dataset.notificationRead]);openNotificationCenter();renderNotificationButton();});
+  document.querySelectorAll("[data-notification-read-all]").forEach(b=>b.onclick=()=>{markNotifications(operationalNotifications().map(item=>item.key));openNotificationCenter();renderNotificationButton();});
+  document.querySelectorAll("[data-new-handover]").forEach(b=>b.onclick=()=>handoverForm());
+  document.querySelectorAll("[data-edit-handover]").forEach(b=>b.onclick=()=>handoverForm(data.handovers.find(h=>h.id===b.dataset.editHandover)));
+  document.querySelectorAll("[data-ack-handover]").forEach(b=>b.onclick=()=>acknowledgeHandover(b.dataset.ackHandover));
+  document.querySelectorAll("[data-copy-terrain-link]").forEach(b=>b.onclick=copyTerrainAccess);
+  document.querySelectorAll("[data-share-terrain-link]").forEach(b=>b.onclick=shareTerrainAccess);
+  document.querySelectorAll("[data-export-sync]").forEach(b=>b.onclick=exportSyncBundle);
   $("listSearch")?.addEventListener("input",filterList);
   document.querySelectorAll("[data-document-tab]").forEach(b=>b.onclick=()=>{state.documentTab=b.dataset.documentTab;render();});
   document.querySelectorAll("[data-signal-filter]").forEach(b=>b.onclick=()=>{state.signalFilter=b.dataset.signalFilter;render();});
@@ -165,7 +220,7 @@ function initExperience() {
   const rawBeforeOS=localStorage.getItem(STORAGE_KEY);
   try{if(rawBeforeOS&&JSON.parse(rawBeforeOS)?.meta?.schema===6&&!localStorage.getItem(STORAGE_KEY+"-before-lean-os"))localStorage.setItem(STORAGE_KEY+"-before-lean-os",rawBeforeOS);}catch{storageConflict=true;}
   data=upgradeData(data);
-  if(data.meta.demo&&Number(data.meta.demo_revision||0)<3&&!storageConflict){
+  if(data.meta.demo&&Number(data.meta.demo_revision||0)<4&&!storageConflict){
     const previous=clone(data);
     try{
       if(rawBeforeOS&&!localStorage.getItem(STORAGE_KEY+"-before-demo-refresh"))localStorage.setItem(STORAGE_KEY+"-before-demo-refresh",rawBeforeOS);
@@ -174,6 +229,10 @@ function initExperience() {
     }catch(error){data=previous;console.warn("Actualisation du scénario impossible",error);}
   }
   osInit();
+  const entryParams=new URLSearchParams(location.search),entrySite=entryParams.get("site"),entryWorkshop=entryParams.get("workshop"),entryView=entryParams.get("entry");
+  if(entrySite&&SITES.some(s=>s.id===entrySite)&&(canGroup()||entrySite===state.site))state.site=entrySite;
+  if(entryWorkshop&&data.workshops.some(w=>w.id===entryWorkshop&&w.site_id===state.site&&!w.archived_at))state.workshop=entryWorkshop;
+  if(entryView==="terrain"&&role().nav.includes("terrain"))state.view="terrain";
   try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const parsed=JSON.parse(raw);validateImport(parsed);}}catch{storageConflict=true;window.biaUnreadable=true;}
   $("siteSelect").onchange=e=>{if(!requestCloseModal())return;state.site=e.target.value;state.receipt=null;localStorage.setItem("biaSite",state.site);render();};
   $("roleSelect").onchange=e=>{if(!requestCloseModal())return;state.role=e.target.value;state.receipt=null;localStorage.setItem("biaRole",state.role);if(!canGroup()&&state.site==="group")state.site="marzin";render();};
@@ -193,6 +252,24 @@ function initExperience() {
 }
 
 function downloadJsonText(raw,name) {if(!raw)return;const url=URL.createObjectURL(new Blob([raw],{type:"application/json"})),a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
+function terrainAccessUrl(){
+  const url=new URL(location.origin+location.pathname),siteId=state.site==="group"?(state.pilotSite||OPERATIONAL_SITES[0].id):state.site,workshopId=state.workshop||data.workshops.find(w=>w.site_id===siteId&&!w.archived_at)?.id||"";
+  url.searchParams.set("entry","terrain");url.searchParams.set("site",siteId);if(workshopId)url.searchParams.set("workshop",workshopId);url.hash="terrain";return url.href;
+}
+async function copyTerrainAccess(){
+  const value=terrainAccessUrl();
+  try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);else{const input=document.createElement("textarea");input.value=value;document.body.append(input);input.select();document.execCommand("copy");input.remove();}toast("Lien terrain copié.");}
+  catch{toast("Copie impossible : sélectionnez le lien affiché.");}
+}
+async function shareTerrainAccess(){
+  const url=terrainAccessUrl();
+  if(navigator.share)try{await navigator.share({title:"BIA Lean OS · Accès terrain",text:`${getSiteName(state.site==="group"?(state.pilotSite||OPERATIONAL_SITES[0].id):state.site)} · Signal Terrain`,url});return;}catch(error){if(error?.name==="AbortError")return;}
+  return copyTerrainAccess();
+}
+function exportSyncBundle(){
+  const pending=(data.syncQueue||[]).filter(item=>item.status==="pending"),events=pending.map(item=>data.activity.find(event=>event.id===item.event_id)).filter(Boolean),recordIds=[...new Set(pending.map(item=>item.record_id).filter(Boolean))],records=recordIds.map(id=>recordMeta(id)).filter(Boolean).map(info=>({collection:info.key,record:clone(info.row)})),bundle={contract:"bia-lean-os-sync-bundle/v1",generated_at:now(),device_revision:data.meta.revision||0,mode:"export-only",pending_events:pending,events,records};
+  downloadJsonText(JSON.stringify(bundle,null,2),`bia-sync-${today()}.json`);toast(`${pending.length} changement(s) préparé(s) pour intégration.`);
+}
 function toolRunForm(id) {
   const run=data.toolRuns.find(r=>r.id===id);if(!run||!allowedSite(run.site_id,true))return;
   modal(`${id} · Responsable de la démarche`,`<form id="toolRunForm"><p>${esc(LEAN_MODULES.find(t=>t.id===run.module_id)?.title)} · ${esc(getSiteName(run.site_id))}</p><label class="field">Responsable<input id="toolRunOwner" required value="${esc(run.owner==="À attribuer"?"":run.owner||"")}"></label><div class="form-actions"><button class="btn">Enregistrer</button></div></form>`);
