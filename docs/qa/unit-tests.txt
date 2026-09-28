@@ -1,17 +1,8 @@
-BIA Lean Operating System 7.3.0 — reçu de tests automatisés
-Date : 28 septembre 2026
+BIA Lean Operating System 7.4.0 — 28 septembre 2026
 Commande : npm test
-
-Résultat :
-- 41 tests exécutés
-- 41 tests réussis
-- 0 échec
-- 0 test annulé, ignoré ou à faire
-
-Couverture principale : intégrité du référentiel, saisies et relecture,
-migration, profils et périmètres, scénarios Lean A–G, pilotage Analyser/Décider,
-interface Essentielle/Complète, commande Créer, alertes opérationnelles, relève,
-accès terrain, paquet d’échanges, formation au logiciel, historique de maturité
-et renouvellement contrôlé du scénario de démonstration.
-
-Le détail reproductible reste fourni par `node --test tests/*.test.cjs`.
+58 tests, 58 réussites, 0 échec, 0 ignoré.
+41 tests existants + 17 tests d’extension 7.4.
+Contrôles : migration, persistance, profils, parcours historiques, J30/J60/J90, preuve, réouverture, standard/version/qualification, VSM CSV, environnement, réplication, escalades et consentement IA.
+IA testée avec réponse simulée uniquement : aucun service ou fournisseur réel appelé.
+Build : 22 ressources, environ 624 Kio, syntaxe et chemins validés.
+Navigateur : 75 combinaisons profil/route, 390/820/1440 px, souris/tactile/hors connexion, aucun échec de ressource ni erreur JavaScript.

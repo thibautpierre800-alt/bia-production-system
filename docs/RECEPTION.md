@@ -1,20 +1,22 @@
-# Réception — BIA Lean Operating System 7.3.0
+# Réception — BIA Lean Operating System 7.4.0
 
-Date : 28 septembre 2026. Version précédente sauvegardée : 7.2.0, commit `c83b46e`, branche `backup/before-7.3.0-2026-09-28`.
+Date : 28 septembre 2026. Version précédente sauvegardée : 7.3.0, commit `f5ff277`, branche `backup/before-7.4.0-2026-09-28`.
 
 ## Changements réceptionnés
 
 Le cœur transversal relie les modules conservés et nouveaux : identifiants, relations, base d’actions, mesures canoniques, résultats, preuves, commentaires et historique. La migration conserve les données compatibles et le JSON antérieur. Les écrans sont alimentés par les dossiers enregistrés ; les scénarios fictifs restent explicitement identifiés.
 
-La version 7.3.0 réduit la charge de navigation : accueil adapté à chaque rôle, interface Essentielle/Complète, quatre entrées mobiles, création regroupée et écran Aujourd’hui compact. Le pilotage ne duplique plus Control Tower et SQCDP dans les profils de direction : une seule vue propose les modes Analyser et Décider. L’ancienne route SQCDP reste utilisable pour les liens existants et les profils atelier.
+La version 7.4.0 réduit la charge de navigation : accueil adapté à chaque rôle, interface Essentielle/Complète, quatre entrées mobiles, création regroupée et écran Aujourd’hui compact. Le pilotage ne duplique plus Control Tower et SQCDP dans les profils de direction : une seule vue propose les modes Analyser et Décider. L’ancienne route SQCDP reste utilisable pour les liens existants et les profils atelier.
 
 Les parcours existants restent disponibles en interface Complète : Hoshin/X-Matrix, routines/escalades, VSM graphique, Kaizen/gains, déploiement, maturité, audits, résolution, formations, guides et documents historiques. Aucun dossier ni permission métier n’est retiré.
+
+Les huit évolutions 7.4 sont détaillées dans [LEAN_74.md](LEAN_74.md). Tests supplémentaires : échéances J30/J60/J90, preuve et réouverture, formation par version de standard, VSM observée/imports atomiques, environnement/KPI sourcés, réplication sans doublon, automatisation locale et assistant avec consentement. Les appels IA sont simulés et aucun service externe n’est configuré.
 
 ## Vérifications exécutées
 
 | Contrôle | Résultat et portée |
 |---|---|
-| Tests métier/DOM | 41 tests réussis : intégrité, formulaires, relecture, migration, scénarios, ergonomie par rôle, interface Essentielle/Complète, alertes, relève et non-régression |
+| Tests métier/DOM | 58 tests réussis : intégrité, formulaires, relecture, migration, scénarios, ergonomie par rôle, interface Essentielle/Complète, alertes, relève et non-régression |
 | A — Gemba → action → SQCDP → escalade → clôture | Réussi ; une seule action et pas de double escalade |
 | B — KPI → problème → A3 → action → résultat | Réussi ; douze rubriques et résultat conservé après rechargement |
 | C — VSM → opportunité → projet/action → résultat | Réussi ; calculs numériques et liens persistants |
@@ -27,8 +29,8 @@ Les parcours existants restent disponibles en interface Complète : Hoshin/X-Mat
 | Saisie navigateur | Gemba créé par formulaire puis retrouvé après rechargement |
 | VSM navigateur | Déplacement souris persistant, sélection tactile, édition et lecture seule |
 | Navigation/cache | Sous-chemin réel de déploiement, ancre Hoshin directe et rechargement hors connexion |
-| Build | 20 ressources statiques, environ 573 Kio avant compression, syntaxe et chemins contrôlés |
-| Performance observée | Premier rendu local du scénario mesuré à 0,399 s dans l’environnement de test ; ce n’est pas une mesure de latence réseau en production |
+| Build | 22 ressources statiques, environ 624 Kio avant compression, syntaxe et chemins contrôlés |
+| Performance observée | Premier rendu local du scénario mesuré à 0,510 s dans l’environnement de test ; ce n’est pas une mesure de latence réseau en production |
 
 Les scénarios A–G sont des tests d’intégration DOM avec sauvegarde et relecture. Le contrôle Chromium complète ces tests sur les interactions et le rendu. Il ne constitue pas une certification sur tous les navigateurs ou un test de charge multisession. Le script `tests/browser.cjs` reproduit les contrôles et génère les captures.
 
@@ -56,6 +58,7 @@ Ces limites ne sont pas dissimulées derrière des boutons « connectés ». Ell
 | Blocage | Cause | Ce qui manque | Comment le terminer |
 |---|---|---|---|
 | Base partagée et authentification réelle | Hébergement GitHub Pages statique ; données actuelles locales | Environnement serveur/base/stockage autorisé, fournisseur d’identité et politique de droits validée | Implémenter et déployer la persistance serveur et l’authentification, appliquer les droits côté serveur, migrer un export et tester concurrence/restauration sur plusieurs comptes/appareils |
+| Assistant IA réel | Aucun serveur IA autorisé configuré | Serveur avec sécurité, fournisseur/modèle et clés côté serveur, CORS et règles de confidentialité | Configurer l’endpoint HTTPS, tester un dossier fictif et approuver les données avant chaque envoi ; ne pas publier de clé dans le client |
 | Connexion SEQUOIA/ERP/MES/SQL | Aucun contrat technique ni accès éditeur fourni | Documentation/version, extraction autorisée, compte de lecture et échantillon métier | Implémenter l’adaptateur correspondant au contrat réel, qualifier les mappings et comparer les résultats à une source validée |
 | Collecte et escalades application fermée | Aucun service serveur planifié configuré | Hébergement du traitement et mécanisme d’exploitation/surveillance | Déployer un ordonnanceur utilisant les mêmes règles, avec idempotence, supervision et journal ; le contrôle explicite actuel reste fonctionnel |
 | Indicateurs et gains officiellement validés | Les responsables, sources et données de démonstration ne sont pas une validation métier | Définitions et propriétaires approuvés, conventions de calcul, données/preuves du terrain | Configurer le dictionnaire via Administration, importer/saisir les données réelles et faire valider les résultats par leurs responsables |

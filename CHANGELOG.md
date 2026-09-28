@@ -1,5 +1,18 @@
 # Changelog
 
+## 7.4.0 — 28 septembre 2026
+
+- Suivi durable des actions à J30/J60/J90 : calendrier, preuve, vérificateur, contrôles successifs et réouverture après inefficacité ; alertes et agenda intégrés.
+- Parcours action → standard versionné → formation du catalogue → compétence nominative. Grilles existantes conservées ; contrôle de la version, de la validité et de l’autonomie avant clôture d’une action ayant un parcours configuré.
+- VSM : avant figé, observations CSV prévisualisées et importées atomiquement, historique, comparaison avec l’actuel et le futur distinct.
+- Synthèse visuelle des six sites sous BIA Holding dans Pilotage, avec KPI daté, tendance, maturité/couverture et contrôles à faire.
+- Réplication d’une pratique validée vers plusieurs sites, en dossiers candidats séparés et sans doublon ; standard local rattachable.
+- Escalades des signaux non repris par une action et option de contrôle automatique à l’ouverture/toutes les minutes, application ouverte seulement, pour les managers autorisés.
+- Relevés énergie/déchets/CO₂ sourcés, liés aux gaspillages et actions ; ratios par pièce bonne et publication contrôlée dans le registre KPI.
+- Assistant d’analyse local et raccordement IA facultatif avec aperçu exact, consentement par envoi, endpoint HTTPS sans secret et résultat inerte non décisionnaire. Aucun modèle externe configuré ou appelé par défaut.
+
+Migration additive, aucune donnée locale supprimée. VSM par saisie/CSV ; aucun flux ERP/MES automatique. Déploiement partagé et authentification restent hors du périmètre statique. Voir [les parcours et limites](docs/LEAN_74.md).
+
 ## 7.3.0 — 28 septembre 2026
 
 - Accueil distinct pour les cinq profils : décisions Groupe, transformation multisite, pilotage site, journée d’équipe ou contribution opérateur.

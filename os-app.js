@@ -200,6 +200,7 @@ function osDecorateModal(title) {
       .forEach((el) => (el.disabled = true));
 }
 function osBind() {
+  os74Bind();
   document
     .querySelectorAll("[data-open-record]")
     .forEach((b) => (b.onclick = () => openRecord(b.dataset.openRecord)));

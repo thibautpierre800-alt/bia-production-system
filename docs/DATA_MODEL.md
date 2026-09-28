@@ -1,5 +1,7 @@
 # Modèle de données — schéma 7
 
+Extension 7.4.0 additive : calendrier et preuves `actions.sustainment`, parcours de transmission/qualifications par version, VSM avant figé et observations, `environmentLogs`, mesures dérivées sourcées et options d’escalade/IA. Voir [le détail des champs](LEAN_74.md#données-nouvelles). Les données antérieures et le schéma 7 restent compatibles.
+
 ## Identité et relations
 
 Une fiche du registre possède un `id` unique et stable, alphanumérique avec tirets ou soulignements. `site_id`, `workshop_id` et `zone_id` précisent son périmètre lorsque pertinent. `created_at`, `updated_at` et `archived_at` portent son cycle de vie. L’archivage masque une fiche des listes actives, conserve ses relations et reste réversible depuis son dossier/journal.
