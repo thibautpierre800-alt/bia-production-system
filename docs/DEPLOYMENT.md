@@ -34,3 +34,7 @@ Créer un nouveau commit rétablissant l’arbre sauvegardé, avec un nouveau nu
 
 La branche `backup/before-7.5.0-2026-11-05` conserve le commit `68826b9`, correspondant à la version 7.4.0 immédiatement antérieure à la 7.5.0. Même méthode que ci-dessus : nouveau commit rétablissant l’arbre sauvegardé, avec un nouveau numéro de cache, sans forcer `main`. La 7.5.0 n’a pas de migration destructive : les données 7.5 (statut Standby, famille, constat) restent lisibles par la 7.4, mais un export JSON préalable reste recommandé.
 
+## Retour à 7.5.0
+
+La branche `backup/before-7.6.0-2026-11-06` conserve le commit `e8ff7fd`, correspondant à la version 7.5.0 immédiatement antérieure à la 7.6.0. Même méthode : nouveau commit rétablissant l’arbre sauvegardé, avec un nouveau numéro de cache, sans forcer `main`. Les champs 7.6 (`updates`, `due_date_initial`, `reschedules`, `category`) sont ignorés par la 7.5 et conservés dans les données ; un export JSON préalable reste recommandé.
+

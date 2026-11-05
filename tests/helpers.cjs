@@ -15,6 +15,7 @@ const scripts = [
   "os-vsm.js",
   "os-app.js",
   "os-improvements.js",
+  "actions-plan.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {
