@@ -70,3 +70,11 @@ Les alertes ne forment pas une collection métier supplémentaire. Elles sont re
 La clé locale reste `biaProductionSystemV5`. La migration 6 → 7 est idempotente : référentiels persistants, rattachement des mesures aux KPI, progression des actions et nouvelles collections. Les anciennes séries quotidiennes sont conservées dans `legacyDailyTrends`, puis retirées des vues de saisie redondantes. Les comptes sont migrés dans `users`, avec copie `legacyAccounts`.
 
 Avant migration, le JSON original est conservé sous `biaProductionSystemV5-before-lean-os`. Compte/Administration permettent d’exporter les sauvegardes. Avant restauration ou changement d’espace, une copie distincte est conservée. Le retour logiciel à 6.8 doit utiliser le JSON de schéma 6 correspondant, jamais un export 7 sans conversion.
+
+## Extension 7.5.0 (additive)
+
+- `actions.status` accepte `Standby`, avec `actions.hold_reason` (motif obligatoire). Une action en Standby n’est ni en retard ni escaladée.
+- Les actions créées depuis un constat de Gemba portent `category` (famille), `finding` (constat) et `hypothesis`. Pour les actions plus anciennes, la famille est retrouvée par `origin_id` et `observation_id`, sinon « Non classée ».
+- Priorités : P1 = `Critique`, P2 = `Haute`, P3 = `Normale` (affichage seulement).
+- `audits.audit_data.domain_scores` (moyenne 0–5 par pilier) et `audits.audit_data.proof_count` sont enregistrés à la validation d’un audit paramétrable.
+

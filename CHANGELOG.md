@@ -1,5 +1,17 @@
 # Changelog
 
+## 7.5.0 — 5 novembre 2026
+
+- Plan d’actions : indicateurs (actives, en cours, à lancer, Standby, sous 30 jours, en retard, à vérifier, sécurité), trois vues — Par statut (inchangée, par défaut), Liste et Par famille — et filtres par responsable et par famille.
+- Modification rapide dans la liste limitée au responsable, à l’échéance et à la priorité, avec les garde-fous de la fiche : lecture seule, site hors périmètre, action clôturée, historique. Le statut se change toujours par la fiche, preuve comprise.
+- Nouveau statut Standby : motif obligatoire, jamais en retard, exclu des escalades, reprise par « Reprendre ».
+- Les actions issues d’un constat de Gemba conservent la famille (catégorie), le constat et l’hypothèse.
+- Responsable : liste des personnes et des responsables déjà utilisés, saisie libre conservée.
+- Priorités affichées P1 · Critique, P2 · Haute, P3 · Normale ; valeurs stockées inchangées.
+- Audits paramétrables : score par pilier et évolution depuis l’audit précédent du même site, questionnaire et périmètre. Ils ne s’affichent plus comme « Ancien format » une fois terminés. Un « | » dans une question ne casse plus l’éditeur de questionnaire.
+
+Migration additive, aucune donnée supprimée, schéma inchangé. Voir [le modèle de données](docs/DATA_MODEL.md).
+
 ## 7.4.0 — 28 septembre 2026
 
 - Suivi durable des actions à J30/J60/J90 : calendrier, preuve, vérificateur, contrôles successifs et réouverture après inefficacité ; alertes et agenda intégrés.

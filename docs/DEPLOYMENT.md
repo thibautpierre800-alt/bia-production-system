@@ -29,3 +29,8 @@ Les données des appareils ne sont pas dans GitHub : leur sauvegarde JSON est di
 La branche `backup/before-7.4.0-2026-09-28` conserve le commit `f5ff277`, correspondant à la version 7.3.0 immédiatement antérieure à cette livraison. Les sauvegardes antérieures restent également disponibles. Exporter les données 7.4 avant retour : les nouveaux champs peuvent être ignorés par l’ancienne interface et ne doivent pas être perdus lors d’une restauration.
 
 Créer un nouveau commit rétablissant l’arbre sauvegardé, avec un nouveau numéro de cache ; ne pas forcer `main` ou supprimer l’historique. Publier et revérifier Pages. Sur les appareils, exporter d’abord les données actuelles avant toute restauration.
+
+## Retour à 7.4.0
+
+La branche `backup/before-7.5.0-2026-11-05` conserve le commit `68826b9`, correspondant à la version 7.4.0 immédiatement antérieure à la 7.5.0. Même méthode que ci-dessus : nouveau commit rétablissant l’arbre sauvegardé, avec un nouveau numéro de cache, sans forcer `main`. La 7.5.0 n’a pas de migration destructive : les données 7.5 (statut Standby, famille, constat) restent lisibles par la 7.4, mais un export JSON préalable reste recommandé.
+
