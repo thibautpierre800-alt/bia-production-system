@@ -1,6 +1,6 @@
-# BIA Lean Operating System 7.4.0
+# BIA Lean Operating System 7.5.0
 
-Application de pilotage Lean pour BIA Holding et ses six sites : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax. La version 7.4.0 ajoute le suivi durable J30/J60/J90, la transmission des standards, les observations VSM, la synthèse multisite et les relevés environnementaux dans les parcours existants, sans effacer les données ni modifier les profils ou modes Essentiel/Complet.
+Application de pilotage Lean pour BIA Holding et ses six sites : Ag Déco, Europlacage, Marzin, Oraison Menuiserie, Profiline et Sodeplax. La version 7.5.0 enrichit le Plan d’actions (vues Liste et Par famille, statut Standby, constat et famille conservés, responsable choisi dans une liste) et les audits (score par pilier, évolution entre audits). La version 7.4.0 ajoutait le suivi durable J30/J60/J90, la transmission des standards, les observations VSM, la synthèse multisite et les relevés environnementaux dans les parcours existants, sans effacer les données ni modifier les profils ou modes Essentiel/Complet.
 
 Les [huit évolutions et leur mode d’emploi](docs/LEAN_74.md) précisent ce qui fonctionne localement et ce qui nécessite un serveur. L’assistant externe reste non connecté ; son raccordement facultatif exige un serveur autorisé et un consentement explicite par envoi. Les escalades automatiques, désactivées initialement, peuvent être activées dans Administration → Règles et ne fonctionnent qu’application ouverte.
 

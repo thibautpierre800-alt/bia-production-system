@@ -60,7 +60,7 @@ const MOBILE_NAV={
   operator:["home","terrain","actions","account"]
 };
 const SIGNAL_STATES=["Nouveau","Pris en compte","Action en cours","Résolu","Vérifié","Clos"];
-const ACTION_STATES=["Ouverte","En cours","À vérifier","Clôturée"];
+const ACTION_STATES=["Ouverte","En cours","Standby","À vérifier","Clôturée"];
 const SIGNAL_TYPES=["Sécurité","Qualité","Production","Flux","Maintenance","Standard","Autre"];
 const AXES={
   S:{label:"Sécurité",color:"#b83232"},
@@ -197,7 +197,7 @@ let state={
   pilotageMode:"analysis",
   terrainTab:"signals",
   resolutionTab:"problems",
-  actionFilter:"all",
+  actionFilter:"all",actionView:"status",actionOwner:"all",actionFamily:"all",actionSite:"all",
   toolCategory:"Tous",
   toolId:null,
   toolQuery:"",
@@ -279,9 +279,9 @@ function navIconSvg(id){
 }
 function isOpenSignal(s){return !s.archived_at&&s.state!=="Clos"}
 function isOpenAction(a){return !a.archived_at&&a.status!=="Clôturée"}
-function isLate(a){return a.due_date&&isOpenAction(a)&&a.due_date<today()}
+function isLate(a){return a.due_date&&isOpenAction(a)&&a.status!=="Standby"&&a.due_date<today()}
 function signalTone(s){return s.severity==="Critique"?"critical":s.state==="Clos"?"done":s.state==="Résolu"||s.state==="Vérifié"?"progress":"open"}
-function actionTone(a){return a.status==="Clôturée"?"done":a.status==="À vérifier"?"progress":a.status==="En cours"?"info":"open"}
+function actionTone(a){return a.status==="Standby"?"neutral":a.status==="Clôturée"?"done":a.status==="À vérifier"?"progress":a.status==="En cours"?"info":"open"}
 function nextId(prefix,rows){
   const max=rows.reduce((m,r)=>Math.max(m,Number(String(r.id).match(/\d+/)?.[0]||0)),0);
   return `${prefix}-${String(max+1).padStart(3,"0")}`;
@@ -424,15 +424,100 @@ function renderRoadmap(){
 function measureStatus(m){const status=osStatus(m);return {text:osStatusText(status),tone:{ok:"done",warn:"progress",gap:"open",missing:"neutral",qualify:"neutral"}[status]};}
 
 function renderActions(){
-  let actions=scoped(data.actions);
+  const all=scoped(data.actions);let actions=all.slice();
   if(state.actionFilter==="late")actions=actions.filter(isLate);
   if(state.actionFilter==="verify")actions=actions.filter(a=>a.status==="À vérifier");
   if(state.actionFilter==="open")actions=actions.filter(isOpenAction);
-  return `${pageHead("Plan d’actions","Une action unique, quelle que soit son origine","Une action créée depuis un signal, un audit ou un A3 reste visible ici avec son lien d’origine.",role().readonly?"":'<button class="btn" data-new-action>+ Nouvelle action</button>')}
-    <div class="filters">${[["all","Toutes"],["late","En retard"],["verify","À vérifier"],["open","Ouvertes"]].map(([id,label])=>`<button class="chip ${state.actionFilter===id?"active":""}" data-action-filter="${id}">${label}</button>`).join("")}</div>
-    ${listSearch("Rechercher une action")}<div class="kanban">${ACTION_STATES.map(status=>{const rows=actions.filter(a=>a.status===status);return `<section class="kanban-col"><h3>${status}<span class="badge">${rows.length}</span></h3><div class="list">${rows.map(a=>actionCard(a)).join("")||empty("Aucune action")}</div></section>`}).join("")}</div>`;
+  if(state.actionFilter==="standby")actions=actions.filter(a=>a.status==="Standby");
+  if(state.actionOwner!=="all")actions=actions.filter(a=>state.actionOwner==="none"?(!a.owner||a.owner==="À désigner"):a.owner===state.actionOwner);
+  if(state.actionFamily!=="all")actions=actions.filter(a=>actionFamily(a)===state.actionFamily);
+  if(state.actionSite!=="all")actions=actions.filter(a=>a.site_id===state.actionSite);
+  const view=["status","list","family","board"].includes(state.actionView)?state.actionView:"status",st=actionStats(all);
+  const owners=[...new Set(all.map(a=>a.owner).filter(o=>o&&o!=="À désigner"))].sort((a,b)=>a.localeCompare(b,"fr")),families=[...new Set(all.map(actionFamily))].sort((a,b)=>a==="Sécurité"?-1:b==="Sécurité"?1:a==="Non classée"?1:b==="Non classée"?-1:a.localeCompare(b,"fr"));
+  const kpi=[["Actions actives",st.active],["En cours",st.running],["Ouvertes (à lancer)",st.toStart],["Standby",st.standby],["Sous 30 jours",st.soon],["En retard",st.late],["À vérifier",st.verify],["Sécurité actives",st.safety]];
+  const siteIds=[...new Set(all.map(a=>a.site_id))];
+  let body;
+  if(view==="list")body=`<div class="table-wrap"><table class="data-table"><thead><tr><th>N°</th><th>Action et constat</th><th>Famille</th><th>Site</th><th>Responsable</th><th>Priorité</th><th>Échéance</th><th>Statut</th><th></th></tr></thead><tbody>${actions.map(actionRow).join("")||'<tr><td colspan="9">Aucune action pour ces filtres.</td></tr>'}</tbody></table></div>${ownerDatalist()}`;
+  else if(view==="family")body=families.map(f=>({f,rows:actions.filter(a=>actionFamily(a)===f)})).filter(g=>g.rows.length).map(g=>`<section class="section"><div class="section-title"><h2>${esc(g.f)} <span class="badge">${g.rows.length}</span></h2></div><div class="grid cols-3">${g.rows.map(actionCard).join("")}</div></section>`).join("")||empty("Aucune action pour ces filtres");
+  else if(view==="board")body=renderActionBoard(all);
+  else body=`<div class="kanban">${ACTION_STATES.map(status=>{const rows=actions.filter(a=>a.status===status);return `<section class="kanban-col"><h3>${status}<span class="badge">${rows.length}</span></h3><div class="list">${rows.map(a=>actionCard(a)).join("")||empty("Aucune action")}</div></section>`}).join("")}</div>`;
+  return `${pageHead("Plan d’actions","Une action unique, quelle que soit son origine","Une action créée depuis un constat de Gemba, un signal, un audit ou un A3 reste visible ici avec son lien d’origine.",role().readonly?"":'<button class="btn" data-new-action>+ Nouvelle action</button>')}
+    <div class="grid cols-4">${kpi.map(([l,v])=>`<article class="card"><div class="metric-label">${l}</div><div class="metric-value">${v}</div></article>`).join("")}</div>
+    <div class="filters" role="group" aria-label="Vue">${[["status","Par statut"],["list","Liste"],["family","Par famille"],["board","Panneau"]].map(([id,label])=>`<button class="chip ${view===id?"active":""}" data-action-view="${id}" aria-pressed="${view===id}">${label}</button>`).join("")}</div>
+    <div class="filters">${[["all","Toutes"],["late","En retard"],["verify","À vérifier"],["open","Ouvertes"],["standby","Standby"]].map(([id,label])=>`<button class="chip ${state.actionFilter===id?"active":""}" data-action-filter="${id}">${label}</button>`).join("")}
+      <label class="inline-filter">Responsable <select data-action-owner-filter><option value="all">Tous</option><option value="none" ${state.actionOwner==="none"?"selected":""}>À désigner</option>${owners.map(o=>`<option ${state.actionOwner===o?"selected":""}>${esc(o)}</option>`).join("")}</select></label>
+      ${siteIds.length>1?`<label class="inline-filter">Site <select data-action-site-filter><option value="all">Tous</option>${siteIds.map(s=>`<option value="${esc(s)}" ${state.actionSite===s?"selected":""}>${esc(getSiteName(s))}</option>`).join("")}</select></label>`:""}
+      <label class="inline-filter">Famille <select data-action-family-filter><option value="all">Toutes</option>${families.map(f=>`<option ${state.actionFamily===f?"selected":""}>${esc(f)}</option>`).join("")}</select></label></div>
+    ${listSearch("Rechercher une action")}${body}`;
 }
-function actionCard(a){return `<article class="row" data-search-row><div class="row-top"><span class="pill ${a.priority==="Critique"?"critical":a.priority==="Haute"?"progress":"neutral"}">${esc(a.id)}</span>${isLate(a)?pill("En retard","open"):""}</div><div class="row-title" style="margin-top:8px">${esc(a.title)}</div><div class="row-meta">${esc(a.owner||"À désigner")} · ${esc(a.origin_type)} ${esc(a.origin_id||"")} · ${shortDate(a.due_date)}</div><div class="row-actions"><button class="btn small secondary" data-open-record="${a.id}">Ouvrir</button>${a.origin_id?recordLink(a.origin_id,"Origine"):""}${a.status!=="Clôturée"?`<button class="btn small ghost" data-advance-action="${a.id}">${a.status==="À vérifier"?"Vérifier":a.status==="Ouverte"?"Démarrer":"Soumettre à vérification"}</button>`:""}</div></article>`}
+function actionCard(a){return `<article class="row" data-search-row><div class="row-top"><span class="pill ${a.priority==="Critique"?"critical":a.priority==="Haute"?"progress":"neutral"}">${esc(a.id)}</span>${isLate(a)?pill("En retard","open"):""}</div><div class="row-title" style="margin-top:8px">${esc(a.title)}</div><div class="row-meta">${esc(a.owner||"À désigner")} · ${esc(a.origin_type)} ${esc(a.origin_id||"")} · ${shortDate(a.due_date)}${a.status==="Standby"&&a.hold_reason?` · En attente : ${esc(a.hold_reason)}`:""}</div><div class="row-actions"><button class="btn small secondary" data-open-record="${a.id}">Ouvrir</button>${a.origin_id?recordLink(a.origin_id,"Origine"):""}${a.status!=="Clôturée"?`<button class="btn small ghost" data-advance-action="${a.id}">${a.status==="À vérifier"?"Vérifier":a.status==="Ouverte"?"Démarrer":a.status==="Standby"?"Reprendre":"Soumettre à vérification"}</button>`:""}</div></article>`}
+function priorityRank(p){return {Critique:1,Haute:2,Normale:3}[p]||3}
+function priorityLabel(p){return `P${priorityRank(p)} · ${p||"Normale"}`}
+function daysUntil(date){return date?Math.round((new Date(date+"T12:00:00")-new Date(today()+"T12:00:00"))/86400000):null}
+function ownerDatalist(){
+  const names=new Set((data.people||[]).filter(p=>p.name).map(p=>p.name));
+  data.actions.forEach(a=>{if(a.owner&&a.owner!=="À désigner")names.add(a.owner)});
+  return `<datalist id="ownerList">${[...names].sort((a,b)=>a.localeCompare(b,"fr")).map(n=>`<option value="${esc(n)}"></option>`).join("")}</datalist>`;
+}
+function actionFamily(a){
+  if(a.category)return a.category;
+  const g=data.gembas.find(x=>x.id===a.origin_id),o=g&&gembaObservations(g).find(x=>x.id===a.observation_id);
+  return o?.category||"Non classée";
+}
+function actionStats(rows){
+  const active=rows.filter(a=>isOpenAction(a)&&a.status!=="Standby"),days=a=>daysUntil(a.due_date);
+  return {active:active.length,running:rows.filter(a=>a.status==="En cours").length,toStart:rows.filter(a=>a.status==="Ouverte").length,verify:rows.filter(a=>a.status==="À vérifier").length,standby:rows.filter(a=>a.status==="Standby"&&!a.archived_at).length,soon:active.filter(a=>{const d=days(a);return d!==null&&d>=0&&d<=30}).length,late:rows.filter(isLate).length,safety:active.filter(a=>actionFamily(a)==="Sécurité").length};
+}
+function quickEditAction(id,field,raw){
+  const labels={owner:"Responsable",due_date:"Échéance",priority:"Priorité"},a=data.actions.find(x=>x.id===id);
+  if(!labels[field]||!a||role().readonly||!allowedSite(a.site_id,true)||a.status==="Clôturée"){toast("Modification non autorisée sur cette action.");return render()}
+  const value=String(raw||"").trim();
+  if(field==="owner"&&!value){toast("Le responsable ne peut pas être vide : indiquez un nom ou « À désigner ».");return render()}
+  if(field==="due_date"&&!/^\d{4}-\d{2}-\d{2}$/.test(value)){toast("Date invalide : une échéance est obligatoire.");return render()}
+  if(field==="priority"&&!["Critique","Haute","Normale"].includes(value))return render();
+  if(a[field]===value)return;
+  if(!commitData(()=>{const row=data.actions.find(x=>x.id===id),before=row[field];row[field]=value;recordHistory(row,row.status,`${labels[field]} : ${before||"vide"} → ${value}`)}))return render();
+  render();
+}
+function actionFamilies(rows){return [...new Set(rows.map(actionFamily))].sort((a,b)=>a==="Sécurité"?-1:b==="Sécurité"?1:a==="Non classée"?1:b==="Non classée"?-1:a.localeCompare(b,"fr"))}
+function actionBoardCell(list){
+  if(!list.length)return {cls:"none",count:"—",label:"aucune"};
+  const act=list.filter(a=>isOpenAction(a)&&a.status!=="Standby");
+  if(act.some(isLate))return {cls:"late",count:list.length,label:"en retard"};
+  if(act.some(a=>a.priority==="Critique"))return {cls:"critical",count:list.length,label:"P1 en cours"};
+  if(list.every(a=>a.status==="Clôturée"))return {cls:"done",count:list.length,label:"clos"};
+  if(list.every(a=>a.status==="Clôturée"||a.status==="Standby"))return {cls:"hold",count:list.length,label:"standby"};
+  return {cls:"work",count:list.length,label:"en traitement"};
+}
+function renderActionBoard(rows){
+  if(!rows.length)return empty("Aucune action à afficher");
+  const sites=[...new Set(rows.map(a=>a.site_id))],families=actionFamilies(rows),active=rows.filter(a=>isOpenAction(a)&&a.status!=="Standby"),safety=active.filter(a=>actionFamily(a)==="Sécurité");
+  const COLORS={Ouverte:["#ecece8","#3f3f3b"],"En cours":["#fff0dc","#7a3d00"],Standby:["#e6eef4","#1f4d6e"],"À vérifier":["#fff2d8","#7a4a00"],Clôturée:["#e7f4ec","#14603a"]};
+  const segs=ACTION_STATES.map(s=>({s,n:rows.filter(a=>a.status===s).length})).filter(x=>x.n);
+  const owners=new Map();active.forEach(a=>{const o=!a.owner||a.owner==="À désigner"?"À désigner":a.owner;owners.set(o,(owners.get(o)||0)+1)});
+  const load=[...owners].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],"fr")).slice(0,10),max=Math.max(1,...load.map(x=>x[1]));
+  const grid=`grid-template-columns:minmax(170px,1.4fr) repeat(${sites.length},minmax(110px,1fr));min-width:${180+sites.length*120}px`;
+  return `<div class="pb">
+    <div class="pb-top">
+      <article class="pb-safety"><div class="metric-label">Sécurité d’abord</div><b>${safety.length}</b><small>action(s) de sécurité encore actives, à examiner avant le reste${safety.filter(a=>a.priority==="Critique").length?` dont ${safety.filter(a=>a.priority==="Critique").length} en P1`:""}.</small></article>
+      <article class="panel section"><div class="metric-label">Répartition par statut</div><div class="pb-bar" role="img" aria-label="Répartition par statut : ${segs.map(x=>`${x.s} ${x.n}`).join(", ")}">${segs.map(x=>`<span style="flex:${x.n} 1 auto;background:${COLORS[x.s][0]};color:${COLORS[x.s][1]}">${esc(x.s)} · ${x.n}</span>`).join("")}</div></article>
+    </div>
+    <section class="panel section"><h2>Famille × site</h2><p class="hint">Chaque case donne le nombre d’actions et son état. Cliquez sur une case pour voir le détail. Ce panneau montre toutes les actions de votre périmètre, quels que soient les filtres.</p>
+      <div class="pb-scroll"><div class="pb-grid" style="${grid}"><div></div>${sites.map(s=>`<div class="pb-head">${esc(getSiteName(s))}</div>`).join("")}${families.map(f=>`<div class="pb-fam">${esc(f)}</div>${sites.map(s=>{const list=rows.filter(a=>actionFamily(a)===f&&a.site_id===s),c=actionBoardCell(list);return `<button class="pb-cell ${c.cls}" data-board-cell data-site="${esc(s)}" data-family="${esc(f)}" ${list.length?"":"disabled"} aria-label="${esc(f)}, ${esc(getSiteName(s))} : ${list.length?`${list.length} action(s), ${c.label}`:"aucune action"}"><b>${c.count}</b><span>${c.label}</span></button>`}).join("")}`).join("")}</div></div>
+      <div class="pb-legend"><span><i style="background:var(--red-soft);border-color:var(--red)"></i>En retard</span><span><i style="background:var(--amber-soft);border-color:#c98400"></i>Priorité P1 en cours</span><span><i style="background:#fff;border-color:#8f8f89"></i>En traitement</span><span><i style="background:#e6eef4;border-color:#6c8aa6"></i>Standby</span><span><i style="background:var(--green-soft);border-color:var(--green)"></i>Tout clos</span><span><i style="background:var(--paper);border-color:var(--line)"></i>Aucune action</span></div></section>
+    <section class="panel section"><h2>Charge par responsable</h2>${load.map(([name,n])=>`<div class="pb-load"><span>${esc(name)}</span><span class="pb-track ${name==="À désigner"?"unassigned":""}" aria-hidden="true"><span style="width:${Math.round(n/max*100)}%"></span></span><b>${n}</b></div>`).join("")||'<p class="hint">Aucune action active.</p>'}<p class="hint">Actions actives hors Standby. Les actions « À désigner » n’ont pas de responsable : à répartir avant de les lancer.</p></section>
+  </div>`;
+}
+function actionRow(a){
+  const edit=!role().readonly&&allowedSite(a.site_id,true)&&a.status!=="Clôturée",q=(field,attrs)=>`data-quick-edit="${a.id}" data-field="${field}" ${attrs}`;
+  const owner=edit?`<input class="quick-edit" list="ownerList" aria-label="Responsable ${esc(a.id)}" ${q("owner",`value="${esc(a.owner||"")}" placeholder="À désigner"`)}>`:esc(a.owner||"À désigner");
+  const prio=edit?`<select class="quick-edit" aria-label="Priorité ${esc(a.id)}" ${q("priority","")}>${["Critique","Haute","Normale"].map(p=>`<option value="${p}" ${p===(a.priority||"Normale")?"selected":""}>${priorityLabel(p)}</option>`).join("")}</select>`:esc(priorityLabel(a.priority));
+  const due=edit?`<input class="quick-edit" type="date" aria-label="Échéance ${esc(a.id)}" ${q("due_date",`value="${esc(a.due_date||"")}"`)}>`:shortDate(a.due_date);
+  const hold=a.status==="Standby"&&a.hold_reason?`<div class="row-meta">En attente : ${esc(a.hold_reason)}</div>`:"";
+  const next=a.status!=="Clôturée"?`<button class="btn small ghost" data-advance-action="${a.id}">${a.status==="À vérifier"?"Vérifier":a.status==="Ouverte"?"Démarrer":a.status==="Standby"?"Reprendre":"Soumettre à vérification"}</button>`:"";
+  return `<tr data-search-row><td><b>${esc(a.id)}</b></td><td style="min-width:260px"><div class="row-title">${esc(a.title)}</div>${a.finding&&a.finding!==a.title?`<div class="row-meta">Constat : ${esc(a.finding)}</div>`:""}${hold}</td><td>${esc(actionFamily(a))}</td><td>${esc(getSiteName(a.site_id))}</td><td>${owner}</td><td>${prio}</td><td>${due}</td><td>${pill(a.status,actionTone(a))}${isLate(a)?" "+pill("En retard","open"):""}</td><td><button class="btn small secondary" data-open-record="${a.id}">Ouvrir</button> ${next}</td></tr>`;
+}
+
 
 function signalStats(){
   const rows=scoped(data.signals);
@@ -442,12 +527,12 @@ function signalCard(s){return `<article class="row signal-row" data-search-row><
 
 function renderAudits(){
   const rows=scoped(data.audits).sort((a,b)=>String(b.updated_at||b.performed_at).localeCompare(String(a.updated_at||a.performed_at)));
-  const completed=rows.filter(a=>a.status==="Terminé"&&a.audit_data?.domain_scores),drafts=rows.filter(a=>a.status==="Brouillon"),last=completed[0],domains=last?Object.entries(last.audit_data.domain_scores):[];
+  const completed=rows.filter(a=>a.status==="Terminé"&&auditDomainScores(a)),drafts=rows.filter(a=>a.status==="Brouillon"),last=completed[0],domains=last?Object.entries(auditDomainScores(last)):[];
   return `${pageHead("Audits","Audit Terrain BIA · 50 critères","Dix domaines, cinq critères par domaine et une preuve obligatoire pour chaque note.",'<button class="btn" data-new-audit>+ DÉMARRER L’AUDIT 50 CRITÈRES</button>')}
     ${drafts.length?`<section class="attention-strip"><div><b>${drafts.length} audit(s) à reprendre</b><span>Les brouillons sont enregistrés sur cet appareil.</span></div><button class="btn" data-edit-audit="${drafts[0].id}">Continuer ${esc(drafts[0].id)}</button></section>`:""}
     <div class="grid cols-4"><article class="card"><div class="metric-label">Audits 50 critères terminés</div><div class="metric-value">${completed.length}</div></article><article class="card"><div class="metric-label">Brouillons à reprendre</div><div class="metric-value">${drafts.length}</div></article><article class="card"><div class="metric-label">Dernier score détaillé</div><div class="metric-value">${last?.score??"—"} <small>/ 100</small></div></article><article class="card"><div class="metric-label">Actions issues d’audit</div><div class="metric-value">${scoped(data.actions).filter(a=>a.origin_type==="Audit").length}</div></article></div>
     ${last?`<section class="panel section"><div class="section-title"><div><h2>Dernier Audit Terrain · ${esc(last.scope)}</h2><p class="hint">${shortDate(last.performed_at)} · ${esc(last.owner)}</p></div>${pill(`${last.score}/100`,last.score>=80?"done":last.score>=60?"progress":"open")}</div><div class="audit-domain-grid">${domains.map(([name,score])=>`<div class="audit-score-card"><div class="section-title"><b>${esc(name)}</b><span>${Number(score).toFixed(1)}/5</span></div><div class="progress"><span style="width:${score/5*100}%"></span></div></div>`).join("")}</div></section>`:""}
-    <section class="section"><div class="section-title"><h2>Audits enregistrés</h2><button class="btn secondary" data-open-tool="audit-terrain">Ouvrir le guide Audit Terrain</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>ID</th><th>Statut</th><th>Périmètre</th><th>Score</th><th>Preuves</th><th>Date</th><th>Responsable</th><th></th></tr></thead><tbody>${rows.map(a=>`<tr><td>${esc(a.id)}</td><td>${pill(a.status==="Terminé"&&!a.audit_data?.domain_scores?"Ancien format · détail indisponible":a.status,a.status==="Terminé"&&a.audit_data?.domain_scores?"done":"progress")}</td><td>${esc(a.scope||"À compléter")}</td><td><b>${a.score==null?"—":`${a.score}/100${a.status==="Terminé"&&!a.audit_data?.domain_scores?" · historique":""}`}</b></td><td>${a.audit_data?.proof_count??(a.proof?1:"—")}</td><td>${shortDate(a.performed_at)}</td><td>${esc(a.owner||"À compléter")}</td><td><button class="btn small secondary" data-edit-audit="${a.id}">${a.status==="Brouillon"?"Continuer":"Consulter"}</button></td></tr>`).join("")||'<tr><td colspan="8">Aucun audit.</td></tr>'}</tbody></table></div></section>`;
+    <section class="section"><div class="section-title"><h2>Audits enregistrés</h2><button class="btn secondary" data-open-tool="audit-terrain">Ouvrir le guide Audit Terrain</button></div><div class="table-wrap"><table class="data-table"><thead><tr><th>ID</th><th>Statut</th><th>Périmètre</th><th>Score</th><th>Preuves</th><th>Date</th><th>Responsable</th><th></th></tr></thead><tbody>${rows.map(a=>`<tr><td>${esc(a.id)}</td><td>${pill(a.status==="Terminé"&&!auditDomainScores(a)?"Ancien format · détail indisponible":a.status,a.status==="Terminé"&&auditDomainScores(a)?"done":"progress")}</td><td>${esc(a.scope||"À compléter")}</td><td><b>${a.score==null?"—":`${a.score}/100${a.status==="Terminé"&&!auditDomainScores(a)?" · historique":""}`}</b></td><td>${a.audit_data?.proof_count??(a.proof?1:"—")}</td><td>${shortDate(a.performed_at)}</td><td>${esc(a.owner||"À compléter")}</td><td><button class="btn small secondary" data-edit-audit="${a.id}">${a.status==="Brouillon"?"Continuer":"Consulter"}</button></td></tr>`).join("")||'<tr><td colspan="8">Aucun audit.</td></tr>'}</tbody></table></div></section>`;
 }
 
 
@@ -699,6 +784,12 @@ function bind(){
   document.querySelectorAll("[data-edit-action]").forEach(b=>b.onclick=()=>actionForm(data.actions.find(x=>x.id===b.dataset.editAction)));
   document.querySelectorAll("[data-advance-action]").forEach(b=>b.onclick=()=>advanceAction(b.dataset.advanceAction));
   document.querySelectorAll("[data-action-filter]").forEach(b=>b.onclick=()=>{state.actionFilter=b.dataset.actionFilter;render()});
+  document.querySelectorAll("[data-action-view]").forEach(b=>b.onclick=()=>{state.actionView=b.dataset.actionView;render()});
+  document.querySelectorAll("[data-action-owner-filter]").forEach(s=>s.onchange=()=>{state.actionOwner=s.value;render()});
+  document.querySelectorAll("[data-action-family-filter]").forEach(s=>s.onchange=()=>{state.actionFamily=s.value;render()});
+  document.querySelectorAll("[data-action-site-filter]").forEach(s=>s.onchange=()=>{state.actionSite=s.value;render()});
+  document.querySelectorAll("[data-board-cell]").forEach(b=>b.onclick=()=>{state.actionSite=b.dataset.site;state.actionFamily=b.dataset.family;state.actionView="family";render()});
+  document.querySelectorAll("[data-quick-edit]").forEach(el=>el.onchange=()=>quickEditAction(el.dataset.quickEdit,el.dataset.field,el.value));
   document.querySelectorAll("[data-terrain-tab]").forEach(b=>b.onclick=()=>{state.terrainTab=b.dataset.terrainTab;render()});
   document.querySelectorAll("[data-new-gemba]").forEach(b=>b.onclick=()=>gembaForm());
   document.querySelectorAll("[data-new-problem]").forEach(b=>b.onclick=()=>genericProblemForm());

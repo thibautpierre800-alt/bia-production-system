@@ -11,14 +11,15 @@ function actionForm(existing=null,origin={}) {
   if(readOnly)return modal(`${existing?.id||"Action"} · Consultation`,`<h3>${esc(existing?.title||"")}</h3><p>${esc(existing?.description||"")}</p><p>${esc(existing?.owner)} · ${shortDate(existing?.due_date)} · ${esc(existing?.status)}</p><p>${esc(existing?.effectiveness||"Efficacité non encore vérifiée")}</p>${recordLink(existing?.origin_id,"Origine")}`);
   modal(existing?`${existing.id} · Action`:"Nouvelle action",`<form id="actionForm"><p class="hint">Une action = un résultat attendu, un responsable, une date.</p>${ref?`<div class="context-strip">Origine : ${esc(ref.row.id)} · ${esc(ref.row.title||ref.row.description||ref.row.zone||ref.row.scope)}</div>`:""}<div class="form-grid section">
     <label class="wide">Que faut-il faire ?<input id="actionTitle" required value="${esc(existing?.title||origin.title||"")}" placeholder="Ex. Remplacer le guide usé du poste 4"></label>
-    <label>Responsable<input id="actionOwner" value="${esc(existing?.owner||origin.owner||"")}" required placeholder="Nom ou équipe"></label>
+    <label>Responsable<input id="actionOwner" list="ownerList" value="${esc(existing?.owner||origin.owner||"")}" required placeholder="Nom ou équipe">${ownerDatalist()}</label>
     <label>Pour quand ?<input id="actionDue" type="date" value="${existing?.due_date||origin.due_date||today()}" required></label>
     <label>Priorité<select id="actionPriority">${["Normale","Haute","Critique"].map(x=>`<option ${x===(existing?.priority||origin.priority||"Normale")?"selected":""}>${x}</option>`).join("")}</select></label>
     <label>Statut<select id="actionStatus">${ACTION_STATES.map(x=>`<option ${x===(existing?.status||"Ouverte")?"selected":""}>${x}</option>`).join("")}</select></label>
+    <label class="wide" id="actionHoldBox" hidden>Motif de mise en attente<input id="actionHold" value="${esc(existing?.hold_reason||"")}" placeholder="Ex. Attente d’un budget, d’une décision ou d’une pièce"></label>
     <label>Site<select id="actionSite" ${ref&&ref.row.site_id!=="group"?"disabled":""}>${siteOptions(siteId)}</select></label>
     <label class="wide">Contexte et résultat attendu<textarea id="actionDescription" rows="3">${esc(existing?.description||origin.description||"")}</textarea></label>
   ${osRelationFields(existing||origin)}</div><fieldset id="actionVerification" class="verification-box section"><legend>Vérifier l’efficacité</legend><label class="field">Résultat observé et période de tenue<textarea id="actionEvidence" rows="3" placeholder="Ex. 0 défaut sur trois lots contrôlés">${esc(existing?.effectiveness||"")}</textarea></label><div class="form-grid section"><label>Vérifié par<input id="actionVerifier" value="${esc(existing?.verified_by||"")}"></label><label>Date de vérification<input type="date" id="actionVerifiedAt" value="${existing?.verified_at||today()}"></label></div></fieldset>${existing?historyView(existing):""}<div class="form-actions"><button class="btn">Enregistrer l’action</button><button type="button" class="btn secondary" data-close-modal>Annuler</button></div></form>`);
-  const visibility=()=>{$("actionVerification").hidden=!["À vérifier","Clôturée"].includes($("actionStatus").value);};$("actionStatus").onchange=visibility;visibility();
+  const visibility=()=>{$("actionVerification").hidden=!["À vérifier","Clôturée"].includes($("actionStatus").value);$("actionHoldBox").hidden=$("actionStatus").value!=="Standby";};$("actionStatus").onchange=visibility;visibility();
   $("actionForm").onsubmit=e=>{
     e.preventDefault();const status=$("actionStatus").value,evidence=$("actionEvidence").value.trim(),verifier=$("actionVerifier").value.trim(),verifiedAt=$("actionVerifiedAt").value,chosenSite=$("actionSite").value;
     if(!allowedSite(chosenSite,true))return toast("Site hors de votre périmètre.");
@@ -28,6 +29,7 @@ function actionForm(existing=null,origin={}) {
     if(status==="Clôturée"&&(!evidence||!verifier||!verifiedAt||verifiedAt>today()))return toast("Pour clore : résultat constaté, vérificateur et date passée ou du jour requis.");
     const id=existing?.id||nextId("A",data.actions),payload={...osRelationValues(),id,site_id:chosenSite,workshop_id:existing?.workshop_id||origin.workshop_id||state.workshop||null,title:$("actionTitle").value.trim(),owner:$("actionOwner").value.trim(),due_date:$("actionDue").value,priority:$("actionPriority").value,status,progress:status==="Clôturée"?100:status==="À vérifier"?90:status==="En cours"?50:0,closed_at:status==="Clôturée"?(existing?.closed_at||now()):null,description:$("actionDescription").value.trim(),origin_type:existing?.origin_type||origin.origin_type||"Manuel",origin_id:existing?.origin_id||origin.origin_id||null,observation_id:existing?.observation_id||origin.observation_id||null,effectiveness:evidence||null,verified_by:verifier||null,verified_at:status==="Clôturée"?verifiedAt:null,created_at:existing?.created_at||now(),updated_at:now()};
     if(!payload.title||!payload.owner)return toast("Précisez l’action et son responsable.");
+    payload.hold_reason=status==="Standby"?$("actionHold").value.trim():"";if(status==="Standby"&&!payload.hold_reason)return toast("Indiquez le motif de mise en attente.");
     if(!commitData(()=>{let a=data.actions.find(x=>x.id===id);if(a)Object.assign(a,payload);else {a=payload;data.actions.unshift(a);}recordHistory(a,status,evidence);const p=data.problems.find(x=>x.id===a.origin_id);if(p&&!p.action_ids.includes(id))p.action_ids.push(id);const signal=data.signals.find(x=>x.id===a.origin_id);if(signal){signal.action_id=id;if(["Nouveau","Pris en compte"].includes(signal.state)){signal.state="Action en cours";signal.owner=payload.owner;recordHistory(signal,signal.state,`Action ${id}`);}}}))return;
     closeModal();receipt(id,"Actions",chosenSite,status==="À vérifier"?"Vérifier le résultat sur le terrain":"Suivre l’échéance et le résultat");render();
   };
@@ -36,7 +38,7 @@ function advanceAction(id) {
   const a=data.actions.find(x=>x.id===id);if(!a||!allowedSite(a.site_id,true))return;
   if(a.status==="À vérifier")return actionForm(a);
   if(a.status==="Clôturée")return;
-  const status=a.status==="Ouverte"?"En cours":"À vérifier";
+  const status=a.status==="Ouverte"||a.status==="Standby"?"En cours":"À vérifier";
   if(!commitData(()=>{const row=data.actions.find(x=>x.id===id);row.status=status;row.progress=status==="À vérifier"?90:50;recordHistory(row,status);}))return;
   receipt(id,"Actions",a.site_id,status==="À vérifier"?"Ouvrir pour renseigner la preuve d’efficacité":"Action démarrée");render();
 }

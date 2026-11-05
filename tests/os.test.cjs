@@ -292,6 +292,11 @@ test("F · audit paramétrable → preuve obligatoire → écart → action vér
     );
   a.submit("#osAudit");
   assert.equal(a.run(`data.audits.find(a=>a.id==='${id}').score`), 68);
+  assert.ok(
+    a.run(
+      `Object.keys(data.audits.find(a=>a.id==='${id}').audit_data.domain_scores).length`,
+    ) > 0,
+  );
   const aid = a.run(`data.actions.find(a=>a.origin_id==='${id}').id`);
   a.run("closeModal()");
   closeAction(a, aid);
@@ -448,4 +453,42 @@ test("Adaptateur mock explicite : export accepté par le contrat réel d’impor
   assert.equal(check.errors.length, 0);
   assert.equal(check.accepted[0].entry_mode, "import");
   assert.equal(check.accepted[0].value, 82);
+});
+
+test("Plan d’actions · Standby, vues et modification rapide gardée", (t) => {
+  const a = app(t);
+  assert.ok(a.run("ACTION_STATES.includes('Standby')"));
+  const id = a.run("scoped(data.actions).find(isOpenAction).id");
+  a.run(
+    `(()=>{const x=data.actions.find(a=>a.id==='${id}');x.status='Standby';x.due_date='2020-01-01';})()`,
+  );
+  assert.equal(a.run(`isLate(data.actions.find(a=>a.id==='${id}'))`), false);
+  assert.equal(
+    a.run(`osEscalationCandidates().some(c=>c.action.id==='${id}')`),
+    false,
+  );
+  for (const v of ["list", "family", "status"]) {
+    a.run(`state.view="actions";state.actionView="${v}";render()`);
+    assert.match(a.q("#appView").textContent, /Plan d’actions/);
+  }
+  a.run('state.actionView="list";render()');
+  a.run(`quickEditAction('${id}','priority','Critique')`);
+  assert.equal(
+    a.run(`data.actions.find(a=>a.id==='${id}').priority`),
+    "Critique",
+  );
+  a.run(`quickEditAction('${id}','owner','')`);
+  assert.notEqual(a.run(`data.actions.find(a=>a.id==='${id}').owner`), "");
+});
+
+test("Plan d’actions · panneau visuel et filtre par site", (t) => {
+  const a = app(t);
+  a.run('state.view="actions";state.actionView="board";render()');
+  assert.match(a.q("#appView").textContent, /Sécurité d’abord/);
+  assert.match(a.q("#appView").textContent, /Famille × site/);
+  const cell = a.q("[data-board-cell]:not([disabled])");
+  assert.ok(cell);
+  cell.click();
+  assert.equal(a.run("state.actionView"), "family");
+  assert.notEqual(a.run("state.actionSite"), "all");
 });

@@ -1,4 +1,58 @@
 "use strict";
+function osAuditDomainScores(criteria) {
+  const by = {};
+  for (const c of criteria || []) {
+    if (!osFinite(c.score)) continue;
+    (by[c.domain] ||= []).push(c.score);
+  }
+  return Object.fromEntries(
+    Object.entries(by).map(([name, list]) => [
+      name,
+      Math.round((list.reduce((sum, n) => sum + n, 0) / list.length) * 100) /
+        100,
+    ]),
+  );
+}
+function auditDomainScores(a) {
+  if (a?.audit_data?.domain_scores) return a.audit_data.domain_scores;
+  if (a?.status === "Terminé" && a.template_id) {
+    const scores = osAuditDomainScores(a.audit_data?.criteria);
+    return Object.keys(scores).length ? scores : null;
+  }
+  return null;
+}
+function osAuditPrevious(a) {
+  return data.audits
+    .filter(
+      (x) =>
+        x.id !== a.id &&
+        x.status === "Terminé" &&
+        osFinite(x.score) &&
+        x.site_id === a.site_id &&
+        x.template_id === a.template_id &&
+        x.scope === a.scope &&
+        String(x.performed_at) <= String(a.performed_at),
+    )
+    .sort((p, q) => String(q.performed_at).localeCompare(String(p.performed_at)))[0];
+}
+function osAuditSummary(a) {
+  const scores = auditDomainScores(a);
+  if (a.status !== "Terminé" || !scores) return "";
+  const prev = osAuditPrevious(a),
+    delta = prev ? a.score - prev.score : 0;
+  return `<section class="os-audit-summary"><h3>Résultat par pilier</h3><div class="audit-domain-grid">${Object.entries(
+    scores,
+  )
+    .map(
+      ([name, value]) =>
+        `<div class="audit-score-card"><div class="section-title"><b>${esc(name)}</b><span>${value.toFixed(1)}/5</span></div><div class="progress"><span style="width:${(value / 5) * 100}%"></span></div></div>`,
+    )
+    .join("")}</div>${
+    prev
+      ? `<p class="hint">Évolution depuis l’audit du ${shortDate(prev.performed_at)} (${esc(prev.id)}) : ${delta > 0 ? "+" : ""}${delta} point(s), de ${prev.score} à ${a.score}/100.</p>`
+      : `<p class="hint">Premier audit terminé sur ce périmètre : il servira de référence pour mesurer l’évolution.</p>`
+  }</section>`;
+}
 function osQuestionnaireForm(id = null) {
   if (!osIsAdmin()) return;
   const old = data.auditTemplates.find((q) => q.id === id);
@@ -14,7 +68,10 @@ function osQuestionnaireForm(id = null) {
       for (const line of f.elements.questions.value
         .split("\n")
         .filter((l) => l.trim())) {
-        const [pillar, text, proof] = line.split("|").map((s) => s.trim());
+        const parts = line.split("|").map((s) => s.trim()),
+          pillar = parts[0],
+          proof = parts.length > 2 ? parts[parts.length - 1] : "",
+          text = parts.slice(1, -1).join(" | ");
         if (!pillar || !text || !["oui", "non"].includes(proof))
           throw Error(
             "Chaque ligne doit avoir : pilier | question | oui ou non.",
@@ -93,7 +150,7 @@ function osAuditForm(saved) {
   const score = osFinite(a.score) ? `${a.score}/100` : "Brouillon";
   modal(
     `${a.id} · ${a.type} · ${score}`,
-    `<form id="osAudit"><h3>${esc(a.scope)}</h3><p>${esc(a.owner)} · ${esc(getSiteName(a.site_id))}</p><label class="field">Date de l’audit<input name="date" type="date" required value="${a.performed_at}" ${readonly ? "disabled" : ""}></label><fieldset ${readonly ? "disabled" : ""}>${a.question_snapshot
+    `<form id="osAudit"><h3>${esc(a.scope)}</h3><p>${esc(a.owner)} · ${esc(getSiteName(a.site_id))}</p>${osAuditSummary(a)}<label class="field">Date de l’audit<input name="date" type="date" required value="${a.performed_at}" ${readonly ? "disabled" : ""}></label><fieldset ${readonly ? "disabled" : ""}>${a.question_snapshot
       .map((q, i) => {
         const old = a.audit_data.criteria.find((c) => c.question_id === q.id);
         return `<section class="os-audit-question"><h3>${i + 1}. ${esc(q.text)}</h3><p class="hint">${esc(q.pillar)} · ${q.proof_required ? "Preuve obligatoire" : "Preuve facultative"}</p><label>Note<select name="score${i}"><option value="">À évaluer</option>${[0, 1, 2, 3, 4, 5].map((n) => `<option value="${n}" ${old?.score === n ? "selected" : ""}>${n}/5</option>`).join("")}</select></label><label>Fait observé / document consulté<textarea name="proof${i}" rows="2">${esc(old?.proof || "")}</textarea></label><label>Commentaire<textarea name="comment${i}" rows="2">${esc(old?.comment || "")}</textarea></label></section>`;
@@ -135,6 +192,14 @@ function osAuditForm(saved) {
         false
       );
     a.status = complete ? "Terminé" : "Brouillon";
+    if (complete) {
+      a.audit_data.domain_scores = osAuditDomainScores(a.audit_data.criteria);
+      a.audit_data.proof_count =
+        a.audit_data.criteria.filter((c) => c.proof).length + (a.photo ? 1 : 0);
+    } else {
+      delete a.audit_data.domain_scores;
+      delete a.audit_data.proof_count;
+    }
     a.score = complete
       ? Math.round(
           (a.audit_data.criteria.reduce((s, c) => s + c.score, 0) /
