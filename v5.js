@@ -343,7 +343,7 @@ function render(){
   if(state.view==="tools"&&state.toolId)$("appView").insertAdjacentHTML("afterbegin",toolLaunch(state.toolId));
   $("appView").insertAdjacentHTML("beforeend",quickActionDock());
   $("pageLocation").textContent=`${site().name} / ${NAV.find(n=>n.id===state.view)?.label||"Accueil"}`;
-  $("dataMode").innerHTML=`<span><b>BIA LEAN OS ${APP_VERSION}</b> · ${data.meta.demo?"Exemples fictifs":"Saisies locales"} · Données sur cet appareil · SEQUOIA non connecté</span><button type="button" class="mode-toggle" data-interface-mode-toggle>Interface ${interfaceMode()==="essential"?"Essentielle":"Complète"}</button>`;
+  $("dataMode").innerHTML=`<span><b>BIA LEAN OS ${APP_VERSION}</b> · ${data.meta.demo?"Exemples fictifs":"Saisies locales"} · Données sur cet appareil · SEQUOIA non connecté</span><span>Interface ${interfaceMode()==="essential"?"essentielle : l’essentiel par profil":"complète : tous les écrans"}</span><button type="button" class="mode-toggle" data-interface-mode-toggle>${interfaceMode()==="essential"?"Passer en interface complète":"Passer en interface essentielle"}</button>`;
   renderNotificationButton();
   bind();
   bindExperience();

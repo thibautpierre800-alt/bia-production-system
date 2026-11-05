@@ -498,7 +498,7 @@ test("Plan d’actions · panneau visuel et filtre par site", (t) => {
 test("Plan d’actions 7.6 · menu, compteurs, point, report tracé, revue et saisie rapide", (t) => {
   const a = app(t);
   a.run('state.site="group";state.role="lean";state.view="home";render()');
-  assert.ok(a.q('#desktopNav .nav-pinned [data-nav="actions"]'), "Plan d’actions épinglé");
+  assert.ok(a.q('#desktopNav .ux-path [data-nav="actions"]'), "Plan d’actions dans le chemin");
   assert.ok(a.all("#mobileNav .nav-button").some((b) => b.dataset.nav === "actions"));
   assert.equal(a.all("#mobileNav .nav-button").length, 4);
   const id = a.run('scoped(data.actions).find(x=>x.status==="Ouverte"||x.status==="En cours").id');
@@ -559,5 +559,25 @@ test("Plan d’actions 7.7 · rappels « Je suis », cloche et fichier agenda", 
   assert.ok(a.q("#appView .ap-remind"));
   a.fill(".ap-remind [data-ap-me]", "");
   assert.equal(a.run("apMe()"), "");
+});
+
+test("Interface 7.8 · chemin d’usage, onglets d’étape et contexte regroupé", (t) => {
+  const a = app(t);
+  a.run('state.site="group";state.role="lean";state.interfaceMode="complete";state.view="pilotage";render()');
+  const steps = a.all("#desktopNav .ux-step-btn").map((b) => b.querySelector("b").textContent);
+  assert.deepEqual(steps, ["Voir", "Observer", "Résoudre", "Agir", "Pérenniser"]);
+  assert.ok(a.q("#desktopNav .ux-step-btn.active"));
+  assert.ok(a.q(".ux-pathbar .ux-pb-step.active"));
+  assert.ok(a.all(".ux-tabs .ux-tab").length > 1);
+  a.click('.ux-tabs [data-nav="maturity"]');
+  assert.equal(a.run("state.view"), "maturity");
+  assert.ok(a.q("#contextPanel #siteSelect") && a.q("#contextPanel #roleSelect") && a.q("#contextPanel [data-interface-mode-toggle]"));
+  assert.match(a.q("#contextSummary").textContent, /Responsable Lean/);
+  a.run('state.view="home";render()');
+  assert.equal(a.all(".ux-tiles .ux-tile").length, 5);
+  assert.equal(a.q("#pageLocation").textContent.trim(), "");
+  a.run('state.role="dg";render()');
+  assert.ok(!a.all("#desktopNav .ux-step-btn b").some((b) => b.textContent === "Observer"));
+  assert.equal(a.all("#mobileNav .nav-button").length, 4);
 });
 
