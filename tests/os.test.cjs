@@ -454,3 +454,29 @@ test("Adaptateur mock explicite : export accepté par le contrat réel d’impor
   assert.equal(check.accepted[0].entry_mode, "import");
   assert.equal(check.accepted[0].value, 82);
 });
+
+test("Plan d’actions · Standby, vues et modification rapide gardée", (t) => {
+  const a = app(t);
+  assert.ok(a.run("ACTION_STATES.includes('Standby')"));
+  const id = a.run("scoped(data.actions).find(isOpenAction).id");
+  a.run(
+    `(()=>{const x=data.actions.find(a=>a.id==='${id}');x.status='Standby';x.due_date='2020-01-01';})()`,
+  );
+  assert.equal(a.run(`isLate(data.actions.find(a=>a.id==='${id}'))`), false);
+  assert.equal(
+    a.run(`osEscalationCandidates().some(c=>c.action.id==='${id}')`),
+    false,
+  );
+  for (const v of ["list", "family", "status"]) {
+    a.run(`state.view="actions";state.actionView="${v}";render()`);
+    assert.match(a.q("#appView").textContent, /Plan d’actions/);
+  }
+  a.run('state.actionView="list";render()');
+  a.run(`quickEditAction('${id}','priority','Critique')`);
+  assert.equal(
+    a.run(`data.actions.find(a=>a.id==='${id}').priority`),
+    "Critique",
+  );
+  a.run(`quickEditAction('${id}','owner','')`);
+  assert.notEqual(a.run(`data.actions.find(a=>a.id==='${id}').owner`), "");
+});

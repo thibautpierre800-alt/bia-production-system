@@ -757,7 +757,7 @@ function osSuggestions(siteId = state.site) {
 }
 function osEscalationCandidates(at = today()) {
   return osActive(data.actions)
-    .filter((a) => isOpenAction(a) && a.due_date)
+    .filter((a) => isOpenAction(a) && a.status !== "Standby" && a.due_date)
     .map((a) => {
       const last = data.escalations
           .filter((e) => e.source_id === a.id)

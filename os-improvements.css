@@ -12,3 +12,8 @@
 @media(max-width:1000px){.os-multisite-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.os-multisite-grid,.os-checkpoints,.os-environment .os-metrics{grid-template-columns:1fr}.os-multisite-map .section-title{display:block}.os-multisite-map .section-title label{max-width:none}.os-continuity .row-actions{flex-wrap:wrap}.os-checkpoints>div{display:grid;grid-template-columns:auto 1fr;align-items:center}.os-checkpoints small{grid-column:1/-1}}
 @media print{.os-multisite-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.os-site-summary{break-inside:avoid}.os-checkpoints{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+.quick-edit{min-height:44px;max-width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;font:inherit;color:inherit}
+.quick-edit:hover{border-color:var(--ink)}
+.inline-filter{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
+.inline-filter select{min-height:44px;border:1px solid var(--line);border-radius:6px;background:#fff;font:inherit;padding:0 8px}
