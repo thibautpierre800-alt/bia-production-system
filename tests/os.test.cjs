@@ -292,6 +292,11 @@ test("F · audit paramétrable → preuve obligatoire → écart → action vér
     );
   a.submit("#osAudit");
   assert.equal(a.run(`data.audits.find(a=>a.id==='${id}').score`), 68);
+  assert.ok(
+    a.run(
+      `Object.keys(data.audits.find(a=>a.id==='${id}').audit_data.domain_scores).length`,
+    ) > 0,
+  );
   const aid = a.run(`data.actions.find(a=>a.origin_id==='${id}').id`);
   a.run("closeModal()");
   closeAction(a, aid);
