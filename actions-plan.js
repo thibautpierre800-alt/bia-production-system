@@ -114,7 +114,8 @@ function apRow(a, compact = false) {
 
 function apScopeRows(all) {
   let rows = all;
-  if (state.actionOwner && state.actionOwner !== "all") rows = rows.filter((a) => (state.actionOwner === "none" ? apOwnerless(a) : a.owner === state.actionOwner));
+  if (state.actionOwner === "me" && typeof apMe === "function" && !apMe()) state.actionOwner = "all";
+  if (state.actionOwner && state.actionOwner !== "all") rows = rows.filter((a) => (state.actionOwner === "none" ? apOwnerless(a) : state.actionOwner === "me" ? apIsMine(a) : a.owner === state.actionOwner));
   if (state.actionFamily && state.actionFamily !== "all") rows = rows.filter((a) => actionFamily(a) === state.actionFamily);
   if (state.actionSite && state.actionSite !== "all") rows = rows.filter((a) => a.site_id === state.actionSite);
   return rows;
@@ -190,7 +191,8 @@ function renderActions() {
     <div class="ap-toolbar">
       <div class="filters" role="group" aria-label="Vue">${[["todo", "À traiter"], ["status", "Par statut"], ["board", "Panneau"]].map(([id, label]) => `<button type="button" class="chip ${view === id ? "active" : ""}" data-action-view="${id}" aria-pressed="${view === id}">${label}</button>`).join("")}</div>
       ${view === "todo" ? `<label class="inline-filter">Regrouper par <select data-action-group>${[["due", "Échéance"], ["owner", "Pilote"], ["family", "Famille"], ["site", "Site"]].map(([v, l]) => `<option value="${v}" ${group === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>` : ""}
-      ${view !== "board" ? `<label class="inline-filter">Pilote <select data-action-owner-filter><option value="all">Tous</option>${owners.map((o) => `<option value="${esc(o)}" ${state.actionOwner === o ? "selected" : ""}>${esc(o)}</option>`).join("")}<option value="none" ${state.actionOwner === "none" ? "selected" : ""}>À désigner</option></select></label>` : ""}
+      ${view !== "board" ? `<label class="inline-filter">Pilote <select data-action-owner-filter><option value="all">Tous</option>${apMe() ? `<option value="me" ${state.actionOwner === "me" ? "selected" : ""}>Mes actions (${esc(apMe())})</option>` : ""}${owners.map((o) => `<option value="${esc(o)}" ${state.actionOwner === o ? "selected" : ""}>${esc(o)}</option>`).join("")}<option value="none" ${state.actionOwner === "none" ? "selected" : ""}>À désigner</option></select></label>` : ""}
+      ${view !== "board" ? '<button type="button" class="chip" data-ap-ics-view title="Fichier agenda des échéances à venir affichées, avec rappel la veille">Agenda (.ics)</button>' : ""}
       ${scope ? `<button type="button" class="chip active" data-ap-scope-clear aria-label="Retirer le filtre ${esc(scope)}">${esc(scope)} ✕</button>` : ""}
     </div>
     ${view !== "board" ? listSearch("Rechercher une action") : ""}${body}</div>`;
@@ -576,3 +578,133 @@ function apBind() {
 }
 const apOsBindBase = osBind;
 osBind = function () { const out = apOsBindBase.apply(this, arguments); apBind(); return out; };
+
+/* ---------- Rappels et agenda (7.7) ---------- */
+
+const AP_ME_KEY = "biaActionMe";
+function apMe() { try { return localStorage.getItem(AP_ME_KEY) || ""; } catch { return ""; } }
+function apSetMe(name) { try { name ? localStorage.setItem(AP_ME_KEY, name) : localStorage.removeItem(AP_ME_KEY); } catch {} }
+function apIsMine(a, me = apMe()) {
+  if (!me || !a.owner) return false;
+  return a.owner === me || a.owner.startsWith(me + " ·") || me.startsWith(a.owner + " ·");
+}
+function apWeekKey() { return Math.floor(new Date(today() + "T12:00:00").getTime() / 6048e5); }
+
+function apReminders(rows = scoped(data.actions)) {
+  const me = apMe(), mine = rows.filter((a) => isOpenAction(a) && (!me || apIsMine(a, me)));
+  return {
+    me,
+    late: mine.filter(isLate),
+    today: mine.filter((a) => !isLate(a) && a.status !== "Standby" && a.due_date && daysUntil(a.due_date) === 0),
+    tomorrow: mine.filter((a) => a.status !== "Standby" && a.due_date && daysUntil(a.due_date) === 1),
+    stale: mine.filter((a) => apInfo(a).stale),
+    upcoming: mine.filter((a) => a.status !== "Standby" && a.due_date && daysUntil(a.due_date) >= 0),
+  };
+}
+
+function apReminderRows() {
+  const scope = (row) => allowedSite(row.site_id) && (state.site === "group" || row.site_id === state.site) && (!state.workshop || !row.workshop_id || row.workshop_id === state.workshop);
+  const r = apReminders(data.actions.filter((a) => !a.archived_at && scope(a))), who = r.me ? ` · ${r.me}` : "", out = [];
+  r.today.forEach((a) => out.push({ key: `remind:${a.id}:today:${a.due_date}`, record_id: a.id, site_id: a.site_id, tone: "warn", title: `Échéance aujourd’hui${who}`, detail: `${getSiteName(a.site_id)} · ${a.title} · ${a.owner || "À désigner"}`, due: a.due_date }));
+  r.tomorrow.forEach((a) => out.push({ key: `remind:${a.id}:tomorrow:${a.due_date}`, record_id: a.id, site_id: a.site_id, tone: "info", title: `Échéance demain${who}`, detail: `${getSiteName(a.site_id)} · ${a.title} · ${a.owner || "À désigner"}`, due: a.due_date }));
+  r.stale.forEach((a) => out.push({ key: `remind:${a.id}:stale:${apWeekKey()}`, record_id: a.id, site_id: a.site_id, tone: "info", title: `Sans nouvelle depuis ${apSilence(a)} jours${who}`, detail: `${getSiteName(a.site_id)} · ${a.title} · ${a.owner || "À désigner"} · noter un point`, due: a.due_date }));
+  return out;
+}
+
+const apOperationalBase = operationalNotifications;
+operationalNotifications = function () {
+  const base = apOperationalBase(), seen = new Set(base.map((x) => x.key)), order = { critical: 0, warn: 1, info: 2 };
+  return base.concat(apReminderRows().filter((x) => !seen.has(x.key)))
+    .sort((a, b) => order[a.tone] - order[b.tone] || String(a.due || "").localeCompare(String(b.due || "")) || a.title.localeCompare(b.title, "fr"));
+};
+
+function apMeSelect(attr = "data-ap-me") {
+  const me = apMe(), owners = apOwners();
+  if (me && !owners.includes(me)) owners.unshift(me);
+  return `<label class="inline-filter">Je suis <select ${attr} aria-label="Choisir votre nom pour vos rappels"><option value="">Tout le périmètre</option>${owners.map((o) => `<option value="${esc(o)}" ${o === me ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></label>`;
+}
+function apReminderStrip(where = "actions") {
+  const r = apReminders(), me = r.me;
+  if (where === "home" && (!me || !(r.late.length + r.today.length + r.tomorrow.length + r.stale.length))) return "";
+  const chip = (n, label, filter, tone) => n ? `<button type="button" class="ap-remind-chip ${tone}" data-ap-remind="${filter}">${n} ${label}</button>` : "";
+  const chips = chip(r.late.length, "en retard", "late", "late") + chip(r.today.length, "aujourd’hui", "week", "soon") + chip(r.tomorrow.length, "demain", "week", "") + chip(r.stale.length, "sans nouvelle", "stale", "");
+  return `<section class="ap-remind" aria-label="Vos rappels">
+    <div class="ap-remind-head"><b>${me ? `Vos rappels · ${esc(me)}` : "Rappels du périmètre"}</b>${apMeSelect()}</div>
+    <div class="ap-remind-body">${chips || '<span class="hint">Rien d’urgent : aucune action en retard, à échéance aujourd’hui ou demain, ni sans nouvelle.</span>'}
+      ${r.upcoming.length ? `<button type="button" class="btn secondary small" data-ap-ics-mine>Ajouter à l’agenda · ${r.upcoming.length} échéance${r.upcoming.length > 1 ? "s" : ""}</button>` : ""}</div>
+    ${me ? "" : '<p class="hint">Choisissez votre nom pour ne voir que vos actions : le choix reste sur cet appareil.</p>'}
+  </section>`;
+}
+
+/* Fichier agenda (.ics) : un événement par échéance, rappel la veille à 9 h, identifiant stable pour mettre à jour. */
+function apIcsText(value) { return String(value || "").replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n"); }
+function apIcsFold(line) {
+  const enc = new TextEncoder(), parts = [];
+  let current = "";
+  for (const ch of line) {
+    if (enc.encode(current + ch).length > (parts.length ? 74 : 75)) { parts.push(current); current = ch; }
+    else current += ch;
+  }
+  parts.push(current);
+  return parts.join("\r\n ");
+}
+function apIcs(actions) {
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z"), link = location.href.split("#")[0] + "#actions";
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//BIA Lean OS//Plan d'actions//FR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:BIA · Plan d’actions"];
+  for (const a of actions.filter((x) => x.due_date && isOpenAction(x))) {
+    const start = a.due_date.replace(/-/g, ""), end = apShiftDay(a.due_date, 1).replace(/-/g, ""), p = apPrioRank(a);
+    const desc = [`Pilote : ${a.owner || "À désigner"}`, `Site : ${getSiteName(a.site_id)}`, `Priorité : P${p} · ${a.priority || "Normale"}`, `Statut : ${a.status}`, a.finding ? `Constat : ${a.finding}` : "", apPromised(a) !== a.due_date ? `Date promise au départ : ${shortDate(apPromised(a))}` : "", `Ouvrir le plan d’actions : ${link}`].filter(Boolean).join("\n");
+    lines.push("BEGIN:VEVENT", `UID:${a.id}-${a.site_id}@bia-lean-os`, `DTSTAMP:${stamp}`, `SEQUENCE:${(a.reschedules || []).length}`,
+      `DTSTART;VALUE=DATE:${start}`, `DTEND;VALUE=DATE:${end}`, `SUMMARY:${apIcsText(`[BIA] ${a.id} · ${a.title}`)}`, `DESCRIPTION:${apIcsText(desc)}`,
+      `CATEGORIES:${apIcsText("Plan d’actions BIA")}`, "TRANSP:TRANSPARENT", `URL:${link}`,
+      "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${apIcsText(`Échéance demain : ${a.title}`)}`, "TRIGGER:-PT15H", "END:VALARM", "END:VEVENT");
+  }
+  lines.push("END:VCALENDAR");
+  return lines.map(apIcsFold).join("\r\n") + "\r\n";
+}
+function apDownloadIcs(actions, name) {
+  const list = actions.filter((x) => x.due_date && isOpenAction(x));
+  if (!list.length) return toast("Aucune échéance à ajouter à l’agenda.");
+  const blob = new Blob([apIcs(list)], { type: "text/calendar;charset=utf-8" }), url = URL.createObjectURL(blob), link = document.createElement("a");
+  link.href = url; link.download = name; document.body.append(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(`${list.length} échéance(s) prête(s) pour l’agenda : ouvrez le fichier pour les ajouter à Outlook, avec un rappel la veille à 9 h.`);
+}
+
+/* Intégration : page, accueil, fiche, cloche. */
+const apRenderActionsWithAgenda = renderActions;
+renderActions = function () { return apReminderStrip("actions") + apRenderActionsWithAgenda(); };
+const apRenderHomeBase = renderHome;
+renderHome = function () { return apReminderStrip("home") + apRenderHomeBase(); };
+
+const apOpenFicheBase = apOpen;
+apOpen = function (id, ask = "") {
+  apOpenFicheBase(id, ask);
+  const a = data.actions.find((x) => x.id === id), actions = $("modalContent")?.querySelector(".ap-fiche .form-actions");
+  if (a && actions && a.due_date && isOpenAction(a)) {
+    actions.insertAdjacentHTML("afterbegin", '<button type="button" class="btn secondary" data-ap-ics-one>Ajouter à mon agenda</button>');
+    actions.querySelector("[data-ap-ics-one]").onclick = () => apDownloadIcs([a], `${a.id}-echeance.ics`);
+  }
+};
+
+const apNotificationCenterBase = openNotificationCenter;
+openNotificationCenter = function () {
+  apNotificationCenterBase();
+  const head = $("modalContent")?.querySelector(".notification-head");
+  if (head) head.insertAdjacentHTML("afterend", apReminderStrip("center"));
+  apBindReminders($("modalContent"), true);
+  $("modalContent")?.querySelectorAll("[data-notification-open]").forEach((b) => {
+    const action = data.actions.find((x) => x.id === b.dataset.notificationOpen);
+    if (action) b.onclick = () => { markNotifications([b.dataset.notificationKey]); closeModal(); state.view = "actions"; render(); apOpen(action.id); renderNotificationButton(); };
+  });
+};
+
+function apBindReminders(root = document, inCenter = false) {
+  if (!root) return;
+  root.querySelectorAll("[data-ap-me]").forEach((s) => (s.onchange = () => { apSetMe(s.value); if (s.value) { state.actionOwner = "me"; } else if (state.actionOwner === "me") state.actionOwner = "all"; renderNotificationButton(); if (inCenter) openNotificationCenter(); else render(); }));
+  root.querySelectorAll("[data-ap-remind]").forEach((b) => (b.onclick = () => { if (inCenter) closeModal(); state.view = "actions"; state.actionView = "todo"; state.actionGroup = "due"; state.actionFilter = b.dataset.apRemind; state.actionOwner = apMe() ? "me" : "all"; render(); }));
+  root.querySelectorAll("[data-ap-ics-mine]").forEach((b) => (b.onclick = () => apDownloadIcs(apReminders().upcoming, `bia-echeances-${today()}.ics`)));
+  root.querySelectorAll("[data-ap-ics-view]").forEach((b) => (b.onclick = () => apDownloadIcs(apScopeRows(scoped(data.actions)).filter((a) => a.due_date && daysUntil(a.due_date) >= 0 && a.status !== "Standby"), `bia-plan-actions-${today()}.ics`)));
+}
+const apOsBindWithReminders = osBind;
+osBind = function () { const out = apOsBindWithReminders.apply(this, arguments); if (state.view === "actions" || state.view === "home") apBindReminders(document); return out; };

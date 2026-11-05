@@ -1,5 +1,15 @@
 # Changelog
 
+## 7.7.0 — 6 novembre 2026
+
+- Rappels : choix « Je suis » (nom du pilote, gardé sur l’appareil). Bandeau « Vos rappels » sur le Plan d’actions et sur l’accueil : en retard, échéance aujourd’hui, demain, sans nouvelle ; un clic ouvre la liste filtrée sur vos actions.
+- La cloche d’alertes ajoute les échéances du jour et du lendemain et les actions sans nouvelle (rappel hebdomadaire). « Ouvrir » sur une action mène à la fiche rapide.
+- Filtre « Mes actions » dans la liste.
+- Agenda Outlook : « Ajouter à mon agenda » dans la fiche, « Ajouter à l’agenda » pour vos échéances à venir et « Agenda (.ics) » pour la vue affichée. Un événement par échéance, rappel la veille à 9 h, identifiant stable : réimporter met l’événement à jour.
+- Les rappels ne s’envoient pas application fermée : l’agenda Outlook prend le relais sur téléphone et ordinateur.
+
+Aucun changement de données : le nom choisi reste dans le navigateur (`biaActionMe`).
+
 ## 7.6.0 — 6 novembre 2026
 
 - Plan d’actions trouvable en un clic : épinglé en tête du menu avec une pastille rouge des retards, et présent dans la barre du bas sur téléphone pour tous les profils.

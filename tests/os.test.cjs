@@ -540,3 +540,24 @@ test("Plan d’actions 7.6 · menu, compteurs, point, report tracé, revue et sa
   assert.equal(a.run("data.actions[0].category"), "Sécurité");
   assert.equal(a.run("data.actions[0].due_date_initial"), a.run("data.actions[0].due_date"));
 });
+
+test("Plan d’actions 7.7 · rappels « Je suis », cloche et fichier agenda", (t) => {
+  const a = app(t);
+  a.run('state.site="group";state.role="lean";state.view="actions";render()');
+  assert.ok(a.q(".ap-remind"));
+  const owner = a.run('data.actions.find(x=>x.status==="Ouverte"||x.status==="En cours").owner');
+  a.fill(".ap-remind [data-ap-me]", owner);
+  assert.equal(a.run("apMe()"), owner);
+  assert.equal(a.run("state.actionOwner"), "me");
+  a.run('(()=>{const x=data.actions.find(r=>apIsMine(r)&&isOpenAction(r));x.due_date=today();x.status="En cours";save();render();})()');
+  assert.ok(a.run('operationalNotifications().some(r=>r.key.startsWith("remind:")&&r.title.startsWith("Échéance aujourd’hui"))'));
+  const ics = a.run("apIcs(apReminders().upcoming)");
+  assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
+  assert.match(ics, /TRIGGER:-PT15H/);
+  assert.ok(ics.split("\r\n").every((l) => Buffer.byteLength(l) <= 75));
+  a.run('switchView("home")');
+  assert.ok(a.q("#appView .ap-remind"));
+  a.fill(".ap-remind [data-ap-me]", "");
+  assert.equal(a.run("apMe()"), "");
+});
+

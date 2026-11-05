@@ -38,3 +38,7 @@ La branche `backup/before-7.5.0-2026-11-05` conserve le commit `68826b9`, corres
 
 La branche `backup/before-7.6.0-2026-11-06` conserve le commit `e8ff7fd`, correspondant à la version 7.5.0 immédiatement antérieure à la 7.6.0. Même méthode : nouveau commit rétablissant l’arbre sauvegardé, avec un nouveau numéro de cache, sans forcer `main`. Les champs 7.6 (`updates`, `due_date_initial`, `reschedules`, `category`) sont ignorés par la 7.5 et conservés dans les données ; un export JSON préalable reste recommandé.
 
+## Retour à 7.6.0
+
+La branche `backup/before-7.7.0-2026-11-06` conserve le commit `f6790ce`, correspondant à la version 7.6.0. La 7.7.0 ne modifie pas les données : seul le nom choisi pour les rappels est gardé dans le navigateur (`biaActionMe`).
+
