@@ -33,7 +33,7 @@ const NAV=[
   {id:"pilotage",icon:"↗",label:"Pilotage",group:"Piloter"},
   {id:"roadmap",icon:"⇢",label:"Roadmap",group:"Piloter"},
   {id:"sqcdp",icon:"▦",label:"SQCDP Atelier",group:"Piloter"},
-  {id:"actions",icon:"✓",label:"Actions",group:"Agir"},
+  {id:"actions",icon:"✓",label:"Plan d’actions",group:"Agir"},
   {id:"terrain",icon:"!",label:"Terrain",group:"Agir"},
   {id:"audits",icon:"◎",label:"Audit Terrain · 50",group:"Agir"},
   {id:"resolution",icon:"◇",label:"Résolution",group:"Améliorer"},
@@ -53,12 +53,13 @@ const ESSENTIAL_NAV={
   operator:["home","sqcdp","actions","terrain","kaizen","account"]
 };
 const MOBILE_NAV={
-  dg:["home","pilotage","roadmap","account"],
-  lean:["home","pilotage","daily","account"],
-  director:["home","pilotage","daily","account"],
-  teamlead:["home","daily","terrain","account"],
+  dg:["home","pilotage","actions","account"],
+  lean:["home","daily","actions","terrain"],
+  director:["home","pilotage","actions","terrain"],
+  teamlead:["home","daily","actions","terrain"],
   operator:["home","terrain","actions","account"]
 };
+const PINNED_NAV=["home","actions"];
 const SIGNAL_STATES=["Nouveau","Pris en compte","Action en cours","Résolu","Vérifié","Clos"];
 const ACTION_STATES=["Ouverte","En cours","Standby","À vérifier","Clôturée"];
 const SIGNAL_TYPES=["Sécurité","Qualité","Production","Flux","Maintenance","Standard","Autre"];
@@ -197,7 +198,7 @@ let state={
   pilotageMode:"analysis",
   terrainTab:"signals",
   resolutionTab:"problems",
-  actionFilter:"all",actionView:"status",actionOwner:"all",actionFamily:"all",actionSite:"all",
+  actionFilter:"all",actionView:"todo",actionGroup:"due",actionBoardCols:"auto",actionOwner:"all",actionFamily:"all",actionSite:"all",apReview:null,
   toolCategory:"Tous",
   toolId:null,
   toolQuery:"",
@@ -296,13 +297,19 @@ function empty(message){return `<div class="empty">${esc(message)}</div>`}
 function getSiteName(id){return SITES.find(s=>s.id===id)?.name||"Site inconnu"}
 function canGroup(){return role().scope==="group"}
 
+function navBadge(id){
+  if(id!=="actions")return "";
+  const late=scoped(data.actions).filter(isLate).length;
+  return late?`<span class="nav-badge" aria-label="${late} action(s) en retard">${late}</span>`:"";
+}
 function renderNav(){
-  const nav=visibleNav();
-  const groups=[...new Set(nav.map(n=>n.group))];
-  const html=groups.map(group=>`<details class="nav-section" ${nav.some(n=>n.group===group&&n.id===state.view)?"open":""}><summary>${esc(group)}</summary>${nav.filter(n=>n.group===group).map(n=>`<button class="nav-button ${state.view===n.id?"active":""}" data-nav="${n.id}"><span class="nav-icon">${navIconSvg(n.id)}</span>${esc(n.label)}</button>`).join("")}</details>`).join("");
+  const nav=visibleNav(),pinned=nav.filter(n=>PINNED_NAV.includes(n.id)).sort((a,b)=>PINNED_NAV.indexOf(a.id)-PINNED_NAV.indexOf(b.id)),rest=nav.filter(n=>!PINNED_NAV.includes(n.id));
+  const groups=[...new Set(rest.map(n=>n.group))];
+  const button=n=>`<button class="nav-button ${state.view===n.id?"active":""}" data-nav="${n.id}"><span class="nav-icon">${navIconSvg(n.id)}</span><span class="nav-label">${esc(n.label)}</span>${navBadge(n.id)}</button>`;
+  const html=`<div class="nav-pinned">${pinned.map(button).join("")}</div>`+groups.map(group=>`<details class="nav-section" ${rest.some(n=>n.group===group&&n.id===state.view)?"open":""}><summary>${esc(group)}</summary>${rest.filter(n=>n.group===group).map(button).join("")}</details>`).join("");
   $("desktopNav").innerHTML=html;
-  const mobileIds=new Set(MOBILE_NAV[state.role]||["home","terrain","actions","account"]);
-  $("mobileNav").innerHTML=NAV.filter(n=>role().nav.includes(n.id)&&mobileIds.has(n.id)).slice(0,4).map(n=>`<button class="nav-button ${state.view===n.id?"active":""}" data-nav="${n.id}"><span class="nav-icon">${navIconSvg(n.id)}</span>${esc(n.id==="daily"?"Aujourd’hui":n.label)}</button>`).join("");
+  const mobileIds=MOBILE_NAV[state.role]||["home","terrain","actions","account"];
+  $("mobileNav").innerHTML=mobileIds.map(id=>NAV.find(n=>n.id===id)).filter(n=>n&&role().nav.includes(n.id)).slice(0,4).map(n=>`<button class="nav-button ${state.view===n.id?"active":""}" data-nav="${n.id}"><span class="nav-icon">${navIconSvg(n.id)}</span>${esc(n.id==="daily"?"Aujourd’hui":n.id==="actions"?"Actions":n.label)}${navBadge(n.id)}</button>`).join("");
 }
 function renderContexts(){
   const assignedSite=state.site==="group"?"marzin":state.site;
@@ -788,7 +795,7 @@ function bind(){
   document.querySelectorAll("[data-action-owner-filter]").forEach(s=>s.onchange=()=>{state.actionOwner=s.value;render()});
   document.querySelectorAll("[data-action-family-filter]").forEach(s=>s.onchange=()=>{state.actionFamily=s.value;render()});
   document.querySelectorAll("[data-action-site-filter]").forEach(s=>s.onchange=()=>{state.actionSite=s.value;render()});
-  document.querySelectorAll("[data-board-cell]").forEach(b=>b.onclick=()=>{state.actionSite=b.dataset.site;state.actionFamily=b.dataset.family;state.actionView="family";render()});
+  document.querySelectorAll("[data-board-cell]").forEach(b=>b.onclick=()=>{state.actionSite=b.dataset.site;state.actionFamily=b.dataset.family;state.actionView="todo";render()});
   document.querySelectorAll("[data-quick-edit]").forEach(el=>el.onchange=()=>quickEditAction(el.dataset.quickEdit,el.dataset.field,el.value));
   document.querySelectorAll("[data-terrain-tab]").forEach(b=>b.onclick=()=>{state.terrainTab=b.dataset.terrainTab;render()});
   document.querySelectorAll("[data-new-gemba]").forEach(b=>b.onclick=()=>gembaForm());

@@ -78,3 +78,11 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - Priorités : P1 = `Critique`, P2 = `Haute`, P3 = `Normale` (affichage seulement).
 - `audits.audit_data.domain_scores` (moyenne 0–5 par pilier) et `audits.audit_data.proof_count` sont enregistrés à la validation d’un audit paramétrable.
 
+## Extension 7.6.0 (additive)
+
+- `actions.updates[]` : points d’avancement `{at, text, by}`. Le dernier s’affiche sur la ligne de l’action ; une action Ouverte ou En cours sans point (ni création) depuis plus de 14 jours est signalée « sans nouvelle ».
+- `actions.due_date_initial` : date promise au départ. Renseignée à la création, ou au premier report pour les actions plus anciennes.
+- `actions.reschedules[]` : reports `{at, from, to, reason, by}`. Le nombre de reports et la date initiale restent visibles ; la tenue des délais du Panneau se calcule par rapport à la date initiale.
+- `actions.category` : famille choisie dans la liste paramétrable des catégories. À défaut, la famille est déduite du constat de Gemba, puis du type du signal d’origine, sinon « Non classée ».
+- Une action peut être créée sans échéance (saisie rapide « Sans date ») ; elle est alors signalée « Sans date » jusqu’à ce qu’une date soit fixée.
+

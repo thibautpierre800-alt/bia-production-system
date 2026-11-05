@@ -467,11 +467,11 @@ test("Plan d’actions · Standby, vues et modification rapide gardée", (t) => 
     a.run(`osEscalationCandidates().some(c=>c.action.id==='${id}')`),
     false,
   );
-  for (const v of ["list", "family", "status"]) {
+  for (const v of ["todo", "status", "board"]) {
     a.run(`state.view="actions";state.actionView="${v}";render()`);
     assert.match(a.q("#appView").textContent, /Plan d’actions/);
   }
-  a.run('state.actionView="list";render()');
+  a.run('state.actionView="todo";render()');
   a.run(`quickEditAction('${id}','priority','Critique')`);
   assert.equal(
     a.run(`data.actions.find(a=>a.id==='${id}').priority`),
@@ -483,12 +483,60 @@ test("Plan d’actions · Standby, vues et modification rapide gardée", (t) => 
 
 test("Plan d’actions · panneau visuel et filtre par site", (t) => {
   const a = app(t);
-  a.run('state.view="actions";state.actionView="board";render()');
+  a.run('state.site="group";state.view="actions";state.actionView="board";render()');
   assert.match(a.q("#appView").textContent, /Sécurité d’abord/);
   assert.match(a.q("#appView").textContent, /Famille × site/);
+  assert.match(a.q("#appView").textContent, /Tenue des délais/);
   const cell = a.q("[data-board-cell]:not([disabled])");
   assert.ok(cell);
   cell.click();
-  assert.equal(a.run("state.actionView"), "family");
-  assert.notEqual(a.run("state.actionSite"), "all");
+  assert.equal(a.run("state.actionView"), "todo");
+  assert.notEqual(a.run("state.actionFamily"), "all");
+  assert.ok(a.q("[data-ap-scope-clear]"));
+});
+
+test("Plan d’actions 7.6 · menu, compteurs, point, report tracé, revue et saisie rapide", (t) => {
+  const a = app(t);
+  a.run('state.site="group";state.role="lean";state.view="home";render()');
+  assert.ok(a.q('#desktopNav .nav-pinned [data-nav="actions"]'), "Plan d’actions épinglé");
+  assert.ok(a.all("#mobileNav .nav-button").some((b) => b.dataset.nav === "actions"));
+  assert.equal(a.all("#mobileNav .nav-button").length, 4);
+  const id = a.run('scoped(data.actions).find(x=>x.status==="Ouverte"||x.status==="En cours").id');
+  a.run(`(()=>{const x=data.actions.find(r=>r.id==="${id}");x.due_date="2020-01-01";save();})()`);
+  a.run('state.view="actions";render()');
+  assert.ok(a.q('#desktopNav [data-nav="actions"] .nav-badge'));
+  a.click('.ap-counter[data-action-filter="late"]');
+  assert.equal(a.run("state.actionFilter"), "late");
+  assert.match(a.q("#appView").textContent, /En retard/);
+  a.click('.ap-counter[data-action-filter="late"]');
+  assert.equal(a.run("state.actionFilter"), "all");
+  assert.equal(a.run(`apAddUpdate("${id}","")`), false);
+  assert.equal(a.run(`apAddUpdate("${id}","Pièce commandée")`), true);
+  assert.equal(a.run(`data.actions.find(x=>x.id==="${id}").updates.length`), 1);
+  assert.equal(a.run(`apReschedule("${id}","2099-01-15","fournisseur")`), true);
+  assert.equal(a.run(`data.actions.find(x=>x.id==="${id}").due_date_initial`), "2020-01-01");
+  assert.equal(a.run(`data.actions.find(x=>x.id==="${id}").reschedules.length`), 1);
+  assert.equal(a.run(`apSetStatus("${id}","Standby","")`), false);
+  assert.equal(a.run(`apClose("${id}","","")`), false);
+  assert.notEqual(a.run(`data.actions.find(x=>x.id==="${id}").status`), "Clôturée");
+  a.run("render()");
+  assert.ok(a.run("apReviewQueue().length") > 0);
+  a.click("[data-ap-review]");
+  assert.ok(a.q("#modal").classList.contains("ap-review"));
+  a.fill("#apRvNote", "Point fait en revue");
+  a.click('[data-ap-rv="note"]');
+  assert.equal(a.run("state.apReview.i"), 1);
+  for (let n = 0; n < 40 && a.run('state.apReview&&state.apReview.step!=="end"'); n++) a.click('[data-ap-rv="skip"]');
+  assert.equal(a.run("state.apReview.step"), "end");
+  assert.match(a.q("#apReport").value, /Revue du plan d’actions/);
+  a.click("[data-ap-rv-quit]");
+  assert.equal(a.run("state.apReview"), null);
+  const count = a.run("data.actions.length");
+  a.click("[data-ap-quick]");
+  a.fill("#apqTitle", "Mesurer le bruit en zone ponçage");
+  a.click('[data-apq-family="Sécurité"]');
+  a.submit("#apQuickForm");
+  assert.equal(a.run("data.actions.length"), count + 1);
+  assert.equal(a.run("data.actions[0].category"), "Sécurité");
+  assert.equal(a.run("data.actions[0].due_date_initial"), a.run("data.actions[0].due_date"));
 });

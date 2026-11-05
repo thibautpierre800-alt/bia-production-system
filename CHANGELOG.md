@@ -1,5 +1,20 @@
 # Changelog
 
+## 7.6.0 — 6 novembre 2026
+
+- Plan d’actions trouvable en un clic : épinglé en tête du menu avec une pastille rouge des retards, et présent dans la barre du bas sur téléphone pour tous les profils.
+- Écran « À traiter » : actions classées par échéance (en retard, cette semaine, ce mois-ci, plus tard, sans date, à vérifier, standby, clôturées récemment), ou regroupées par pilote, famille ou site. Les vues « Liste » et « Par famille » sont remplacées par ce regroupement ; « Par statut » et « Panneau » restent.
+- Les compteurs servent de filtres : en retard, cette semaine, à vérifier, sécurité ouvertes, sans nouvelle, standby, toutes ouvertes. Un second clic retire le filtre.
+- Fiche rapide en un clic sur une action : statut, pilote, échéance (raccourcis +1 semaine, +2 semaines, fin du mois), priorité, famille, point de la semaine et journal. Standby demande un motif ; la clôture demande une preuve et un vérificateur, avec les mêmes contrôles que la fiche complète (standard et compétences, suivi J30/J60/J90).
+- Point de la semaine : une phrase datée par action, affichée sur la ligne ; signal « sans nouvelle » au-delà de 14 jours.
+- Reports tracés : la date promise au départ est conservée et chaque report est compté avec son motif, y compris depuis la fiche complète.
+- Revue guidée plein écran : sécurité, retards, échéances de la semaine, actions à vérifier et sans nouvelle, une par une. Noter, faite à vérifier, vérifier et clôturer (preuve obligatoire), reporter (motif obligatoire), bloquée, passer. Compte rendu prêt à copier à la fin.
+- Saisie rapide d’une action par boutons : quoi, qui, quand, famille, priorité, site. Formulaire complet toujours disponible.
+- Panneau corrigé : tenue des délais par rapport à la date promise au départ, glissement, actions sans nouvelle, matrice famille × site ou × pilote (le mot explique la couleur), charge par pilote en points sans barres proportionnelles.
+- Famille déduite aussi du type du signal d’origine.
+
+Migration additive : nouveaux champs `updates`, `due_date_initial`, `reschedules`, `category` sur les actions ; aucune donnée supprimée, schéma inchangé.
+
 ## 7.5.0 — 5 novembre 2026
 
 - Plan d’actions : indicateurs (actives, en cours, à lancer, Standby, sous 30 jours, en retard, à vérifier, sécurité), quatre vues — Par statut (inchangée, par défaut), Liste, Par famille et Panneau — et filtres par site, responsable et famille.
