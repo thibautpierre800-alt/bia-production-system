@@ -23,7 +23,7 @@ L’application reste une PWA statique en JavaScript natif. Aucun framework ou s
 | `os-improvements.js` | Suivi durable, qualification par version, VSM actualisée, environnement, synthèse et connecteur IA optionnel |
 | `boot.js` | Initialisation après chargement des fonctions |
 
-Les trois feuilles CSS partagent boutons, champs, cartes, statuts et comportements responsive. Les classes historiques restent compatibles. La navigation est filtrée par rôle et par mode Essentiel/Complet ; ce filtre ne change pas les permissions. Les vues utilisent des ancres, par exemple `#hoshin`, `#pilotage` et l’ancienne ancre `#sqcdp` conservée.
+Les feuilles CSS partagent boutons, champs, cartes, statuts et comportements responsive ; `ux.css`, chargée en dernier, porte l’allègement visuel 7.8. `ux-shell.js` organise la navigation autour du chemin d’usage (Voir → Observer → Résoudre → Agir → Pérenniser) : menu en cinq étapes, barre du chemin et onglets d’étape en haut de page, contexte (périmètre, atelier, profil, mode) dans un seul panneau. `actions-plan.js` porte le plan d’actions, la revue et les rappels. Les classes historiques restent compatibles. La navigation est filtrée par rôle et par mode Essentiel/Complet ; ce filtre ne change pas les permissions. Les vues utilisent des ancres, par exemple `#hoshin`, `#pilotage` et l’ancienne ancre `#sqcdp` conservée.
 
 ## Écriture et lecture
 

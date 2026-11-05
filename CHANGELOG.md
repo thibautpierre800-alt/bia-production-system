@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.8.0 — 6 novembre 2026
+
+- Le chemin d’usage Lean est visible partout : **Voir → Observer → Résoudre → Agir → Pérenniser**. Le menu ne montre plus que l’accueil, ces cinq étapes (avec ce qui attend à chaque étape) et « Plus » pour les ressources et l’administration.
+- Barre du chemin en haut de chaque page, avec l’étape en cours, puis les onglets de cette étape (par exemple Pilotage, Aujourd’hui, Écarts, Maturité, Roadmap, Hoshin pour « Voir »).
+- Accueil : le chemin en cinq tuiles cliquables (indicateurs en écart, signaux ouverts, problèmes en cours, actions en retard, actions à vérifier), en-tête allégé.
+- En-tête épuré : périmètre, atelier, profil et mode d’interface regroupés dans un seul bouton ; le bandeau de version quitte les pages (version visible dans ce panneau et en bas du menu).
+- Allègement visuel : fond plus clair, ombres retirées, bordures plus fines, onglets et boutons homogènes.
+- Téléphone : en-tête sur une ligne, barre du chemin défilante centrée sur l’étape en cours ; l’écran SQCDP ne déborde plus horizontalement.
+
+Aucun changement de données ni de droits par profil. Tous les écrans restent accessibles.
+
 ## 7.7.0 — 6 novembre 2026
 
 - Rappels : choix « Je suis » (nom du pilote, gardé sur l’appareil). Bandeau « Vos rappels » sur le Plan d’actions et sur l’accueil : en retard, échéance aujourd’hui, demain, sans nouvelle ; un clic ouvre la liste filtrée sur vos actions.

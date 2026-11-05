@@ -1,0 +1,141 @@
+/* BIA Lean OS 7.8 · Interface épurée et chemin d'usage */
+:root{--paper:#f6f6f3;--line:#e6e5df;--radius:12px;--shadow:none;--soft:#efeee9}
+body.ux,body.ux html{background:var(--paper)}
+.ux .card,.ux .panel,.ux .row,.ux .form-card{box-shadow:none;border-color:var(--line)}
+.ux .main-content{padding-top:18px}
+.ux .page-head{margin-bottom:18px}
+.ux .page-head h1{font-size:28px;letter-spacing:-.5px}
+.ux .lead{font-size:14px;line-height:1.55}
+.ux .btn{border-radius:8px}
+.ux .chip,.ux .tab{min-height:38px;font-size:12px;border-color:var(--line)}
+
+/* En-tête */
+.ux .topbar{height:64px;padding:0 24px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.96)}
+.ux .top-context{position:relative;gap:10px}
+.ux .ux-search{display:inline-flex;align-items:center;gap:8px;min-height:40px;border-radius:999px;padding:0 14px;font-size:13px}
+.ux .notification-button{width:40px;height:40px;flex-basis:40px}
+.ux-context-btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;max-width:min(380px,46vw);padding:0 14px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.ux-context-btn:hover,.ux-context-btn[aria-expanded="true"]{border-color:var(--ink)}
+#contextSummary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ux-context-panel{position:absolute;top:calc(100% + 12px);right:0;z-index:60;width:min(380px,calc(100vw - 24px));background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.14);padding:16px;display:grid;gap:14px}
+.ux-context-panel[hidden]{display:none}
+.ux-context-panel .context-field,.ux-context-panel .os-workshop-select,.ux-context-panel .role-field{display:flex!important;flex-direction:column;gap:5px;font-size:11px;font-weight:800;text-transform:uppercase;color:var(--muted);letter-spacing:.04em}
+.ux-context-panel .context-field span{display:inline!important}
+.ux-context-panel select{width:100%;min-width:0!important;max-width:none!important;min-height:44px;border:1px solid var(--line)!important;border-radius:8px;padding:0 10px!important;background:#fff;font-size:14px;font-weight:700;text-transform:none;color:var(--ink)}
+.ux-context-panel select:disabled{opacity:.55}
+.ux-context-panel .mode-banner{margin:0;display:flex;flex-direction:column;align-items:flex-start;gap:10px;background:var(--paper);border:0;border-radius:10px;padding:12px;font-size:12px;line-height:1.5;color:#55554f}
+.ux-context-panel .mode-toggle{min-height:40px}
+.ux .profile-button{width:40px;height:40px}
+
+/* Menu latéral : le chemin */
+.ux #desktopNav{padding:16px 10px;gap:2px}
+.ux .ux-home{margin-bottom:4px}
+.ux-nav-title{margin:14px 12px 6px;font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#8d8d87}
+.ux-path{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:2px;position:relative}
+.ux-path::before{content:"";position:absolute;left:25px;top:24px;bottom:24px;width:2px;background:#3d3d3a}
+.ux-step-btn{position:relative;gap:12px;padding:9px 10px 9px 11px;min-height:54px}
+.ux-step-n{position:relative;z-index:1;display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:#262624;border:2px solid #4c4c48;color:#e2e2dc;font-size:13px;font-weight:900}
+.ux-step-btn.active{background:#3a3a37;box-shadow:none}
+.ux-step-btn.active .ux-step-n{background:var(--orange);border-color:var(--orange);color:#161616}
+.ux-step-text{display:flex;flex-direction:column;flex:1;min-width:0;gap:1px}
+.ux-step-text b{font-size:14px}
+.ux-step-text small{font-size:11px;font-weight:600;color:#a3a39d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ux-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;font-size:11px;font-weight:900;background:#3d3d3a;color:#e2e2dc}
+.ux-count.tone-alert{background:#d92d20;color:#fff}
+.ux-count.tone-warn{background:#6b4a17;color:#ffe2b8}
+.ux-sub{display:grid;gap:1px;margin:2px 0 8px 50px}
+.ux-sub-btn{min-height:36px;padding:6px 10px;font-size:13px;font-weight:700;color:#c4c4be}
+.ux-sub-btn.active{background:transparent;color:#fff;box-shadow:inset 2px 0 var(--orange)}
+.ux-more{margin-top:6px}
+
+/* Barre du chemin en haut des pages */
+.ux .page-location{margin:0 0 20px;color:inherit;font-size:inherit}
+.ux-pathbar{display:flex;align-items:center;gap:2px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.ux-pathbar::-webkit-scrollbar{display:none}
+.ux-pb-step{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px 0 6px;border-radius:999px;border:1px solid transparent;background:transparent;color:#55554f;font:inherit;font-size:13px;font-weight:800;white-space:nowrap;cursor:pointer}
+.ux-pb-step:hover{background:#fff;border-color:var(--line)}
+.ux-pb-n{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#e8e7e2;color:#3f3f3b;font-size:12px}
+.ux-pb-step.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ux-pb-step.active .ux-pb-n{background:var(--orange);color:#161616}
+.ux-pb-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;font-size:11px;background:#e8e7e2;color:#3f3f3b}
+.ux-pb-step.tone-alert .ux-pb-count{background:#d92d20;color:#fff}
+.ux-pb-step.tone-warn .ux-pb-count{background:#fff0dc;color:#7a3d00}
+.ux-pb-step.active .ux-pb-count{background:#fff;color:var(--ink)}
+.ux-pb-step.active.tone-alert .ux-pb-count{background:#d92d20;color:#fff}
+.ux-pb-arrow{color:#b9b8b2;font-weight:900;padding:0 2px}
+.ux-pb-here{margin-left:10px;padding-left:12px;border-left:1px solid var(--line);font-size:13px;font-weight:800;color:#33332f;white-space:nowrap}
+.ux-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-top:10px;padding-bottom:2px}
+.ux-tabs::-webkit-scrollbar{display:none}
+.ux-tab{flex:0 0 auto;min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:#33332f;font:inherit;font-size:13px;font-weight:800;white-space:nowrap;cursor:pointer}
+.ux-tab:hover{border-color:#c9c8c2}
+.ux-tab.active{background:var(--orange-soft);border-color:#f0c48a;color:#5b3200}
+
+/* Accueil : le chemin en tuiles, en-tête allégé */
+.ux .home-alert-hero{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.ux .home-alert-hero:after{display:none}
+.ux .home-alert-hero .eyebrow{color:var(--orange)}
+.ux .group-ambition{color:#55554f!important;font-size:14px;font-weight:700;margin:2px 0 10px!important}
+.ux .home-alert-hero h1:not(.home-alerts){color:var(--ink)}
+.ux .home-alert-note{color:var(--muted)!important;font-size:13px!important;font-weight:600}
+.ux .home-alert-count{border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.ux .home-alert-count small{color:#55554f}
+.ux .home-alert-count.critical-count{background:#fdecea;border-color:#e8bcb8;color:#9b1c1c}
+.ux .home-alert-count.critical-count small{color:#7a1f1f}
+.ux .home-role-actions .secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.ux-home-path-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.ux-home-path-head h2{margin:0;font-size:18px}
+.ux-home-path-head .hint{margin:0;font-size:13px}
+.ux-tiles{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.ux-tiles li{position:relative;display:flex}
+.ux-tiles li+li::before{content:"›";position:absolute;left:-12px;top:50%;transform:translateY(-50%);color:#b9b8b2;font-weight:900;font-size:18px}
+.ux-tile{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:14px 14px 16px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);font:inherit;cursor:pointer}
+.ux-tile:hover{border-color:var(--ink)}
+.ux-tile-top{display:flex;align-items:center;gap:8px}
+.ux-tile-top b{font-size:16px}
+.ux-tile-n{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#e8e7e2;font-size:12px;font-weight:900}
+.ux-tile-count{font-size:34px;font-weight:900;line-height:1.1;margin-top:6px}
+.ux-tile-text{font-size:13px;font-weight:800;line-height:1.35}
+.ux-tile small{font-size:12px;color:var(--muted)}
+.ux-tile.tone-alert{border-color:#e8bcb8;background:#fffafa}
+.ux-tile.tone-alert .ux-tile-count{color:#b42318}
+.ux-tile.tone-alert .ux-tile-n{background:#b42318;color:#fff}
+.ux-tile.tone-warn .ux-tile-count{color:#8a4b00}
+.ux-tile.tone-warn .ux-tile-n{background:var(--orange);color:#161616}
+.ux-tile.tone-ok .ux-tile-count{color:#14603a}
+
+@media(max-width:1180px){.ux-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.ux-tiles li:nth-child(4)::before{display:none}}
+@media(max-width:820px){
+  .ux .topbar{height:auto;min-height:60px;padding:8px 12px}
+  .ux .ux-search-label{display:none}
+  .ux .ux-search{width:40px;padding:0;justify-content:center}
+  .ux-context-btn{max-width:52vw;padding:0 12px;font-size:12px}
+  .ux-context-panel{position:fixed;top:68px;right:12px;left:12px;width:auto}
+  .ux .page-location{margin-bottom:14px}
+  .ux-pb-step{padding:0 10px 0 4px;font-size:12px}
+  .ux-pb-label{display:none}
+  .ux-pb-step.active .ux-pb-label{display:inline}
+  .ux-pb-arrow{padding:0}
+  .ux-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .ux-tiles li::before{display:none}
+  .ux-tile-count{font-size:28px}
+}
+@media print{.ux .page-location,.ux-context-panel,.ux-context-btn{display:none!important}}
+@media(max-width:820px){
+  .ux .topbar{display:flex;flex-wrap:nowrap;gap:8px}
+  .ux .menu-button{order:0;flex:0 0 auto}
+  .ux .top-context{flex:1 1 auto;min-width:0;flex-wrap:nowrap;justify-content:flex-end;gap:6px}
+  .ux .ux-context-btn{order:-1;flex:1 1 auto;min-width:0;max-width:none;justify-content:space-between}
+  .ux .ux-search,.ux .notification-button{flex:0 0 40px}
+  .ux .profile-button{display:none}
+  .ux .page-location:empty{display:none}
+  .ux-pb-label{display:inline}
+  .ux-pb-count{display:none}
+  .ux-pb-step.active .ux-pb-count,.ux-pb-step.tone-alert .ux-pb-count{display:inline-flex}
+  .ux-pb-step{min-height:38px}
+}
+@media(max-width:820px){
+  .ux .top-context{display:flex;align-items:center}
+  .ux .sqcdp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
+  .ux .sqcdp-card{min-width:0}
+}
+@media(max-width:540px){.ux .sqcdp-grid{grid-template-columns:1fr}}
