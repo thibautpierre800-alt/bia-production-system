@@ -480,3 +480,15 @@ test("Plan d’actions · Standby, vues et modification rapide gardée", (t) => 
   a.run(`quickEditAction('${id}','owner','')`);
   assert.notEqual(a.run(`data.actions.find(a=>a.id==='${id}').owner`), "");
 });
+
+test("Plan d’actions · panneau visuel et filtre par site", (t) => {
+  const a = app(t);
+  a.run('state.view="actions";state.actionView="board";render()');
+  assert.match(a.q("#appView").textContent, /Sécurité d’abord/);
+  assert.match(a.q("#appView").textContent, /Famille × site/);
+  const cell = a.q("[data-board-cell]:not([disabled])");
+  assert.ok(cell);
+  cell.click();
+  assert.equal(a.run("state.actionView"), "family");
+  assert.notEqual(a.run("state.actionSite"), "all");
+});

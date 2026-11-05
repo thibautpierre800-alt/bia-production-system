@@ -2,7 +2,8 @@
 
 ## 7.5.0 — 5 novembre 2026
 
-- Plan d’actions : indicateurs (actives, en cours, à lancer, Standby, sous 30 jours, en retard, à vérifier, sécurité), trois vues — Par statut (inchangée, par défaut), Liste et Par famille — et filtres par responsable et par famille.
+- Plan d’actions : indicateurs (actives, en cours, à lancer, Standby, sous 30 jours, en retard, à vérifier, sécurité), quatre vues — Par statut (inchangée, par défaut), Liste, Par famille et Panneau — et filtres par site, responsable et famille.
+- Panneau visuel : tuile « Sécurité d’abord », répartition par statut, matrice famille × site (en retard, P1 en cours, en traitement, Standby, clos ; clic vers le détail) et charge par responsable.
 - Modification rapide dans la liste limitée au responsable, à l’échéance et à la priorité, avec les garde-fous de la fiche : lecture seule, site hors périmètre, action clôturée, historique. Le statut se change toujours par la fiche, preuve comprise.
 - Nouveau statut Standby : motif obligatoire, jamais en retard, exclu des escalades, reprise par « Reprendre ».
 - Les actions issues d’un constat de Gemba conservent la famille (catégorie), le constat et l’hypothèse.

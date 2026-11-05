@@ -197,7 +197,7 @@ let state={
   pilotageMode:"analysis",
   terrainTab:"signals",
   resolutionTab:"problems",
-  actionFilter:"all",actionView:"status",actionOwner:"all",actionFamily:"all",
+  actionFilter:"all",actionView:"status",actionOwner:"all",actionFamily:"all",actionSite:"all",
   toolCategory:"Tous",
   toolId:null,
   toolQuery:"",
@@ -431,18 +431,22 @@ function renderActions(){
   if(state.actionFilter==="standby")actions=actions.filter(a=>a.status==="Standby");
   if(state.actionOwner!=="all")actions=actions.filter(a=>state.actionOwner==="none"?(!a.owner||a.owner==="À désigner"):a.owner===state.actionOwner);
   if(state.actionFamily!=="all")actions=actions.filter(a=>actionFamily(a)===state.actionFamily);
-  const view=["status","list","family"].includes(state.actionView)?state.actionView:"status",st=actionStats(all);
+  if(state.actionSite!=="all")actions=actions.filter(a=>a.site_id===state.actionSite);
+  const view=["status","list","family","board"].includes(state.actionView)?state.actionView:"status",st=actionStats(all);
   const owners=[...new Set(all.map(a=>a.owner).filter(o=>o&&o!=="À désigner"))].sort((a,b)=>a.localeCompare(b,"fr")),families=[...new Set(all.map(actionFamily))].sort((a,b)=>a==="Sécurité"?-1:b==="Sécurité"?1:a==="Non classée"?1:b==="Non classée"?-1:a.localeCompare(b,"fr"));
   const kpi=[["Actions actives",st.active],["En cours",st.running],["Ouvertes (à lancer)",st.toStart],["Standby",st.standby],["Sous 30 jours",st.soon],["En retard",st.late],["À vérifier",st.verify],["Sécurité actives",st.safety]];
+  const siteIds=[...new Set(all.map(a=>a.site_id))];
   let body;
   if(view==="list")body=`<div class="table-wrap"><table class="data-table"><thead><tr><th>N°</th><th>Action et constat</th><th>Famille</th><th>Site</th><th>Responsable</th><th>Priorité</th><th>Échéance</th><th>Statut</th><th></th></tr></thead><tbody>${actions.map(actionRow).join("")||'<tr><td colspan="9">Aucune action pour ces filtres.</td></tr>'}</tbody></table></div>${ownerDatalist()}`;
   else if(view==="family")body=families.map(f=>({f,rows:actions.filter(a=>actionFamily(a)===f)})).filter(g=>g.rows.length).map(g=>`<section class="section"><div class="section-title"><h2>${esc(g.f)} <span class="badge">${g.rows.length}</span></h2></div><div class="grid cols-3">${g.rows.map(actionCard).join("")}</div></section>`).join("")||empty("Aucune action pour ces filtres");
+  else if(view==="board")body=renderActionBoard(all);
   else body=`<div class="kanban">${ACTION_STATES.map(status=>{const rows=actions.filter(a=>a.status===status);return `<section class="kanban-col"><h3>${status}<span class="badge">${rows.length}</span></h3><div class="list">${rows.map(a=>actionCard(a)).join("")||empty("Aucune action")}</div></section>`}).join("")}</div>`;
   return `${pageHead("Plan d’actions","Une action unique, quelle que soit son origine","Une action créée depuis un constat de Gemba, un signal, un audit ou un A3 reste visible ici avec son lien d’origine.",role().readonly?"":'<button class="btn" data-new-action>+ Nouvelle action</button>')}
     <div class="grid cols-4">${kpi.map(([l,v])=>`<article class="card"><div class="metric-label">${l}</div><div class="metric-value">${v}</div></article>`).join("")}</div>
-    <div class="filters" role="group" aria-label="Vue">${[["status","Par statut"],["list","Liste"],["family","Par famille"]].map(([id,label])=>`<button class="chip ${view===id?"active":""}" data-action-view="${id}" aria-pressed="${view===id}">${label}</button>`).join("")}</div>
+    <div class="filters" role="group" aria-label="Vue">${[["status","Par statut"],["list","Liste"],["family","Par famille"],["board","Panneau"]].map(([id,label])=>`<button class="chip ${view===id?"active":""}" data-action-view="${id}" aria-pressed="${view===id}">${label}</button>`).join("")}</div>
     <div class="filters">${[["all","Toutes"],["late","En retard"],["verify","À vérifier"],["open","Ouvertes"],["standby","Standby"]].map(([id,label])=>`<button class="chip ${state.actionFilter===id?"active":""}" data-action-filter="${id}">${label}</button>`).join("")}
       <label class="inline-filter">Responsable <select data-action-owner-filter><option value="all">Tous</option><option value="none" ${state.actionOwner==="none"?"selected":""}>À désigner</option>${owners.map(o=>`<option ${state.actionOwner===o?"selected":""}>${esc(o)}</option>`).join("")}</select></label>
+      ${siteIds.length>1?`<label class="inline-filter">Site <select data-action-site-filter><option value="all">Tous</option>${siteIds.map(s=>`<option value="${esc(s)}" ${state.actionSite===s?"selected":""}>${esc(getSiteName(s))}</option>`).join("")}</select></label>`:""}
       <label class="inline-filter">Famille <select data-action-family-filter><option value="all">Toutes</option>${families.map(f=>`<option ${state.actionFamily===f?"selected":""}>${esc(f)}</option>`).join("")}</select></label></div>
     ${listSearch("Rechercher une action")}${body}`;
 }
@@ -474,6 +478,35 @@ function quickEditAction(id,field,raw){
   if(a[field]===value)return;
   if(!commitData(()=>{const row=data.actions.find(x=>x.id===id),before=row[field];row[field]=value;recordHistory(row,row.status,`${labels[field]} : ${before||"vide"} → ${value}`)}))return render();
   render();
+}
+function actionFamilies(rows){return [...new Set(rows.map(actionFamily))].sort((a,b)=>a==="Sécurité"?-1:b==="Sécurité"?1:a==="Non classée"?1:b==="Non classée"?-1:a.localeCompare(b,"fr"))}
+function actionBoardCell(list){
+  if(!list.length)return {cls:"none",count:"—",label:"aucune"};
+  const act=list.filter(a=>isOpenAction(a)&&a.status!=="Standby");
+  if(act.some(isLate))return {cls:"late",count:list.length,label:"en retard"};
+  if(act.some(a=>a.priority==="Critique"))return {cls:"critical",count:list.length,label:"P1 en cours"};
+  if(list.every(a=>a.status==="Clôturée"))return {cls:"done",count:list.length,label:"clos"};
+  if(list.every(a=>a.status==="Clôturée"||a.status==="Standby"))return {cls:"hold",count:list.length,label:"standby"};
+  return {cls:"work",count:list.length,label:"en traitement"};
+}
+function renderActionBoard(rows){
+  if(!rows.length)return empty("Aucune action à afficher");
+  const sites=[...new Set(rows.map(a=>a.site_id))],families=actionFamilies(rows),active=rows.filter(a=>isOpenAction(a)&&a.status!=="Standby"),safety=active.filter(a=>actionFamily(a)==="Sécurité");
+  const COLORS={Ouverte:["#ecece8","#3f3f3b"],"En cours":["#fff0dc","#7a3d00"],Standby:["#e6eef4","#1f4d6e"],"À vérifier":["#fff2d8","#7a4a00"],Clôturée:["#e7f4ec","#14603a"]};
+  const segs=ACTION_STATES.map(s=>({s,n:rows.filter(a=>a.status===s).length})).filter(x=>x.n);
+  const owners=new Map();active.forEach(a=>{const o=!a.owner||a.owner==="À désigner"?"À désigner":a.owner;owners.set(o,(owners.get(o)||0)+1)});
+  const load=[...owners].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],"fr")).slice(0,10),max=Math.max(1,...load.map(x=>x[1]));
+  const grid=`grid-template-columns:minmax(170px,1.4fr) repeat(${sites.length},minmax(110px,1fr));min-width:${180+sites.length*120}px`;
+  return `<div class="pb">
+    <div class="pb-top">
+      <article class="pb-safety"><div class="metric-label">Sécurité d’abord</div><b>${safety.length}</b><small>action(s) de sécurité encore actives, à examiner avant le reste${safety.filter(a=>a.priority==="Critique").length?` dont ${safety.filter(a=>a.priority==="Critique").length} en P1`:""}.</small></article>
+      <article class="panel section"><div class="metric-label">Répartition par statut</div><div class="pb-bar" role="img" aria-label="Répartition par statut : ${segs.map(x=>`${x.s} ${x.n}`).join(", ")}">${segs.map(x=>`<span style="flex:${x.n} 1 auto;background:${COLORS[x.s][0]};color:${COLORS[x.s][1]}">${esc(x.s)} · ${x.n}</span>`).join("")}</div></article>
+    </div>
+    <section class="panel section"><h2>Famille × site</h2><p class="hint">Chaque case donne le nombre d’actions et son état. Cliquez sur une case pour voir le détail. Ce panneau montre toutes les actions de votre périmètre, quels que soient les filtres.</p>
+      <div class="pb-scroll"><div class="pb-grid" style="${grid}"><div></div>${sites.map(s=>`<div class="pb-head">${esc(getSiteName(s))}</div>`).join("")}${families.map(f=>`<div class="pb-fam">${esc(f)}</div>${sites.map(s=>{const list=rows.filter(a=>actionFamily(a)===f&&a.site_id===s),c=actionBoardCell(list);return `<button class="pb-cell ${c.cls}" data-board-cell data-site="${esc(s)}" data-family="${esc(f)}" ${list.length?"":"disabled"} aria-label="${esc(f)}, ${esc(getSiteName(s))} : ${list.length?`${list.length} action(s), ${c.label}`:"aucune action"}"><b>${c.count}</b><span>${c.label}</span></button>`}).join("")}`).join("")}</div></div>
+      <div class="pb-legend"><span><i style="background:var(--red-soft);border-color:var(--red)"></i>En retard</span><span><i style="background:var(--amber-soft);border-color:#c98400"></i>Priorité P1 en cours</span><span><i style="background:#fff;border-color:#8f8f89"></i>En traitement</span><span><i style="background:#e6eef4;border-color:#6c8aa6"></i>Standby</span><span><i style="background:var(--green-soft);border-color:var(--green)"></i>Tout clos</span><span><i style="background:var(--paper);border-color:var(--line)"></i>Aucune action</span></div></section>
+    <section class="panel section"><h2>Charge par responsable</h2>${load.map(([name,n])=>`<div class="pb-load"><span>${esc(name)}</span><span class="pb-track ${name==="À désigner"?"unassigned":""}" aria-hidden="true"><span style="width:${Math.round(n/max*100)}%"></span></span><b>${n}</b></div>`).join("")||'<p class="hint">Aucune action active.</p>'}<p class="hint">Actions actives hors Standby. Les actions « À désigner » n’ont pas de responsable : à répartir avant de les lancer.</p></section>
+  </div>`;
 }
 function actionRow(a){
   const edit=!role().readonly&&allowedSite(a.site_id,true)&&a.status!=="Clôturée",q=(field,attrs)=>`data-quick-edit="${a.id}" data-field="${field}" ${attrs}`;
@@ -754,6 +787,8 @@ function bind(){
   document.querySelectorAll("[data-action-view]").forEach(b=>b.onclick=()=>{state.actionView=b.dataset.actionView;render()});
   document.querySelectorAll("[data-action-owner-filter]").forEach(s=>s.onchange=()=>{state.actionOwner=s.value;render()});
   document.querySelectorAll("[data-action-family-filter]").forEach(s=>s.onchange=()=>{state.actionFamily=s.value;render()});
+  document.querySelectorAll("[data-action-site-filter]").forEach(s=>s.onchange=()=>{state.actionSite=s.value;render()});
+  document.querySelectorAll("[data-board-cell]").forEach(b=>b.onclick=()=>{state.actionSite=b.dataset.site;state.actionFamily=b.dataset.family;state.actionView="family";render()});
   document.querySelectorAll("[data-quick-edit]").forEach(el=>el.onchange=()=>quickEditAction(el.dataset.quickEdit,el.dataset.field,el.value));
   document.querySelectorAll("[data-terrain-tab]").forEach(b=>b.onclick=()=>{state.terrainTab=b.dataset.terrainTab;render()});
   document.querySelectorAll("[data-new-gemba]").forEach(b=>b.onclick=()=>gembaForm());

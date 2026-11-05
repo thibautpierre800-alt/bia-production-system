@@ -17,3 +17,32 @@
 .quick-edit:hover{border-color:var(--ink)}
 .inline-filter{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700}
 .inline-filter select{min-height:44px;border:1px solid var(--line);border-radius:6px;background:#fff;font:inherit;padding:0 8px}
+
+.pb{display:flex;flex-direction:column;gap:16px}
+.pb-top{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.pb-safety{background:var(--red-soft);border:1px solid #e3b9b6;border-left:8px solid var(--red);border-radius:12px;padding:16px}
+.pb-safety .metric-label{color:#8a2020}
+.pb-safety b{display:block;font-size:44px;line-height:1.1;color:#8a2020}
+.pb-safety small{display:block;color:#5b1f1f;font-size:13px;line-height:1.45}
+.pb-bar{display:flex;border-radius:8px;overflow:hidden;min-height:48px;margin-top:10px}
+.pb-bar span{display:flex;align-items:center;justify-content:center;padding:0 10px;font-size:12px;font-weight:700}
+.pb-scroll{overflow-x:auto;padding-bottom:4px}
+.pb-grid{display:grid;gap:8px}
+.pb-head{font-size:12px;font-weight:800;text-align:center;align-self:end}
+.pb-fam{font-size:13px;font-weight:700;align-self:center}
+.pb-cell{min-height:64px;border-radius:8px;padding:6px;cursor:pointer;font:inherit;border:2px solid var(--line);background:#fff;color:var(--ink)}
+.pb-cell b{display:block;font-size:22px;line-height:1.1}
+.pb-cell span{display:block;font-size:11px;font-weight:700}
+.pb-cell.late{background:var(--red-soft);border-color:var(--red);color:#7a1f1f}
+.pb-cell.critical{background:var(--amber-soft);border-color:#c98400;color:#6b4200}
+.pb-cell.work{border-color:#8f8f89}
+.pb-cell.hold{background:#e6eef4;border-color:#6c8aa6;color:#1f4d6e}
+.pb-cell.done{background:var(--green-soft);border-color:var(--green);color:#14603a}
+.pb-cell.none{background:var(--paper);color:var(--muted);cursor:default}
+.pb-legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;font-size:12px}
+.pb-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;border:2px solid;vertical-align:-2px;margin-right:4px}
+.pb-load{display:grid;grid-template-columns:130px 1fr 32px;gap:10px;align-items:center;margin:8px 0;font-size:13px;font-weight:700}
+.pb-load b{text-align:right}
+.pb-track{display:block;height:16px;background:#ecebe6;border-radius:999px;overflow:hidden}
+.pb-track span{display:block;height:100%;border-radius:999px;background:var(--ink)}
+.pb-track.unassigned span{background:#c98400}
