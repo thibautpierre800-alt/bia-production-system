@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.15.0 — 6 novembre 2026
+
+**TPM et maintenance autonome : les machines tenues par leurs équipes.**
+
+- Nouvel onglet Observer › TPM. Machines par site et zone, avec leur criticité (A, B, C). Les responsables d’équipe, de site et Lean les ajoutent.
+- Étiquettes d’anomalie au téléphone, photo d’abord : fuite, saleté, usure, desserrage, bruit, source de saleté, accès difficile, sécurité. Bleue si l’équipe la traite, rouge s’il faut la maintenance ; une anomalie de sécurité est rouge et à traiter le lendemain. On la traite en disant ce qui a été fait, avec la photo après.
+- Standard CIL par machine : nettoyer, inspecter, lubrifier, resserrer ; le point, comment, la fréquence, les minutes. Fiche à afficher au pied de la machine.
+- Tournée CIL au téléphone : OK ou anomalie point par point, reprise si l’appli se ferme. Chaque anomalie devient une étiquette à la fin. La prochaine tournée se calcule sur la fréquence la plus courte.
+- Pannes : arrêt et remise en route (un geste), cause, ce qui a été fait. Par machine sur 90 jours : heures perdues, MTTR et MTBF calendaire ; Pareto des heures perdues.
+- « À surveiller » montre les machines à l’arrêt, les étiquettes en retard et les tournées en retard des machines critiques ; « + » propose « Étiquette machine » et « Panne machine ».
+
+Données : nouvelles collections `machines`, `tpmTags`, `cilRuns` et `breakdowns` ; rien n’est retiré.
+
 ## 8.14.0 — 6 novembre 2026
 
 **Ishikawa et 5 pourquoi : des post-it, des causes vérifiées par un fait, un arbre des pourquoi.**
