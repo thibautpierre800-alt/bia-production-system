@@ -160,7 +160,7 @@ async function main() {
       state.view = "home";
       render();
     });
-    assert.equal(await page.locator(".mobile-nav .nav-button").count(), 4);
+    assert.equal(await page.locator(".mobile-nav .nav-button").count(), 5);
     assert.match(await page.locator("#appView").innerText(), /Voir, signaler, agir/);
     await page.screenshot({
       path: path.join(output, "home-operator-mobile.png"),
@@ -269,7 +269,7 @@ async function main() {
         animations: "disabled",
       });
       if (width === 390) {
-        assert.equal(await page.locator(".mobile-nav .nav-button").count(), 4);
+        assert.equal(await page.locator(".mobile-nav .nav-button").count(), 5);
         await page.waitForFunction(
           () =>
             document.querySelector(".sidebar").getBoundingClientRect().right <=

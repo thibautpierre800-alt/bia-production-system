@@ -500,7 +500,7 @@ test("Plan d’actions 7.6 · menu, compteurs, point, report tracé, revue et sa
   a.run('state.site="group";state.role="lean";state.view="home";render()');
   assert.ok(a.q('#desktopNav .ux-path [data-nav="actions"]'), "Plan d’actions dans le chemin");
   assert.ok(a.all("#mobileNav .nav-button").some((b) => b.dataset.nav === "actions"));
-  assert.equal(a.all("#mobileNav .nav-button").length, 4);
+  assert.equal(a.all("#mobileNav .nav-button").length, 5);
   const id = a.run('scoped(data.actions).find(x=>x.status==="Ouverte"||x.status==="En cours").id');
   a.run(`(()=>{const x=data.actions.find(r=>r.id==="${id}");x.due_date="2020-01-01";save();})()`);
   a.run('state.view="actions";render()');
@@ -578,6 +578,24 @@ test("Interface 7.8 · chemin d’usage, onglets d’étape et contexte regroup�
   assert.equal(a.q("#pageLocation").textContent.trim(), "");
   a.run('state.role="dg";render()');
   assert.ok(!a.all("#desktopNav .ux-step-btn b").some((b) => b.textContent === "Observer"));
-  assert.equal(a.all("#mobileNav .nav-button").length, 4);
+  assert.equal(a.all("#mobileNav .nav-button").length, 5);
+  assert.equal(a.q("#mobileNav .nav-button").dataset.nav, "home");
+});
+
+test("Interface 7.9 · sections remontées, liens hors profil retirés, barre du bas = le chemin", (t) => {
+  const a = app(t);
+  a.run('state.site="group";state.role="lean";state.interfaceMode="complete";state.view="pilotage";render()');
+  assert.equal(a.all(".pilotage-switch").length, 1);
+  assert.ok(a.q("#pageLocation .pilotage-switch.ux-sections"));
+  assert.deepEqual(a.all("[data-pilotage-mode] b").map((b) => b.textContent), ["Analyser", "Décider"]);
+  assert.deepEqual(a.all("#mobileNav .nav-button").map((b) => b.textContent.replace(/\d/g, "").trim()), ["Voir", "Observer", "Résoudre", "Agir", "Pérenniser"]);
+  a.run('state.view="terrain";render()');
+  assert.ok(a.q('#pageLocation .ux-sections [data-terrain-tab="gemba"]'));
+  assert.equal(a.q('#pageLocation .ux-sections [data-nav="audits"]'), null, "Doublon de l’onglet Audits retiré");
+  a.run('state.role="operator";state.site="marzin";state.view="terrain";render()');
+  assert.equal(a.q('[data-nav="audits"]'), null, "Pas de lien vers un écran hors profil");
+  a.run('state.role="lean";state.site="group";state.view="maturity";render()');
+  const cards = a.all("#appView .os-cards > *");
+  if (cards.length > 12) assert.ok(cards.filter((x) => x.hidden).length > 0 && a.q(".ux-more-btn"));
 });
 
