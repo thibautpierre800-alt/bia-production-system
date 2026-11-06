@@ -1495,3 +1495,83 @@ label.md-head{cursor:text}
   .au-radar,.au-bars,.au-badge,.cs-bilan-score{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .cs-view-s{break-inside:avoid}
 }
+
+/* ---------- 8.12 · Standard de poste ---------- */
+.st-editor{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
+.st-editor>*,.st-step,.st-step-main{min-width:0}
+.st-status{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:12px;background:#f0efea;border-left:5px solid #9a9a93}
+.st-status b{font-size:15px}.st-status span{font-size:12.5px;color:#55554f}
+.st-status.st-valide{background:#e7f4ec;border-left-color:#1f8a52}.st-status.st-en-revision{background:#fff1dd;border-left-color:#e08a00}
+.st-meta{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.st-editor .field{display:grid;gap:4px;font-size:13px;font-weight:800}
+.st-editor .field input,.st-editor .field select{min-height:44px;font-size:16px}
+.st-steps{list-style:none;margin:0;padding:0;display:grid;gap:10px;counter-reset:none}
+.st-step{padding:10px 12px;border-radius:14px;background:#fff;border:1px solid var(--line)}
+.st-step-top{display:flex;align-items:center;gap:8px}
+.st-n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:#fff;font-weight:900;font-size:14px}
+.st-title{flex:1;min-width:0;min-height:44px;font-size:16px;font-weight:800;border:1px solid var(--line);border-radius:10px;padding:0 10px}
+.st-step-tools{display:flex;gap:4px}.st-step-tools .cp-ph-btn{background:var(--paper)}
+.st-step-body{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;margin-top:8px}
+.st-photo .cp-ph,.st-photo .cp-ph-add{width:120px;height:120px}
+.st-step-main{display:grid;gap:6px;align-content:start}
+.st-kp-list{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.st-kp{display:flex;gap:6px;align-items:center}
+.st-kp input{flex:1;min-width:0;min-height:40px;font-size:15px;border:1px solid var(--line);border-radius:8px;padding:0 8px}
+.st-kp .cp-ph-btn{background:var(--paper)}
+.st-kind{flex:0 0 auto;min-height:40px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:#fff;font:inherit;font-size:12px;font-weight:900;cursor:pointer;white-space:nowrap}
+.st-kp.kp-securite .st-kind{background:#fdecea;border-color:#e9a39b;color:#b42318}
+.st-kp.kp-qualite .st-kind{background:#e7f0fb;border-color:#a9c6ea;color:#1d5fa8}
+.st-kp.kp-geste .st-kind{background:#f0efea;color:#3f3f3b}
+.st-add-kp{display:flex;flex-wrap:wrap;gap:6px}.st-add-kp .chip{margin:0}
+.st-step-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.st-step-row label{display:grid;gap:3px;font-size:12px;font-weight:800;color:#55554f}
+.st-step-row input{min-height:40px;font-size:15px;border:1px solid var(--line);border-radius:8px;padding:0 8px}
+.st-t input{width:80px}
+.st-validate h3,.st-trained h3,.st-zone h3{margin:0 0 6px;font-size:15px}
+.st-validate .btn{margin-top:8px}
+.st-tr{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
+.st-tr span{font-size:12.5px;color:#55554f}
+.create-choice.st-choice>span b{font-size:12px;font-weight:900}
+/* Fiche au poste */
+.st-sheet{display:grid;gap:10px}
+.st-sheet-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding-bottom:8px;border-bottom:4px solid var(--orange)}
+.st-sheet-head h3{margin:2px 0 4px;font-size:22px}.st-sheet-head p{margin:0;font-size:13px;color:#3f3f3b}
+.st-k{font-size:11px!important;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#a85a00!important}
+.st-ppe{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:45%}
+.st-ppe li{padding:4px 10px;border-radius:999px;background:#1d5fa8;color:#fff;font-size:12px;font-weight:800}
+.st-cards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.st-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;break-inside:avoid}
+.st-card .st-n{position:absolute;top:16px;left:16px;box-shadow:0 0 0 3px #fff}
+.st-card-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;display:block}
+.st-nophoto{display:grid;place-items:center;background:var(--paper);border:1px dashed #c9c8c1;font-size:12px;color:#8a8a83}
+.st-card-t{font-size:15px;line-height:1.3}
+.st-kps{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.st-kps li{display:flex;gap:6px;font-size:13px;line-height:1.35}
+.st-kps i{font-style:normal;flex:0 0 18px;text-align:center}
+.st-kps em{font-style:normal;font-weight:900;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em}
+.st-kps .kp-securite{color:#b42318}.st-kps .kp-qualite{color:#1d5fa8}.st-kps .kp-geste{color:#3f3f3b}
+.st-kps .kp-securite span,.st-kps .kp-qualite span{color:var(--ink)}
+.st-why{margin:0;font-size:12px;font-style:italic;color:#55554f}
+.st-time{margin:0;font-size:11.5px;font-weight:800;color:#8a8a83;text-align:right}
+.st-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 12px;border-radius:10px;background:#fdecea;font-size:13px}
+.st-foot span{color:#55554f}
+@media screen and (max-width:540px){
+  .st-meta{grid-template-columns:1fr}
+  .st-step-body{grid-template-columns:1fr}
+  .st-photo .cp-ph,.st-photo .cp-ph-add{width:100%;height:auto;aspect-ratio:4/3}
+  .st-step-top{flex-wrap:wrap}.st-step-tools{margin-left:auto}.st-title{order:3;flex-basis:100%}
+  .st-kind span{display:none}.st-kind{padding:0 8px;font-size:15px}
+  .st-step-row{grid-template-columns:minmax(0,1fr) 90px}
+  .st-ppe{max-width:none;justify-content:flex-start}
+  .st-sheet-head{flex-direction:column}
+}
+@media print{
+  .modal:has(.st-preview) .modal-head{display:none!important}
+  .st-sheet{font-size:9pt;gap:6px}
+  .st-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  .st-card{padding:6px}.st-card-t{font-size:10pt}.st-kps li{font-size:8.5pt}
+  .st-sheet-head,.st-ppe li,.st-n,.st-foot,.st-kps{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html:has(.st-preview),body:has(.st-preview),.modal:has(.st-preview){background:#fff!important}
+}
+.cs-who-when input,.cs-act-fields input{width:100%;min-width:0}
+@media screen and (max-width:540px){.st-editor .cs-who-when{grid-template-columns:1fr}}

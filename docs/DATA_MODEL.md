@@ -103,3 +103,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `audits[]` de type « 5S » par zone : `zone_id`, `five_s: { answers: { <critère>: { v: 0|1|2|"na", note, photo, act, what, who, when } }, s_scores: [5 scores %], target }`, `score` (moyenne des S, %), `audit_data.criteria` et `audit_data.domain_scores` (sur 5) pour rester lisibles comme les autres audits. Pas de `template_id` : les quinze critères sont fixés par l’application (`CS_CRITERIA`).
 - `redTags[]` : `{ id "ER-001", site_id, zone_id, what, qty, reason, decision, owner, due_date, photo, status ("Ouverte" | "Traitée"), done_at, done_note, author, created_at }`.
 - Actions issues d’un audit 5S : `origin_type` « Audit », `origin_id` l’audit, `question_id` le critère, `zone_id`, famille « Standard » (ou « Sécurité » pour les accès dégagés).
+
+## Extension 8.12.0 (additive)
+
+- `documents[]` de type STANDARD : `structured_data.st = { zone_id, ppe[], steps[{ id, title, points[{ kind: "securite"|"qualite"|"geste", text }], reason, photo, time_s }], reaction, approved_by, approved_at, effective_date, trained[{ name, date, by, version }] }`. Le statut du document suit Brouillon → Validé → En révision ; `version` augmente à chaque nouvelle validation. Les six rubriques texte précédentes sont conservées.
