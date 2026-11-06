@@ -580,7 +580,7 @@ test("Interface 8.0 · une seule navigation, sans pastilles, onglets fusionnés"
   a.run('uxGoStage("observer")');
   assert.equal(a.run("state.view"), "terrain");
   assert.equal(a.run("state.terrainTab"), "gemba");
-  assert.deepEqual(a.all("#pageLocation .ux-tab").map((b) => b.textContent), ["Gemba", "Signaux", "Audits", "Statistiques"]);
+  assert.deepEqual(a.all("#pageLocation .ux-tab").map((b) => b.textContent), ["Gemba", "Rapport d’étonnement", "Signaux", "Audits", "Statistiques"]);
   assert.equal(a.q("#appView > .tabs"), null, "Sous-onglets fusionnés dans la ligne de l’étape");
   assert.ok(a.q("#contextPanel #siteSelect") && a.q("#contextPanel #roleSelect") && a.q("#contextPanel [data-interface-mode-toggle]") && a.q("#contextMore [data-nav]"));
   a.run('state.role="operator";state.site="marzin";render();uxGoStage("observer")');
@@ -698,5 +698,40 @@ test("Calepin Gemba 8.8 · nature des notes, risque immédiat, photos, compte re
   assert.equal(a.run("cpNotes().length"), 1);
   assert.match(a.run("cpNotesText(cpNotes())"), /Ça gêne · .* : Trop de clics pour ajouter une photo/);
   assert.equal(a.all(".cp-note-list li").length, 1);
+});
+
+test("Rapport d’étonnement 8.9 · thèmes tirés des Gemba, mots du responsable Lean, période, droits et texte pour le COMEX", (t) => {
+  const a = app(t);
+  a.run(`const mk=(site,day,notes)=>{const g={id:nextId("G",data.gembas),site_id:site,zone:"Zone "+site,author:"Pierre Thibaut",status:"Brouillon",observations:[],created_at:day+"T09:00:00.000Z",updated_at:day+"T09:00:00.000Z"};notes.forEach(([kind,cat,fact,urgent])=>g.observations.push({id:uid("OBS"),kind,category:cat,fact,urgent:!!urgent,decision:kind==="positif"?"Conforme":"À décider",photos:[],photo:""}));data.gembas.unshift(g);};
+    mk("marzin","2020-01-06",[["risque","Sécurité","Coffret électrique au sol",true],["fait","Flux","Stock devant les racks"],["question","Flux","Racks sous-dimensionnés ?"],["positif","Qualité","Feuilles vertes utiles"]]);
+    mk("sodeplax","2020-01-07",[["fait","Sécurité","Pincement au film de protection"],["piste","Standard","Objectifs visibles au poste"]]);
+    mk("sodeplax","2019-12-01",[["fait","Maintenance","Note hors période"]]);
+    data.etonnement={group:{from:"2020-01-06",to:"2020-01-07",themes:{}}};save();
+    state.site="group";state.role="lean";state.view="terrain";state.terrainTab="etonnement";render()`);
+  assert.ok(a.run('uxTabs(uxStages().find(s=>s.id==="observer")).some(t=>t.key==="etonnement")'), "Onglet dans Observer");
+  assert.ok(a.q(".et-report"));
+  assert.match(a.q(".et-figures").textContent, /2 visites · 2 sites \(Marzin, Sodeplax\) · 6 notes/);
+  assert.deepEqual(a.all(".et-theme").map((x) => x.dataset.etFam), ["Sécurité", "Flux", "Standard"], "Sécurité d’abord ; hors période exclue ; points forts à part");
+  assert.match(a.q(".et-common").textContent, /Sécurité · Marzin, Sodeplax · 2 notes/);
+  assert.match(a.q(".et-strong").textContent, /Feuilles vertes utiles/);
+  assert.equal(a.all(".et-matrix tbody tr").length, 2);
+  a.fill("#et-securite-analysis", "Risques électriques et mécaniques sur les deux sites");
+  a.fill("#et-msg-message", "La sécurité d’abord.");
+  a.run("etFlush()");
+  assert.equal(a.run('data.etonnement.group.themes["Sécurité"].analysis'), "Risques électriques et mécaniques sur les deux sites");
+  assert.equal(a.run("data.etonnement.group.message"), "La sécurité d’abord.");
+  assert.equal(a.run("validateImport(JSON.parse(JSON.stringify(data))).etonnement.group.message"), "La sécurité d’abord.", "Conservé par la sauvegarde");
+  const text = a.run("etText()");
+  assert.match(text, /MESSAGE CLÉ\nLa sécurité d’abord\.[\s\S]*SÉCURITÉ\nConstat\n- Marzin : \[risque immédiat\] Coffret électrique au sol[\s\S]*Analyse : Risques électriques/);
+  assert.match(text, /ne vaut pas plan d’action définitif/);
+  a.fill('[data-et-period="from"]', "2020-01-07");
+  a.run("etFlush()");
+  assert.match(a.q(".et-figures").textContent, /1 visite · 1 site \(Sodeplax\)/);
+  a.run('state.role="director";state.site="marzin";render()');
+  assert.ok(a.run("etCan()"));
+  assert.equal(a.run("etKey()"), "marzin", "Chaque site a son propre rapport");
+  a.run('state.role="teamlead";render()');
+  assert.equal(a.run('uxTabs(uxStages().find(s=>s.id==="observer")).some(t=>t.key==="etonnement")'), false);
+  assert.notEqual(a.run("state.terrainTab"), "etonnement");
 });
 

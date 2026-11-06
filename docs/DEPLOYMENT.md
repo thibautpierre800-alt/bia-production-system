@@ -93,3 +93,7 @@ La branche `backup/before-8.7.0-2026-11-06` conserve le commit `c2371ad`, corres
 ## Retour à 8.7.0
 
 La branche `backup/before-8.8.0-2026-11-06` conserve le commit `bf09b03`, correspondant à la version 8.7.0. La 8.8.0 ajoute des champs aux constats (`kind`, `urgent`, `photos`, `noted_at`) et à la visite (`people`), ignorés par la 8.7.0. Les nouvelles photos sont rangées dans la base photos du navigateur (IndexedDB `bia-photos`) et référencées `photo:…` : avant un retour en 8.7.0, exporter une sauvegarde depuis la 8.8.0, puisque la 8.7.0 n’affiche pas ces photos référencées (les données restent lisibles).
+
+## Retour à 8.8.0
+
+La branche `backup/before-8.9.0-2026-11-06` conserve le commit `8c54d79`, correspondant à la version 8.8.0. La 8.9.0 ajoute l’onglet Rapport d’étonnement (`etonnement.js`) et la donnée `data.etonnement`, ignorée par la 8.8.0 et conservée dans les données.

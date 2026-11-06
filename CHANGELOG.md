@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.9.0 — 6 novembre 2026
+
+**Rapport d’étonnement : la synthèse des Gemba pour le COMEX, prête à imprimer.**
+
+- Nouvel onglet Observer › Rapport d’étonnement (Responsable Lean, directeurs de site), pour le Groupe ou pour un site, sur une période choisie (par défaut depuis le premier Gemba).
+- En tête : visites, sites, notes et photos de la période, et votre « message clé ».
+- « Où regarder » : notes par site et par famille, risques immédiats en rouge, points forts et actions ouvertes ; les familles vues sur plusieurs sites sont reprises en « points communs ».
+- Un bloc par thème (sécurité d’abord) : le constat site par site, les risques à vérifier, les questions ouvertes, les pistes et jusqu’à trois photos ; à côté, vos mots en quatre cases (analyse, enjeu, recommandation, action 2027), enregistrés au fil de la saisie.
+- Points forts à garder et à partager, actions déjà engagées depuis ces visites (retards en rouge), note de méthode : observations à confirmer, pas un plan d’action définitif.
+- Impression en A4 sur deux colonnes, sans cases vides ; « Copier le texte » pour un mail, Word ou PowerPoint.
+
+Nouvelle donnée : `data.etonnement`, par périmètre (Groupe ou site), conservée par la sauvegarde exportée.
+
 ## 8.8.0 — 6 novembre 2026
 
 **Calepin Gemba : noter sur le terrain au téléphone, avec photos, hors ligne.**
