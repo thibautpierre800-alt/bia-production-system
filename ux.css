@@ -695,3 +695,51 @@ button.in-counter:hover{border-color:var(--ink)}
   .hk-scale>span:not(.hk-year){display:none}
   .hk-scale{height:14px}
 }
+
+/* 8.4 · Roadmap : le plan du Hoshin dans le temps */
+.hk-obj-sync{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 12px;padding:10px 12px;border-radius:9px;background:#eef4f2}
+.hk-obj-sync p{flex:1 1 260px;margin:0;font-size:13px}
+.rm-gantt-panel .section-title{flex-wrap:wrap;gap:8px}
+.rm-gantt-wrap{overflow-x:auto;scrollbar-width:thin;--rm-label:230px}
+.rm-gantt{position:relative;min-width:760px}
+.rm-body{position:relative}
+.rm-row{position:relative;display:grid;grid-template-columns:var(--rm-label) 1fr;align-items:stretch;min-height:30px;border-bottom:1px solid #efeee9}
+.rm-label{display:grid;align-content:center;gap:1px;padding:4px 10px 4px 6px;font-size:12px;line-height:1.2;min-width:0}
+.rm-label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rm-label small{font-size:11px;color:var(--muted)}
+.rm-lane{position:relative;min-height:30px}
+.rm-head{border-bottom:1px solid var(--line)}
+.rm-head .rm-lane{min-height:24px}
+.rm-month{position:absolute;top:5px;padding-left:4px;font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap}
+.rm-overlay{position:absolute;top:0;bottom:0;left:var(--rm-label);right:0;pointer-events:none;z-index:2}
+.rm-vline{position:absolute;top:0;bottom:0;width:1px;background:#ecebe6}
+.rm-now{position:absolute;top:0;bottom:0;width:2px;background:var(--red)}
+.rm-mile{position:absolute;top:0;bottom:0;border-left:1.5px dashed #d97817}
+.rm-mile.done{border-left-color:var(--green)}
+.rm-bar{position:absolute;top:5px;bottom:5px;z-index:1;display:flex;align-items:center;padding:0 6px;border:1px solid transparent;border-radius:6px;font-size:11px;font-weight:800;overflow:hidden;white-space:nowrap}
+.rm-bar span{overflow:hidden;text-overflow:ellipsis}
+.rm-phase{background:#d4e3df;color:#24524d}
+.rm-phase.now{background:#24524d;color:#fff}
+.rm-step{font:inherit;font-size:11px;font-weight:800;text-align:left;cursor:pointer}
+.rm-step:disabled{cursor:default}
+.rm-step.hk-todo{background:#fff;border-color:#c9c8c1;color:var(--ink)}
+.rm-step.late{box-shadow:inset 0 0 0 2px var(--red)}
+.rm-program{background:#faf9f6}
+.rm-site{background:var(--soft);border-top:4px solid #fff}
+.rm-site .rm-label b{font-size:13px}
+.rm-diamond{position:absolute;top:50%;z-index:3;display:flex;align-items:center;gap:3px;transform:translate(-7px,-50%);color:#d97817;font-size:14px;white-space:nowrap}
+.rm-diamond em{font-size:10.5px;font-style:normal;font-weight:800;color:var(--ink);background:rgba(255,255,255,.85);padding:0 3px;border-radius:3px}
+.rm-diamond.done{color:var(--green)}.rm-diamond.late{color:var(--red)}
+.rm-empty{position:absolute;top:50%;transform:translateY(-50%);padding-left:8px;font-size:12px;color:var(--muted);white-space:nowrap}
+.rm-key{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:10px 0 0;font-size:12px;color:var(--muted)}
+.rm-k{display:inline-block;width:18px;height:10px;border-radius:3px;border:1px solid #c9c8c1;background:#fff}
+.rm-k.hk-doing{background:var(--amber-soft);border-color:#ebcf96}.rm-k.hk-done{background:var(--green-soft);border-color:#b5dbc3}
+.rm-k.late{box-shadow:inset 0 0 0 2px var(--red)}
+.rm-k-mile{color:#d97817}
+.rm-k-now{display:inline-block;width:2px;height:12px;background:var(--red)}
+.rm-prio-title{margin-bottom:4px}
+@media (max-width:820px){
+  .rm-gantt-wrap{--rm-label:128px}
+  .rm-gantt{min-width:640px}
+  .rm-label{font-size:11px;padding:3px 6px 3px 4px}
+}

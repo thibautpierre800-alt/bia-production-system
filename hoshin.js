@@ -48,13 +48,24 @@ async function hkReadXlsx(file) {
   if (relsXml) for (const r of xml(relsXml).getElementsByTagName("Relationship")) rels[r.getAttribute("Id")] = r.getAttribute("Target");
   const sharedXml = await zip.read("xl/sharedStrings.xml"),
     shared = sharedXml ? [...xml(sharedXml).getElementsByTagName("si")].map((si) => [...si.getElementsByTagName("t")].map((t) => t.textContent).join("")) : [];
-  const sheets = {};
+  // Couleurs de remplissage (barres du Gantt du planning) : style de cellule → couleur.
+  const stylesXml = await zip.read("xl/styles.xml"), fillOf = [];
+  if (stylesXml) {
+    const st = xml(stylesXml), fills = [...(st.getElementsByTagName("fills")[0]?.getElementsByTagName("fill") || [])].map((f) => {
+      const p = f.getElementsByTagName("patternFill")[0], fg = p?.getElementsByTagName("fgColor")[0];
+      if (!p || p.getAttribute("patternType") !== "solid" || !fg) return null;
+      return fg.getAttribute("rgb") || (fg.getAttribute("theme") !== null ? `theme${fg.getAttribute("theme")}` : null);
+    });
+    for (const xf of st.getElementsByTagName("cellXfs")[0]?.getElementsByTagName("xf") || []) fillOf.push(fills[Number(xf.getAttribute("fillId"))] || null);
+  }
+  const sheets = {}, colors = {};
   for (const s of xml(book).getElementsByTagName("sheet")) {
     const target = String(rels[s.getAttribute("r:id")] || "").replace(/^\/?(xl\/)?/, ""), raw = target ? await zip.read("xl/" + target) : null;
     if (!raw) continue;
-    const cells = {};
+    const cells = {}, painted = {};
     for (const c of xml(raw).getElementsByTagName("c")) {
-      const t = c.getAttribute("t"), v = c.getElementsByTagName("v")[0]?.textContent;
+      const t = c.getAttribute("t"), v = c.getElementsByTagName("v")[0]?.textContent, fill = fillOf[Number(c.getAttribute("s"))];
+      if (fill) painted[c.getAttribute("r")] = fill;
       let value = null;
       if (t === "s") value = shared[Number(v)] ?? null;
       else if (t === "inlineStr") value = [...c.getElementsByTagName("t")].map((x) => x.textContent).join("");
@@ -64,8 +75,9 @@ async function hkReadXlsx(file) {
       if (value !== null && value !== "") cells[c.getAttribute("r")] = value;
     }
     sheets[s.getAttribute("name")] = cells;
+    colors[s.getAttribute("name")] = painted;
   }
-  return sheets;
+  return { sheets, colors };
 }
 
 /* ---------- Interprétation du classeur (pure, testable) ---------- */
@@ -221,7 +233,38 @@ function hkParseMacro(cells) {
   return titles.list.map((x) => ({ title: hkText(x.v), description: hkText(desc.find((d) => d.ci === x.ci)?.v) }));
 }
 
-function hkParsePlanning(cells, report) {
+function hkIsoWeekStart(year, week) {
+  const jan4 = new Date(Date.UTC(year, 0, 4)), monday = new Date(jan4);
+  monday.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay() + 6) % 7) + (week - 1) * 7);
+  return monday.toISOString().slice(0, 10);
+}
+function hkAddDays(iso, days) {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+// Colonnes de semaines du Gantt (« S45 », « S1 »…) → lundi de chaque semaine, année
+// lue dans la ligne des années au-dessus (cellules fusionnées 2026, 2027…).
+function hkWeekColumns(rows, headR) {
+  const head = rows.get(headR) || [], years = [];
+  for (const [r, list] of rows) if (r < headR) for (const x of list) if (typeof x.v === "number" && x.v >= 2000 && x.v <= 2100) years.push({ ci: x.ci, y: x.v });
+  years.sort((a, b) => a.ci - b.ci);
+  const out = new Map();
+  let prevWeek = null, wrapYear = null;
+  for (const x of head) {
+    const m = /^S(\d{1,2})$/i.exec(hkText(x.v));
+    if (!m) continue;
+    const week = Number(m[1]);
+    let year = years.filter((y) => y.ci <= x.ci).at(-1)?.y;
+    if (!year) { wrapYear ??= new Date().getUTCFullYear(); if (prevWeek !== null && week < prevWeek) wrapYear++; year = wrapYear; }
+    prevWeek = week;
+    out.set(x.ci, hkIsoWeekStart(year, week));
+  }
+  return out;
+}
+const HK_LATE = "FFFF0000", HK_MILESTONE = "FFFFFF00";
+
+function hkParsePlanning(cells, report, painted = {}) {
   const rows = hkRows(cells), out = { tracks: {}, macroTasks: [], topics: [] };
   const val = (re) => { for (const list of rows.values()) { const i = list.findIndex((x) => re.test(hkNorm(x.v))); if (i >= 0 && list[i + 1]) return list[i + 1].v; } return null; };
   out.start = hkDate(val(/^date$/));
@@ -235,6 +278,19 @@ function hkParsePlanning(cells, report) {
     break;
   }
   if (headR === null) return out;
+  const weeks = hkWeekColumns(rows, headR), paintedRows = new Map();
+  for (const [ref, color] of Object.entries(painted || {})) {
+    const m = /^([A-Z]+)(\d+)$/.exec(ref);
+    if (!m || !weeks.has(hkCol(m[1]))) continue;
+    const r = Number(m[2]);
+    if (!paintedRows.has(r)) paintedRows.set(r, []);
+    paintedRows.get(r).push({ ci: hkCol(m[1]), color });
+  }
+  const span = (r) => {
+    const cellsOn = (paintedRows.get(r) || []).filter((x) => !/^theme/.test(x.color)).sort((a, b) => a.ci - b.ci);
+    if (!cellsOn.length) return {};
+    return { from: weeks.get(cellsOn[0].ci), to: hkAddDays(weeks.get(cellsOn.at(-1).ci), 6), late: cellsOn.some((x) => x.color === HK_LATE), milestone: cellsOn.some((x) => x.color === HK_MILESTONE) };
+  };
   let group = null;
   for (const [r, list] of rows) {
     if (r <= headR) continue;
@@ -255,7 +311,7 @@ function hkParsePlanning(cells, report) {
     }
     if (!name || !group || group === "topics") continue;
     const ratio = Number(get("done")), status = ratio >= 1 ? "done" : ratio > 0 ? "doing" : "todo";
-    const step = { name, who: hkText(get("who")), duration: hkText(get("delay")), status };
+    const step = { name, who: hkText(get("who")), duration: hkText(get("delay")), status, ...span(r) };
     if (group.site) out.tracks[group.site].push(step);
     else if (group.macro) out.macroTasks.push(step);
   }
@@ -265,7 +321,7 @@ function hkParsePlanning(cells, report) {
 }
 
 // Classeur → plan Hoshin. Le rapport liste ce qui a été trouvé et ce qui a été ignoré.
-function hkFromWorkbook(sheets, fileName = "") {
+function hkFromWorkbook(sheets, fileName = "", colors = {}) {
   const report = { found: [], warnings: [] }, plan = { source: { file: fileName, imported_at: now(), by: osActor() } };
   const prio = hkFindSheet(sheets, /prio/) || Object.values(sheets || {}).find((c) => Object.values(c).some((v) => hkNorm(v) === "poids"));
   plan.matrix = prio ? hkParseMatrix(prio, report) : null;
@@ -278,8 +334,10 @@ function hkFromWorkbook(sheets, fileName = "") {
   const macro = hkFindSheet(sheets, /macro/);
   plan.macroSteps = macro ? hkParseMacro(macro) : [];
   if (plan.macroSteps.length) report.found.push(`${plan.macroSteps.length} macro-étapes de suivi de production`);
-  const planning = hkFindSheet(sheets, /planning/);
-  Object.assign(plan, planning ? hkParsePlanning(planning, report) : { tracks: {}, macroTasks: [], topics: [] });
+  const planningName = Object.keys(sheets || {}).find((n) => /planning/.test(hkNorm(n))), planning = planningName ? sheets[planningName] : null;
+  Object.assign(plan, planning ? hkParsePlanning(planning, report, colors?.[planningName] || {}) : { tracks: {}, macroTasks: [], topics: [] });
+  const dated = Object.values(plan.tracks).flat().concat(plan.macroTasks).filter((x) => x.from).length;
+  if (dated) report.found.push(`${dated} tâches datées dans le planning (Gantt)`);
   const tracked = Object.entries(plan.tracks).filter(([, s]) => s.length);
   if (tracked.length) report.found.push(`Parcours détaillés : ${tracked.map(([id]) => getSiteName(id)).join(", ")}`);
   plan.title = plan.project || "Déploiement de l’amélioration continue";
@@ -409,9 +467,114 @@ const hkHoshinBase = renderOSHoshin;
 renderOSHoshin = function () {
   const plan = hkPlan(), tl = hkTimeline(plan);
   const tools = hkCanPlan() ? `<div class="row-actions"><label class="btn ${plan ? "secondary" : ""} hk-import">Importer le fichier de déploiement (.xlsx)<input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-hk-import hidden></label>${osButton("Créer un objectif", "new", { key: "objectives" })}</div>` : "";
+  const synced = osActive(data.objectives).filter((o) => o.plan_key).length;
+  const objTools = plan && hkCanPlan() ? `<div class="hk-obj-sync"><p>${synced ? `${synced} objectifs suivent le plan (cap, jalons, parcours de site).` : "Le plan peut devenir la cascade d’objectifs : le cap en axe, un objectif Groupe par jalon, un objectif par site."}</p><button type="button" class="btn ${synced ? "secondary" : ""}" data-hk-sync-objectives>${synced ? "Mettre à jour les objectifs depuis le plan" : "Créer les objectifs à partir du plan"}</button>${role().nav.includes("roadmap") ? '<button type="button" class="btn ghost" data-hk-roadmap>Voir la roadmap</button>' : ""}</div>` : "";
   const intro = plan ? `<p class="hk-source">Plan issu de « ${esc(plan.source?.file || "saisie dans l’appli")} »${plan.source?.imported_at ? `, importé le ${shortDate(plan.source.imported_at)}` : ""}. Il reste sur cet appareil, comme toutes vos données.</p>` : `<div class="hk-empty"><b>Le Hoshin part des priorités des sites.</b><p>Importez le fichier qui a servi à les fixer (« Déploiement AC ») : matrice de priorité pondérée, phases, jalons, gouvernance, risques, macro-étapes et planning par site. Le fichier est lu sur cet appareil ; son contenu n’est ni envoyé ni publié.</p></div>`;
   const base = hkHoshinBase().replace(/^[\s\S]*?(<section class="os-hoshin-tree">)/, "$1");
-  return `${pageHead("Voir · Hoshin Kanri", "Cap, priorités et plan", "Le cap du Groupe, les priorités des sites et le plan de déploiement, puis la déclinaison en objectifs.", tools)}${hkCap(plan, tl)}${intro}${hkMatrixView(plan)}${hkPlanView(plan, tl)}${hkSitesView(plan)}${hkGovView(plan)}<section class="section hk-objectives"><h2>Déclinaison des objectifs</h2>${base}</section>`;
+  return `${pageHead("Voir · Hoshin Kanri", "Cap, priorités et plan", "Le cap du Groupe, les priorités des sites et le plan de déploiement, puis la déclinaison en objectifs.", tools)}${hkCap(plan, tl)}${intro}${hkMatrixView(plan)}${hkPlanView(plan, tl)}${hkSitesView(plan)}${hkGovView(plan)}<section class="section hk-objectives"><h2>Déclinaison des objectifs</h2>${objTools}${base}</section>`;
+};
+
+/* ---------- Objectifs issus du plan ---------- */
+
+// Le plan devient la cascade Hoshin : le cap (axe), un objectif Groupe par jalon de
+// décision, un objectif Site par parcours. Clé stable : un nouvel appel met à jour,
+// sans doublon ; les objectifs saisis à la main ne sont jamais touchés.
+function hkObjectivesFromPlan(plan) {
+  const tl = hkTimeline(plan), miles = (plan?.milestones || []).filter((m) => m.date).sort((a, b) => a.date.localeCompare(b.date));
+  const end = miles.at(-1)?.date || (tl.phases.length ? tl.end : today()), out = [];
+  out.push({ key: "cap", level: "Axe stratégique", site_id: "group", title: "D’artisan industriel à industriel artisan", description: [plan?.title, plan?.objective].filter(Boolean).join(" · "), due_date: end, parent: null });
+  for (const m of miles) out.push({ key: `jalon:${hkNorm(m.name)}`, level: "Groupe", site_id: "group", title: m.name, description: m.criteria, due_date: m.date, parent: "cap" });
+  for (const site of OPERATIONAL_SITES) {
+    const steps = plan?.tracks?.[site.id] || [];
+    if (!steps.length) continue;
+    const last = steps.map((x) => x.to).filter(Boolean).sort().at(-1) || null, wave = plan.waves?.[site.id];
+    let parent = wave === "pilot" ? miles[0] : wave === "wave1" ? miles[1] || miles.at(-1) : wave === "wave2" ? miles.at(-1) : null;
+    parent ||= miles.find((m) => last && m.date >= last) || miles.at(-1) || null;
+    out.push({ key: `site:${site.id}`, level: "Site", site_id: site.id, title: `${site.name} : ${steps[0].name} → ${steps.at(-1).name}`, description: `Parcours du plan de déploiement : ${steps.map((x) => x.name).join(", ")}.`, due_date: last || parent?.date || end, parent: parent ? `jalon:${hkNorm(parent.name)}` : "cap" });
+  }
+  return out;
+}
+function hkSyncObjectives() {
+  const plan = hkPlan();
+  if (!plan || !hkCanPlan()) return;
+  const items = hkObjectivesFromPlan(plan), owner = plan.team || "Responsable Lean Groupe";
+  let created = 0, updated = 0;
+  const ok = commitData(() => {
+    const byKey = new Map(data.objectives.filter((o) => o.plan_key && !o.archived_at).map((o) => [o.plan_key, o])), ids = {};
+    for (const it of items) {
+      let o = byKey.get(it.key);
+      const row = { title: it.title, site_id: it.site_id, level: it.level, year: Number(it.due_date.slice(0, 4)), due_date: it.due_date, description: it.description, plan_key: it.key, source: "Plan de déploiement" };
+      if (o) { Object.assign(o, row, { updated_at: now() }); updated++; }
+      else { o = { id: uid("OBJ"), ...row, owner, status: "En cours", created_at: now() }; data.objectives.push(o); created++; }
+      ids[it.key] = o.id;
+    }
+    for (const it of items) data.objectives.find((x) => x.id === ids[it.key]).parent_id = it.parent ? ids[it.parent] : null;
+    data.activity.push({ id: uid("EVT"), at: now(), actor: osActor(), event: "Objectifs Hoshin alignés sur le plan", record_id: null, fields: ["objectives"], site_id: "group" });
+  });
+  if (!ok) return;
+  render();
+  toast(`${created} objectif${created > 1 ? "s" : ""} créé${created > 1 ? "s" : ""}, ${updated} mis à jour depuis le plan.`);
+}
+
+/* ---------- Roadmap : le même plan, dans le temps ---------- */
+
+function hkMonthStart(iso) {
+  return iso.slice(0, 8) + "01";
+}
+function hkWindow(plan, key) {
+  const tl = hkTimeline(plan), start = tl.start || today();
+  // « Tout le plan » couvre les phases, les jalons et les étapes datées.
+  const end = [tl.phases.length ? tl.end : hkAddMonths(start, 12), ...(plan?.milestones || []).map((m) => m.date), ...Object.values(plan?.tracks || {}).flat().map((x) => x.to)].filter(Boolean).sort().at(-1);
+  if (key === "all") return { from: start, to: end };
+  const from = [start, hkAddMonths(hkMonthStart(today()), -1)].sort().at(-1);
+  return { from, to: hkAddMonths(from, Number(key) || 6) };
+}
+function hkGantt(plan) {
+  const key = ["6", "12", "all"].includes(state.rmWindow) ? state.rmWindow : "6", win = hkWindow(plan, key), from = Date.parse(win.from), span = Math.max(1, Date.parse(win.to) - from);
+  const x = (iso) => ((Date.parse(iso) - from) / span) * 100;
+  const bar = (a, b) => {
+    if (!a || !b || b < win.from || a > win.to) return null;
+    const l = Math.max(0, x(a)), r = Math.min(100, x(hkAddDays(b, 1)));
+    return `left:${l.toFixed(2)}%;width:${Math.max(0.8, r - l).toFixed(2)}%`;
+  };
+  const months = [];
+  for (let d = hkMonthStart(win.from); d <= win.to; d = hkAddMonths(d, 1)) if (d >= win.from || d === hkMonthStart(win.from)) months.push(d);
+  const monthLabel = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("fr-FR", { month: "short", timeZone: "UTC" }).replace(".", "") + (d.slice(5, 7) === "01" || d === months[0] ? ` ${d.slice(0, 4)}` : "");
+  const grid = months.map((d) => `<span class="rm-month" style="left:${Math.max(0, x(d)).toFixed(2)}%">${esc(monthLabel(d))}</span>`).join("");
+  const lines = months.map((d) => (x(d) > 0 ? `<i class="rm-vline" style="left:${x(d).toFixed(2)}%"></i>` : "")).join("");
+  const nowLine = today() >= win.from && today() <= win.to ? `<i class="rm-now" style="left:${x(today()).toFixed(2)}%" title="Aujourd’hui · ${shortDate(today())}"></i>` : "";
+  const miles = (plan.milestones || []).filter((m) => m.date && m.date >= win.from && m.date <= win.to).map((m) => `<i class="rm-mile ${m.done ? "done" : ""}" style="left:${x(m.date).toFixed(2)}%" title="${esc(m.name)} · ${shortDate(m.date)}"></i>`).join("");
+  const overlay = `<div class="rm-overlay" aria-hidden="true">${lines}${miles}${nowLine}</div>`;
+  const row = (label, bars, cls = "") => `<div class="rm-row ${cls}"><div class="rm-label">${label}</div><div class="rm-lane">${bars}</div></div>`;
+  const tl = hkTimeline(plan);
+  const phaseRow = row("<b>Phases</b>", tl.phases.map((p, i) => { const st = bar(p.from, hkAddDays(p.to, -1)); return st ? `<span class="rm-bar rm-phase ${i === tl.current ? "now" : ""}" style="${st}" title="${esc(p.name)} · ${shortDate(p.from)} → ${shortDate(p.to)}">${esc(p.name.replace(/^\d+\.\s*/, ""))}</span>` : ""; }).join(""), "rm-program");
+  const mileRow = (plan.milestones || []).some((m) => m.date && m.date >= win.from && m.date <= win.to) ? row("<b>Jalons</b>", (plan.milestones || []).filter((m) => m.date && m.date >= win.from && m.date <= win.to).map((m) => `<span class="rm-diamond ${m.done ? "done" : m.date < today() ? "late" : ""}" style="left:${x(m.date).toFixed(2)}%" title="${esc(m.name)} · ${shortDate(m.date)}">◆<em>${esc(m.name)}</em></span>`).join(""), "rm-miles") : "";
+  const stepBar = (siteId, st, i) => {
+    const css = bar(st.from, st.to);
+    if (!css) return "";
+    const can = siteId && hkCanSite(siteId);
+    return `<button type="button" class="rm-bar rm-step ${HK_STATUS[st.status]?.[1] || "hk-todo"} ${st.late ? "late" : ""}" style="${css}" ${can ? `data-hk-step="${esc(JSON.stringify({ site: siteId, i }))}"` : "disabled"} title="${esc(st.name)} · ${shortDate(st.from)} → ${shortDate(st.to)} · ${HK_STATUS[st.status]?.[0] || "À faire"}${st.late ? " · en retard" : ""}"><span>${esc(st.name)}</span></button>`;
+  };
+  const macro = (plan.macroTasks || []).filter((t) => t.from);
+  const macroRows = macro.map((t) => row(`<span>${esc(t.name)}</span>${t.who ? `<small>${esc(t.who)}</small>` : ""}`, stepBar(null, t, 0))).join("");
+  const rank = hkRanking(plan.matrix).map((r) => r.id);
+  const sites = hkVisibleSites().sort((a, b) => (rank.indexOf(a.id) + 1 || 99) - (rank.indexOf(b.id) + 1 || 99));
+  const siteRows = sites.map((s) => {
+    const steps = plan.tracks?.[s.id] || [], wave = plan.waves?.[s.id];
+    const head = row(`<b>${esc(s.name)}</b><small>${wave ? esc(HK_WAVES.find((w) => w[0] === wave)?.[1]) + " · " : ""}${steps.length ? `${steps.filter((x) => x.status === "done").length}/${steps.length} faites` : "parcours à définir"}</small>`, steps.filter((st) => st.from).length ? "" : `<span class="rm-empty">${steps.length ? "Étapes non datées dans le planning" : "Parcours à définir dans le planning"}</span>`, "rm-site");
+    return head + steps.map((st, i) => (st.from ? row(`<span>${esc(st.name)}</span>`, stepBar(s.id, st, i)) : "")).join("");
+  }).join("");
+  const chips = `<div class="in-chips in-chips-small" role="group" aria-label="Période affichée">${[["6", "6 mois"], ["12", "12 mois"], ["all", "Tout le plan"]].map(([k, l]) => `<button type="button" class="in-chip ${k === key ? "active" : ""}" data-rm-window="${k}" aria-pressed="${k === key}">${l}</button>`).join("")}</div>`;
+  return `<section class="panel section rm-gantt-panel" aria-labelledby="rmGanttTitle"><div class="section-title"><div><h2 id="rmGanttTitle">Calendrier du déploiement</h2><p class="hint">${shortDate(win.from)} → ${shortDate(win.to)} · touchez une étape pour la faire avancer ; elle avance aussi dans le Hoshin.</p></div>${chips}</div><div class="rm-gantt-wrap"><div class="rm-gantt"><div class="rm-row rm-head"><div class="rm-label"></div><div class="rm-lane">${grid}</div></div><div class="rm-body">${overlay}${phaseRow}${mileRow}${macroRows}${siteRows}</div></div></div><p class="rm-key"><span class="rm-k hk-todo"></span>À faire <span class="rm-k hk-doing"></span>En cours <span class="rm-k hk-done"></span>Fait <span class="rm-k late"></span>En retard dans le fichier <span class="rm-k-mile">◆</span>Jalon <span class="rm-k-now"></span>Aujourd’hui</p></section>`;
+}
+
+const hkRoadmapBase = renderRoadmap;
+renderRoadmap = function () {
+  const plan = hkPlan(), tl = hkTimeline(plan);
+  const base = hkRoadmapBase(), board = /<div class="roadmap-board[\s\S]*$/.exec(base)?.[0] || "";
+  const add = osManager() && !role().readonly ? '<button class="btn secondary" data-new-roadmap>+ Priorité</button>' : "";
+  const link = role().nav.includes("hoshin") || role().nav.includes("pilotage") ? '<button type="button" class="btn ghost small" data-rm-hoshin>Priorités et objectifs dans le Hoshin</button>' : "";
+  return `${pageHead("Voir · Roadmap", "Roadmap de déploiement", "Le même plan que le Hoshin, dans le temps : phases, jalons et étapes de chaque site.", add)}${hkCap(plan, tl)}${plan ? `<p class="hk-source">Une seule source : le plan importé dans le Hoshin (« ${esc(plan.source?.file || "saisie dans l’appli")} »). ${link}</p>${hkGantt(plan)}` : `<div class="hk-empty"><b>Pas encore de plan de déploiement.</b><p>Importez le fichier de déploiement dans Voir › Hoshin : la roadmap affichera ici les mêmes phases, jalons et étapes par site.</p>${link}</div>`}<h2 class="section rm-prio-title">Priorités de la roadmap</h2><p class="hint">Résultat attendu, propriétaire, indicateur et date pour chaque priorité ; à rattacher aux phases du plan.</p>${board.replace(/^<div class="roadmap-board section">/, '<div class="roadmap-board">')}`;
 };
 
 /* ---------- Actions ---------- */
@@ -419,7 +582,7 @@ renderOSHoshin = function () {
 async function hkImport(file) {
   if (!hkCanPlan()) return toast("Import réservé au Responsable Lean Groupe.");
   let parsed;
-  try { parsed = hkFromWorkbook(await hkReadXlsx(file), file.name); }
+  try { const book = await hkReadXlsx(file); parsed = hkFromWorkbook(book.sheets, file.name, book.colors); }
   catch (e) { return toast(e.message || "Fichier illisible."); }
   const { plan, report } = parsed;
   if (!plan.matrix && !plan.phases.length) return toast("Ni matrice de priorité ni phases reconnues dans ce fichier.");
@@ -483,6 +646,10 @@ function hkBind(root = document) {
   root.querySelectorAll("[data-hk-edit-matrix]").forEach((b) => (b.onclick = () => hkMatrixForm(false)));
   root.querySelectorAll("[data-hk-new-matrix]").forEach((b) => (b.onclick = () => hkMatrixForm(true)));
   root.querySelectorAll("[data-hk-waves]").forEach((b) => (b.onclick = () => hkWavesForm()));
+  root.querySelectorAll("[data-hk-sync-objectives]").forEach((b) => (b.onclick = () => hkSyncObjectives()));
+  root.querySelectorAll("[data-hk-roadmap]").forEach((b) => (b.onclick = () => switchView("roadmap")));
+  root.querySelectorAll("[data-rm-hoshin]").forEach((b) => (b.onclick = () => switchView(role().nav.includes("hoshin") ? "hoshin" : "pilotage")));
+  root.querySelectorAll("[data-rm-window]").forEach((b) => (b.onclick = () => { state.rmWindow = b.dataset.rmWindow; render(); }));
   root.querySelectorAll("[data-hk-nav]").forEach((b) => (b.onclick = () => { state.pilotageMode = "analysis"; state.osTab = "tower"; switchView(b.dataset.hkNav); }));
   root.querySelectorAll("[data-hk-milestone]").forEach((b) => (b.onclick = () => {
     const i = Number(b.dataset.hkMilestone);

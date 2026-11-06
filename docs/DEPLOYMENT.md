@@ -69,3 +69,7 @@ La branche `backup/before-8.2.0-2026-11-06` conserve le commit `9e2a23c`, corres
 ## Retour à 8.2.0
 
 La branche `backup/before-8.3.0-2026-11-06` conserve le commit `71979ba`, correspondant à la version 8.2.0. La 8.3.0 ajoute une seule clé de données, `hoshinPlan`, créée lors de l’import du fichier de déploiement ou de la création de la matrice ; aucune donnée existante n’est transformée. Revenue en 8.2.0, l’application ignore cette clé et l’écran Hoshin retrouve sa forme précédente.
+
+## Retour à 8.3.0
+
+La branche `backup/before-8.4.0-2026-11-06` conserve le commit `cbe18dc`, correspondant à la version 8.3.0. La 8.4.0 ajoute des dates aux étapes du plan (`from`, `to`) et des objectifs marqués `plan_key` ; revenue en 8.3.0, l’application les lit comme des données ordinaires.
