@@ -1100,3 +1100,55 @@ test("TPM 8.15 · machines, étiquettes bleues et rouges, standard CIL et tourn�
     assert.ok(a.q("[data-tm-cwhat]").disabled);
   }
 });
+
+test("Polyvalence 8.16 · équipe, postes reliés aux standards, I-L-U-O avec historique, postes fragiles, priorités, formation au standard", (t) => {
+  const a = app(t);
+  a.run('state.site="marzin";state.role="lean";commitData(()=>data.documents.unshift({id:"DOC-077",site_id:"marzin",type:"STANDARD",title:"Plaqueuse 2 · entrée",owner:"X",status:"Validé",version:2,problem_id:null,structured_data:{st:{steps:[],trained:[]}},created_at:now(),updated_at:now()}));state.view="training";state.pvOn=false;render()');
+  const tabs = JSON.parse(a.run('JSON.stringify(uxTabs(uxStages().find(s=>s.id==="perenniser")).map(t=>[t.key,uxTabActive(t)]))'));
+  assert.deepEqual(tabs.filter(([k]) => ["training", "polyvalence"].includes(k)), [["training", true], ["polyvalence", false]], "Onglet Polyvalence à côté de Formation, états distincts");
+  a.run("state.pvOn=true;render()");
+  a.click(".cs-empty [data-pv-newteam]");
+  a.fill("#pvName", "Finition · matin");
+  a.submit("#pvNew");
+  const tid = a.run("data.skillsMatrix[0].id");
+  assert.equal(tid, "PV-001");
+  a.click('[data-pv-fromstd="DOC-077"]');
+  for (const s of ["Ponceuse", "Emballage"]) { a.fill("[data-pv-addstin]", s); a.submit("[data-pv-addst]"); }
+  for (const n of ["Kévin", "Sandrine", "Mehdi"]) { a.fill("[data-pv-addpin]", n); a.submit("[data-pv-addp]"); }
+  a.fill("[data-pv-addpin]", "kévin");
+  a.submit("[data-pv-addp]");
+  assert.equal(a.run("data.skillsMatrix[0].people.length"), 3, "Pas de doublon de personne");
+  assert.deepEqual(JSON.parse(a.run("JSON.stringify(data.skillsMatrix[0].stations.map(s=>[s.name,s.standard_id,s.target]))")), [["Plaqueuse 2 · entrée", "DOC-077", 2], ["Ponceuse", null, 2], ["Emballage", null, 2]]);
+  const [s1, s2] = JSON.parse(a.run("JSON.stringify(data.skillsMatrix[0].stations.map(s=>s.id))"));
+  a.click(`[data-pv-st="${s2}"] [data-pv-sttarget="1"]`);
+  assert.equal(a.run("data.skillsMatrix[0].stations[1].target"), 1);
+  a.click("[data-pv-done]");
+  assert.ok(a.q(".pv-matrix"), "La matrice s’affiche");
+  const [k, sa] = JSON.parse(a.run("JSON.stringify(data.skillsMatrix[0].people.map(p=>p.id))"));
+  a.click(`.pv-matrix [data-pv-cell="${k}|${s1}"]`);
+  a.fill("#pvBy", "Camille");
+  a.click('[data-pv-lv="2"]');
+  assert.equal(a.run(`data.skillsMatrix[0].levels["${k}|${s1}"].lvl`), 2);
+  assert.deepEqual(JSON.parse(a.run('JSON.stringify(stOf(stDoc("DOC-077")).trained.map(x=>[x.name,x.version,x.by]))')), [["Kévin", 2, "Camille"]], "Formation enregistrée sur la version en vigueur du standard");
+  a.click(`.pv-matrix [data-pv-cell="${k}|${s1}"]`);
+  assert.ok(!a.q("#pvStd"), "Déjà formé : pas de deuxième enregistrement");
+  a.click('[data-pv-lv="4"]');
+  assert.deepEqual(JSON.parse(a.run(`JSON.stringify([data.skillsMatrix[0].levels["${k}|${s1}"].lvl,data.skillsMatrix[0].levels["${k}|${s1}"].hist.map(h=>h.lvl)])`)), [4, [2]], "Historique gardé");
+  a.click(`.pv-matrix [data-pv-cell="${sa}|${s1}"]`);
+  a.click('[data-pv-lv="3"]');
+  a.click(`.pv-matrix [data-pv-cell="${sa}|${s2}"]`);
+  a.click('[data-pv-lv="2"]');
+  const st = JSON.parse(a.run("JSON.stringify((s=>({fragile:s.fragile,under:s.under,prio:s.priorities.map(c=>c.p.name+'>'+c.x.s.name)}))(pvStats(data.skillsMatrix[0])))"));
+  assert.deepEqual(st, { fragile: 2, under: 2, prio: ["Sandrine>Ponceuse"] }, "Ponceuse et Emballage sans autonome : fragiles ; Sandrine (L) à former en priorité");
+  assert.match(a.q(".pv-foot").textContent, /2\/2[\s\S]*0\/1[\s\S]*0\/2/);
+  assert.ok(a.q(".pv-prio [data-pv-cell]"), "Liste « À former en priorité »");
+  a.run('state.view="home";render()');
+  assert.match(a.q(".jn-watch").textContent, /2 postes fragiles · Finition · matin/);
+  a.run("pvPrint(state.pvTeam)");
+  assert.match(a.q(".pv-sheet").textContent, /MATRICE DE POLYVALENCE[\s\S]*Kévin/);
+  assert.ok(!a.q(".pv-sheet [data-pv-cell]"), "Matrice à afficher en lecture seule");
+  assert.equal(a.run("validateImport(JSON.parse(JSON.stringify(data))).skillsMatrix.length"), 1);
+  assert.equal(a.run("osIntegrity(data).length"), 0);
+  a.run('closeModal();state.role="operator";state.view="training";state.pvOn=true;render()');
+  assert.ok(!a.q(".pv-matrix button[data-pv-cell]"), "Un opérateur consulte sans modifier");
+});

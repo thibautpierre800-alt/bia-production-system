@@ -557,6 +557,7 @@ renderAudits = function () {
   try { html = csRenderAuditsBase(); } finally { data.audits = all; }
   return `${csCan() ? `<div class="cs-banner"><div><b>Le 5S se fait zone par zone</b><span>Photo de référence, audit au téléphone, radar et étiquettes rouges.</span></div><button type="button" class="btn secondary" data-cs-go>Ouvrir le 5S</button></div>` : ""}${html}`;
 };
+state.auditsTab ||= "audits";
 const csTabsBase = uxTabs;
 uxTabs = function (stage) {
   const out = csTabsBase(stage);

@@ -327,6 +327,7 @@ jnWatchCard = function () {
   if (!base) return `<section class="jn-card jn-watch" aria-label="À surveiller"><div class="jn-card-head"><h2>À surveiller</h2></div><div class="jn-rows">${rows.join("")}</div></section>`;
   return base.replace(/(<div class="jn-rows">)/, `$1${rows.join("")}`);
 };
+state.projectsTab ||= "projects";
 const smTabsBase = uxTabs;
 uxTabs = function (stage) {
   const out = smTabsBase(stage);
