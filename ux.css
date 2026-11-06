@@ -996,6 +996,53 @@ circle.md-ok{fill:var(--green)}circle.md-warn{fill:var(--amber)}circle.md-gap{fi
 .md-par i{grid-column:1/-1;height:7px;border-radius:2px;background:#b9c9c5}
 .md-par.top i{background:var(--md-ink)}.md-par.top b{color:var(--ink)}
 .md-q .md-chart,.md-q .md-pareto,.md-q .md-goalbar>span{background:rgba(255,255,255,.75)}
+/* 8.7 · On écrit directement dans les cases du modèle ; quel outil choisir et pourquoi */
+.md-input{display:block;width:100%;min-height:44px;margin:0;padding:1px 0;border:0;background:transparent;color:var(--ink);font:inherit;line-height:22px;resize:none;overflow:hidden;field-sizing:content}
+.md-input:focus{outline:none}
+.md-input::placeholder{color:#9a9992;font-style:italic;font-size:11.5px}
+.md-editable .md-box.md-empty .md-body{background-image:none}
+.md-editable .md-input:placeholder-shown{background-image:repeating-linear-gradient(transparent 0 21px,#ecebe6 21px 22px)}
+.md-editable .md-box:focus-within{outline:3px solid var(--orange);outline-offset:-2px;z-index:1}
+.md-editable .md-box:focus-within>.md-head{background:var(--orange-soft)}
+.md-editable .md-group:focus-within{outline:0}
+label.md-head{cursor:text}
+.md-title-input,.md-meta-input{width:100%;border:1px dashed transparent;border-radius:4px;background:transparent;color:var(--ink);font:inherit}
+.md-title-input{padding:2px 4px;margin-left:-5px;font-size:16px;font-weight:800}
+.md-meta-input{min-width:96px;padding:1px 3px;margin-left:-4px;font-size:12px;font-weight:700}
+.md-title-input:hover,.md-meta-input:hover{border-color:var(--md-rule)}
+.md-title-input:focus,.md-meta-input:focus{outline:2px solid var(--orange);background:#fff}
+.md-5w-edit td{padding:0 6px}
+.md-5w-edit input{width:100%;padding:3px 0;border:0;background:transparent;color:var(--ink);font:inherit}
+.md-5w-edit input:focus{outline:2px solid var(--orange);outline-offset:1px}
+.md-5w-edit tr:focus-within th{background:var(--orange-soft)}
+.md-add{margin-top:8px}
+.md-wrap-tools{display:flex;flex-wrap:wrap;gap:8px}
+.md-why-tool{max-width:860px;margin:4px 0 0}
+.md-save{margin:4px 0 0;font-size:11.5px;color:var(--green)}
+.md-statuses{display:grid;gap:6px;margin-top:12px}
+.md-status{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.md-status>span{min-width:52px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.md-status button{padding:4px 10px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.md-status button.active{border-color:#24524d;background:#24524d;color:#fff}
+.md-pick-card small em{display:block;font-size:9.5px;font-style:normal;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#24524d}
+.md-guide{margin:0 0 14px;padding:12px 16px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.md-guide>summary{cursor:pointer;font-size:15px;font-weight:800}
+.md-path{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0;padding:0;list-style:none}
+.md-path li{display:flex;align-items:center;gap:8px;padding:5px 6px 5px 12px;border:1px solid var(--line);border-radius:18px;background:#faf9f6;font-size:12px}
+.md-path li span::after{content:" →";color:var(--muted)}
+.md-path li b{padding:2px 9px;border-radius:10px;background:#24524d;color:#fff;font-size:11px}
+.md-guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.md-guide-card{display:grid;align-content:start;gap:8px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#faf9f6}
+.md-guide-card h4{margin:0;font-size:13px}
+.md-guide-card dl{display:grid;gap:6px;margin:0}
+.md-guide-card dt{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#24524d}
+.md-guide-card dd{margin:0;font-size:12px;line-height:1.4}
+.md-guide-sub{margin:16px 0 6px;font-size:13px}
+.md-tools-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px;margin:0}
+.md-tools-list>div{padding:8px 10px;border-left:3px solid #24524d;background:#faf9f6}
+.md-tools-list dt{font-size:12.5px;font-weight:800}
+.md-tools-list dd{margin:2px 0 0;font-size:12px;line-height:1.45}
+.md-tools-list dd b{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 @media screen and (max-width:820px){
   .md-sheet-head{grid-template-columns:auto minmax(0,1fr)}
   .md-meta{grid-column:1/-1;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));border-top:1px solid var(--md-rule)}

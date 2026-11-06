@@ -101,7 +101,7 @@ test("B · dérive KPI → A3 relié → action → résultat, lecture après re
   const doc = a.run(`data.documents.find(d=>d.problem_id==='${pid}').id`);
   const keys = Array.from(a.run("DOCUMENT_SCHEMAS.A3.fields.map(x=>x[0])"));
   for (let i = 0; i < keys.length; i++) {
-    a.run(`editDocument('${doc}',${i})`);
+    a.run(`mdGuided('${doc}',${i})`);
     a.fill(
       "[data-doc-field]",
       "Fait mesuré, essai réalisé, résultat documenté",

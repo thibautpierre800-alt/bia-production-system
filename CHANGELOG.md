@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.7.0 — 6 novembre 2026
+
+**On écrit directement dans les cases du modèle, et chaque outil dit quand et pourquoi l’utiliser.**
+
+- Dès la création d’un problème, on arrive sur la fiche de sa méthode (A3, PDCA, 8D, DMAIC, QRQC), le curseur dans la première case vide : on écrit dedans. Chaque case porte sa consigne en filigrane ; tout s’enregistre au fil de la saisie, sur l’appareil.
+- Le sujet et le pilote se corrigent dans l’en-tête de la fiche ; la grille 5W2H (8D D2, QRQC caractérisation) est le formulaire, une case par question ; « + Ajouter une action » est dans la case du plan d’actions.
+- Étape du dossier (Cadrage → Clos) et état de la fiche (Brouillon, En révision, Validé) d’un geste, avec les mêmes garde-fous qu’avant : pas de fiche validée ni de problème clos sans toutes les cases remplies et les actions closes ; valider crée une version ; modifier une fiche validée la remet en révision, modifier un dossier clos le rouvre (tracé).
+- « Prochaine case » et « Écrire dans cette case ↓ » mènent à la case suivante ; ouvrir le dossier depuis Documents, une recherche ou un lien mène aussi à la fiche.
+- Le formulaire question par question reste disponible : « Mode guidé ».
+- Quel outil choisir, et pourquoi : en tête de Résoudre, du signal à l’outil (défaut au poste → QRQC, idée à tester → PDCA, problème qui revient → A3, client touché → 8D, complexe et chiffré → DMAIC), puis pour chaque outil quand l’utiliser, pourquoi, la durée, qui l’anime et la suite ; et les outils d’analyse (5W2H, Pareto, Ishikawa, 5 pourquoi). Les cartes du choix de la méthode et l’en-tête de chaque fiche reprennent le « quand » et le « pourquoi ».
+
+Aucun champ nouveau : les cases écrivent dans les mêmes rubriques qu’avant.
+
 ## 8.6.1 — 6 novembre 2026
 
 **Les fiches deviennent un résumé graphique de ce qui est écrit et mesuré.**

@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-6-1/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.6.1'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-7-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.7.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -319,23 +319,23 @@ test('Signal → prise en compte → action vérifiée → résolution → clôt
   run(`advanceSignal('${id}')`);submit('#signalTransition');assert.equal(run('data.signals[0].state'),'Clos');
   const b=app(t,a.stored());assert.equal(b.run(`data.signals.find(x=>x.id==='${id}').state`),'Clos');assert.ok(b.run('data.signals[0].closed_at'));
 });
-test('A3, 8D et QRQC : étapes réelles, sauvegarde, action liée, validation protégée',t=>{
+test('A3, 8D et QRQC en mode guidé : étapes réelles, sauvegarde, action liée, validation protégée',t=>{
   const a=app(t),{run,fill,submit,click,q}=a;
   for(const type of ['A3','8D','QRQC']){
     run(`closeModal();genericProblemForm({method:'${type}'})`);fill('#problemTitle',`Analyse ${type}`);fill('#problemOwner','Pilote');submit('#problemForm');
-    const id=run('data.documents[0].id'),pid=run('data.problems[0].id'),fields=Array.from(run(`DOCUMENT_SCHEMAS['${type}'].fields.map(f=>f[0])`));run(`editDocument('${id}',0)`);
+    const id=run('data.documents[0].id'),pid=run('data.problems[0].id'),fields=Array.from(run(`DOCUMENT_SCHEMAS['${type}'].fields.map(f=>f[0])`));run(`mdGuided('${id}',0)`);
     for(let i=0;i<fields.length;i++){
       assert.equal(q('[data-doc-field]').dataset.docField,fields[i]);fill('[data-doc-field]',`Faits et preuve ${type} rubrique ${i}`);
       if(i<fields.length-1)click(`.wizard-actions [data-doc-go='${i+1}']`);
     }
     fill('#editDocumentStatus','Validé');fill('#documentProblemStatus','Clos');submit('#editDocumentForm');
     assert.equal(run(`data.problems.find(x=>x.id==='${pid}').status`),'Clos');assert.equal(run(`data.documents.find(x=>x.id==='${id}').status`),'Validé');
-    run(`editDocument('${id}')`);run('requestCloseModal()');assert.equal(run(`data.documents.find(x=>x.id==='${id}').status`),'Validé','Consulter ne dévalide pas');
-    run(`editDocument('${id}',1)`);fill('[data-doc-field]','Nouvelle mesure');run('requestCloseModal()');assert.equal(run(`data.documents.find(x=>x.id==='${id}').status`),'En révision');
-    const b=app(t,a.stored());b.run(`editDocument('${id}')`);assert.equal(b.q('[data-doc-field]').value,'Nouvelle mesure');
+    run(`mdGuided('${id}')`);run('requestCloseModal()');assert.equal(run(`data.documents.find(x=>x.id==='${id}').status`),'Validé','Consulter ne dévalide pas');
+    run(`mdGuided('${id}',1)`);fill('[data-doc-field]','Nouvelle mesure');run('requestCloseModal()');assert.equal(run(`data.documents.find(x=>x.id==='${id}').status`),'En révision');
+    const b=app(t,a.stored());b.run(`mdGuided('${id}')`);assert.equal(b.q('[data-doc-field]').value,'Nouvelle mesure');
   }
   run('closeModal();genericProblemForm({method:"A3"})');fill('#problemTitle','Action liée');fill('#problemOwner','Pilote');submit('#problemForm');const pid=run('data.problems[0].id');
-  const i=run('DOCUMENT_SCHEMAS.A3.fields.findIndex(f=>f[0]==="action_plan")');run(`editDocument(data.documents[0].id,${i})`);fill('[data-doc-field]','Essai à réaliser');click('#modalContent [data-new-action]');
+  const i=run('DOCUMENT_SCHEMAS.A3.fields.findIndex(f=>f[0]==="action_plan")');run(`mdGuided(data.documents[0].id,${i})`);fill('[data-doc-field]','Essai à réaliser');click('#modalContent [data-new-action]');
   fill('#actionTitle','Tester le contre-guide');fill('#actionOwner','Équipe');submit('#actionForm');assert.equal(run('data.actions[0].origin_id'),pid);assert.ok(run('data.problems[0].action_ids.includes(data.actions[0].id)'));
 });
 test('Résoudre : A3, PDCA, 8D, DMAIC et QRQC sur leur modèle de référence',t=>{
@@ -349,12 +349,15 @@ test('Résoudre : A3, PDCA, 8D, DMAIC et QRQC sur leur modèle de référence',t
     fill('#problemTitle',`Modèle ${type}`);fill('#problemOwner','Pilote');submit('#problemForm');
     const pid=run('data.problems[0].id'),fields=Array.from(run(`DOCUMENT_SCHEMAS['${type}'].fields.map(f=>f[0])`));
     assert.equal(run('data.problems[0].method'),type);
-    assert.ok(q('.wizard-overview .md-sheet'),'Vue d’ensemble = la fiche du modèle');assert.equal(q('.wizard-overview summary').textContent,`Voir la fiche ${type} complète`);
-    assert.equal(q('.wizard-overview .md-box.current').dataset.mdKey,q('[data-doc-field]').dataset.docField,'La case en cours est repérée');
-    run('closeModal();state.view="resolution";render()');
-    assert.equal(q('.md-wrap .md-sheet').dataset.mdType,type);assert.equal(all('.md-wrap [data-md-step]').length,fields.length,'Une case par rubrique, aucune oubliée');
+    assert.equal(run('state.view'),'resolution','Dès la création, on arrive sur la fiche du modèle');assert.equal(run('$("modal").hidden'),true,'Pas de formulaire intermédiaire');
+    assert.equal(q('.md-wrap .md-sheet').dataset.mdType,type);assert.equal(all('.md-wrap [data-md-key]').length,fields.length,'Une case par rubrique, aucune oubliée');
     assert.equal(all(`.md-wrap ${shape[type][0]}`).length,shape[type][1]);
-    const last=fields.at(-1);click(`.md-wrap [data-md-key="${last}"] [data-md-step]`);assert.equal(q('[data-doc-field]').dataset.docField,last,'Toucher une case ouvre sa rubrique');
+    const last=fields.at(-1);fill(`.md-wrap [data-md-key="${last}"] textarea`,`Écrit dans la case ${type}`);
+    assert.equal(run(`data.documents.find(d=>d.problem_id==="${pid}").structured_data["${last}"]`),`Écrit dans la case ${type}`,'On écrit directement dans la case');
+    assert.ok(q(`.md-wrap [data-md-key="${last}"]`).classList.contains('md-filled'));
+    // Le mode guidé reste disponible : sa vue d’ensemble est la même fiche.
+    click('[data-md-guided]');assert.ok(q('.wizard-overview .md-sheet'));assert.equal(q('.wizard-overview summary').textContent,`Voir la fiche ${type} complète`);
+    assert.equal(q('.wizard-overview .md-box.current').dataset.mdKey,q('[data-doc-field]').dataset.docField,'La case en cours est repérée');
     run('closeModal()');
   }
   assert.deepEqual(all('.md-wrap .md-ph .md-head b').map(b=>b.textContent),['Définir','Mesurer','Analyser','Améliorer','Contrôler']);
@@ -364,10 +367,12 @@ test('Résoudre : A3, PDCA, 8D, DMAIC et QRQC sur leur modèle de référence',t
   // 5W2H : une ligne par question remplit la grille ; la trame s’insère d’un geste.
   const p5=JSON.parse(run('JSON.stringify(md5w2hParse("Rayure capot\\nQuoi : rayure\\nOù : poste 3\\n- Combien ? : 12 pièces"))'));
   assert.deepEqual(p5.cells,{quoi:'rayure',ou:'poste 3',combien:'12 pièces'});assert.equal(p5.rest,'Rayure capot');
-  const doc8=run('data.documents.find(d=>d.type==="8D").id');run(`editDocument("${doc8}",2)`);fill('[data-doc-field]','');click('[data-md-5w2h]');
+  const doc8=run('data.documents.find(d=>d.type==="8D").id');run(`mdGuided("${doc8}",2)`);fill('[data-doc-field]','');click('[data-md-5w2h]');
   assert.match(q('[data-doc-field]').value,/^Quoi : \nQui : \nOù : [\s\S]*Pourquoi est-ce un problème : $/);
   fill('[data-doc-field]','Quoi : rayure\nCombien : 12 pièces');run('requestCloseModal();render()');
-  assert.match(q('.md-wrap [data-md-key="d2"] .md-5w').textContent,/Quoi \?rayure[\s\S]*Combien \?12 pièces/);
+  assert.equal(q('.md-wrap [data-md-key="d2"] [data-md-5w="quoi"]').value,'rayure');assert.equal(q('.md-wrap [data-md-key="d2"] [data-md-5w="combien"]').value,'12 pièces');
+  fill('.md-wrap [data-md-key="d2"] [data-md-5w="ou"]','Poste 3');
+  assert.equal(run('data.documents.find(d=>d.type==="8D").structured_data.d2'),'Quoi : rayure\nOù : Poste 3\nCombien : 12 pièces','La grille 5W2H est le formulaire');
   // Plan d’actions : les actions liées au dossier, dans la case du modèle ; plus de doublon sous le dossier.
   run('state.selectedProblemId=data.problems.find(p=>p.method==="A3").id;render()');const pa=run('state.selectedProblemId');
   run(`commitData(()=>data.actions.unshift({id:"A-MD1",site_id:"marzin",title:"Remettre le support à la cote",owner:"Maintenance",status:"À faire",priority:"Haute",due_date:"2000-01-01",origin_type:"Problème",origin_id:"${pa}",created_at:now()}));render()`);
@@ -379,6 +384,36 @@ test('Résoudre : A3, PDCA, 8D, DMAIC et QRQC sur leur modèle de référence',t
   click('[data-md-print]');assert.ok(q('.md-preview .md-sheet.md-a3'));assert.match(q('.md-preview').innerHTML,/size:landscape/);run('closeModal()');
   // Les autres documents gardent leur présentation.
   assert.match(run('documentVisual("5WHY",{why1:"x"})'),/why-ladder/);
+});
+test('Fiches : on écrit dans les cases, avec les garde-fous du dossier ; quel outil et pourquoi',t=>{
+  const a=app(t),{run,q,all,click,fill,submit}=a;
+  run('state.role="lean";state.site="marzin";state.view="resolution";render()');
+  assert.equal(all('.md-guide .md-guide-card').length,5,'Quand et pourquoi utiliser chaque outil');assert.equal(all('.md-guide .md-tools-list > div').length,4,'5W2H, Pareto, Ishikawa, 5 pourquoi');
+  assert.match(q('.md-guide').textContent,/Le client est touché[\s\S]*8D/);
+  run('genericProblemForm({})');assert.match(q('[data-md-method="QRQC"]').textContent,/Quand[\s\S]*Pourquoi/);
+  click('[data-md-method="A3"]');fill('#problemTitle','Bavures découpe');fill('#problemOwner','Pilote');submit('#problemForm');
+  const pid=run('data.problems[0].id'),fields=Array.from(run('DOCUMENT_SCHEMAS.A3.fields.map(f=>f[0])'));
+  assert.equal(run('document.activeElement?.dataset?.mdField'),'background','Le curseur est dans la première case vide (le problème reprend le titre)');
+  assert.match(q('.md-why-tool').textContent,/Pourquoi un A3/);
+  const doc=()=>JSON.parse(run(`JSON.stringify(data.documents.find(d=>d.problem_id==="${pid}"))`)),prob=()=>JSON.parse(run(`JSON.stringify(data.problems.find(p=>p.id==="${pid}"))`));
+  fill('.md-sheet [data-md-meta="title"]','Bavures sur la découpe CN');assert.equal(prob().title,'Bavures sur la découpe CN');assert.equal(doc().title,'Bavures sur la découpe CN');
+  fill('.md-sheet [data-md-meta="owner"]','Équipe méthodes');assert.equal(prob().owner,'Équipe méthodes');
+  fill('.md-sheet [data-md-field="current"]','12 % de pièces à reprendre');assert.equal(prob().content.current,'12 % de pièces à reprendre','Le problème suit la fiche');
+  assert.match(q('[data-md-progress-panel]').textContent,/cases renseignées/);
+  // Garde-fous : pas de fiche validée ni de problème clos tant que tout n’est pas rempli.
+  click('[data-md-dstatus="Validé"]');assert.notEqual(doc().status,'Validé');
+  click('[data-md-pstatus="Clos"]');assert.notEqual(prob().status,'Clos');
+  for(const k of fields)if(q(`.md-sheet [data-md-field="${k}"]`)&&!q(`.md-sheet [data-md-field="${k}"]`).value)fill(`.md-sheet [data-md-field="${k}"]`,`Fait pour ${k}`);
+  click('[data-md-dstatus="Validé"]');assert.equal(doc().status,'Validé');assert.equal(doc().version,2,'Valider crée une version');
+  click('[data-md-pstatus="Clos"]');assert.equal(prob().status,'Clos');
+  fill('.md-sheet [data-md-field="learning"]','Leçon complétée');assert.equal(doc().status,'En révision','Modifier une fiche validée la remet en révision');
+  assert.equal(prob().status,'Analyse','Modifier un dossier clos le rouvre');assert.ok(prob().history.some(h=>/Réouverture/.test(h.note)));
+  // Rien ne se perd : une saisie en attente part avant d’afficher autre chose.
+  q('.md-sheet [data-md-field="background"]').value='Saisie en cours';q('.md-sheet [data-md-field="background"]').dispatchEvent(new (q('body').ownerDocument.defaultView.Event)('input',{bubbles:true}));
+  run('state.view="actions";render()');assert.equal(doc().structured_data.background,'Saisie en cours');
+  const b=app(t,a.stored());assert.equal(b.run(`data.documents.find(d=>d.problem_id==="${pid}").structured_data.background`),'Saisie en cours');
+  // Ouvrir le dossier depuis ailleurs mène à la fiche, sur la case demandée.
+  run(`editDocument(data.documents.find(d=>d.problem_id==="${pid}").id,6)`);assert.equal(run('state.view'),'resolution');assert.equal(run('document.activeElement?.dataset?.mdField'),'countermeasures');
 });
 test('Fiches : résumé graphique de ce qui est écrit et mesuré (courbe, départ → cible, Pareto, pourquoi, Ishikawa)',t=>{
   const a=app(t),{run,q,all}=a;

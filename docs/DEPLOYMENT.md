@@ -85,3 +85,7 @@ La branche `backup/before-8.6.0-2026-11-06` conserve le commit `0ba1aa3`, corres
 ## Retour à 8.6.0
 
 La branche `backup/before-8.6.1-2026-11-06` conserve le commit `cc353c3`, correspondant à la version 8.6.0. La 8.6.1 n’ajoute que de l’affichage (graphiques dans les fiches) ; aucune donnée n’est créée ni modifiée.
+
+## Retour à 8.6.1
+
+La branche `backup/before-8.7.0-2026-11-06` conserve le commit `c2371ad`, correspondant à la version 8.6.1. La 8.7.0 change la saisie (directement dans les cases de la fiche) sans créer de champ ; revenue en 8.6.1, les dossiers se complètent de nouveau par le formulaire question par question.
