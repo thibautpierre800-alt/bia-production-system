@@ -89,3 +89,7 @@ La branche `backup/before-8.6.1-2026-11-06` conserve le commit `cc353c3`, corres
 ## Retour à 8.6.1
 
 La branche `backup/before-8.7.0-2026-11-06` conserve le commit `c2371ad`, correspondant à la version 8.6.1. La 8.7.0 change la saisie (directement dans les cases de la fiche) sans créer de champ ; revenue en 8.6.1, les dossiers se complètent de nouveau par le formulaire question par question.
+
+## Retour à 8.7.0
+
+La branche `backup/before-8.8.0-2026-11-06` conserve le commit `bf09b03`, correspondant à la version 8.7.0. La 8.8.0 ajoute des champs aux constats (`kind`, `urgent`, `photos`, `noted_at`) et à la visite (`people`), ignorés par la 8.7.0. Les nouvelles photos sont rangées dans la base photos du navigateur (IndexedDB `bia-photos`) et référencées `photo:…` : avant un retour en 8.7.0, exporter une sauvegarde depuis la 8.8.0, puisque la 8.7.0 n’affiche pas ces photos référencées (les données restent lisibles).

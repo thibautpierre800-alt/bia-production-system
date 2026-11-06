@@ -86,3 +86,9 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `actions.category` : famille choisie dans la liste paramétrable des catégories. À défaut, la famille est déduite du constat de Gemba, puis du type du signal d’origine, sinon « Non classée ».
 - Une action peut être créée sans échéance (saisie rapide « Sans date ») ; elle est alors signalée « Sans date » jusqu’à ce qu’une date soit fixée.
 
+## Extension 8.8.0 (additive)
+
+- `gembas[].observations[]` : `kind` (`fait`, `risque`, `question`, `piste`, `positif` ; absent = `fait`), `urgent` (risque immédiat), `photos` (jusqu’à trois, la première recopiée dans `photo`), `noted_at` (heure de la note).
+- `gembas[].people` : personnes rencontrées pendant la visite.
+- Photos : une valeur `photo:<id>` désigne une photo de la base photos du navigateur (IndexedDB `bia-photos`). Une sauvegarde exportée ajoute `photos: {<id>: data URL}` ; l’import les range dans la base, ou les réintègre dans la fiche si la base est indisponible. Les anciennes photos intégrées (`data:image/…`) restent valides.
+- Remarques sur l’appli : clé locale `biaAppNotes`, hors des données métier.

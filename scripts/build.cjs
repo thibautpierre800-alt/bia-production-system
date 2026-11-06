@@ -10,6 +10,8 @@ const assets = new Set([
   "manifest.json",
   "icon.svg",
   "service-worker.js",
+  "icon-192.png",
+  "icon-512.png",
 ]);
 for (const match of html.matchAll(/(?:src|href)="([^"?#]+)(?:\?[^"#]*)?"/g)) {
   const file = match[1];
