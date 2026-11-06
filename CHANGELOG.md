@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.3.0 — 6 novembre 2026
+
+**Voir › Hoshin Kanri : le cap, les priorités des sites et le plan, sur le modèle du fichier qui a fixé les priorités.**
+
+- Cap en tête : « D’artisan industriel à industriel artisan », le programme, la phase en cours (mois n sur N) et la fin visée.
+- Priorités des sites : matrice pondérée (critères notés de 1 à 5, poids de 1 à 3, total recalculé), sites classés, TOP retenu et vagues (pilote, vague 1, vague 2). Les écarts entre le total du fichier et le total recalculé sont signalés. Le directeur de site voit le rang de son site ; la DG voit tout le classement, sans modifier.
+- Plan de déploiement : frise des phases datée à partir du début du programme, phase en cours, fiches de phase (actions clés, livrables, notes), jalons de décision avec critères de passage, indicateurs suivis.
+- Avancement par site, dans l’ordre des priorités : étapes du planning de chaque site (à faire → en cours → fait, d’un geste, pour le Responsable Lean ou le directeur du site) et pastilles des macro-étapes de suivi de production.
+- Gouvernance, risques et parades, aspects à aborder ; la déclinaison des objectifs et la X-Matrix restent en dessous.
+- Import du fichier de déploiement (.xlsx), réservé au Responsable Lean Groupe : lu dans le navigateur, résumé avant enregistrement (ce qui a été reconnu, ce qui est à vérifier), conservé sur l’appareil avec les autres données. Une nouvelle importation garde les étapes suivies, les vagues et les jalons franchis. Sans fichier, la matrice peut être créée et modifiée dans l’appli.
+
+Le contenu du fichier n’est pas intégré au code publié : il n’existe que dans les données de l’appareil qui l’a importé.
+
 ## 8.2.0 — 6 novembre 2026
 
 **La trajectoire BIA : d’artisan industriel à industriel artisan.**

@@ -559,3 +559,139 @@ button.in-counter:hover{border-color:var(--ink)}
 .mt-radar-empty{display:grid;place-items:center;min-height:150px;border-radius:8px;background:#f6f5f1;color:var(--muted);font-size:12.5px;font-weight:700;text-align:center;padding:8px}
 .mt-sheet-radars .mt-radar{max-width:290px;margin:0 auto}
 @media (min-width:821px){.jn-mantra{display:none}}
+
+/* 8.3 · Voir › Hoshin Kanri : cap, priorités des sites, plan, avancement */
+.hk-cap{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;margin:0 0 12px;border-radius:12px;overflow:hidden;background:#24524d}
+.hk-cap>div{display:grid;gap:3px;align-content:start;padding:12px 14px;background:#24524d;color:#fff}
+.hk-cap-k{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#f2a654}
+.hk-cap b{font-size:15px;line-height:1.25}
+.hk-cap small{font-size:12px;opacity:.75}
+.hk-source{margin:0 0 12px;font-size:12.5px;color:var(--muted)}
+.hk-empty{margin:0 0 12px;padding:14px 16px;border-radius:10px;background:#fff6e8;color:#5c3a08}
+.hk-empty p{margin:6px 0 0;font-size:13.5px}
+.hk-import{cursor:pointer}
+.hk-legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 14px;list-style:none;margin:6px 0 10px;padding:0;font-size:12.5px}
+.hk-legend li{display:flex;gap:6px;align-items:baseline}
+.hk-legend li>b{display:inline-grid;place-items:center;flex:0 0 auto;width:19px;height:19px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px}
+.hk-legend small{color:var(--muted);font-weight:800}
+.hk-matrix-wrap{overflow-x:auto;scrollbar-width:thin}
+.hk-matrix{display:grid;gap:4px;min-width:0}
+.hk-row{display:grid;grid-template-columns:minmax(150px,1.5fr) repeat(var(--hk-cols),minmax(0,1fr)) minmax(90px,1.2fr);gap:4px;align-items:stretch}
+.hk-head{align-items:end}
+.hk-corner{font-size:12px;font-weight:800;color:var(--muted);padding:0 6px}
+.hk-col{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;text-align:center}
+.hk-col b{font-size:14px}
+.hk-col em{max-width:100%;font-style:normal;font-size:10.5px;font-weight:700;line-height:1.15;color:var(--muted);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.hk-col small{font-size:10.5px;font-weight:900;color:#a85d0c}
+.hk-col-total{border-left:1px solid var(--line)}
+.hk-site{display:flex;align-items:center;gap:8px;min-height:42px;padding:0 8px;border-radius:8px;background:var(--soft);font-size:13.5px;font-weight:800;line-height:1.2}
+.hk-site>span{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.hk-rank{display:inline-grid;place-items:center;flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#fff;font-size:12px;box-shadow:0 0 0 1px var(--line)}
+.hk-top .hk-site{background:#fff1dc;box-shadow:inset 3px 0 0 #d97817}
+.hk-badge{padding:1px 6px;border-radius:999px;background:#d97817;color:#fff;font-size:9.5px;font-style:normal;font-weight:900}
+.hk-wave{padding:1px 7px;border-radius:999px;background:#e6ece9;color:#24524d;font-size:10.5px;font-weight:900}
+.hk-wave-pilot{background:#24524d;color:#fff}
+.hk-score{display:grid;place-items:center;min-height:42px;border-radius:7px;font-size:15px;font-weight:900;color:#5a3a12;background:#f3efe7}
+.hk-s1{background:#fbf1e3}.hk-s2{background:#f8e0bf}.hk-s3{background:#f3c98f}.hk-s4{background:#eba85a;color:#3d2405}.hk-s5{background:#d97817;color:#fff}
+.hk-s0{color:#a9a8a1}
+.hk-total{position:relative;display:grid;align-items:center;min-height:42px;padding:0 10px;border-radius:7px;background:#f6f5f1;overflow:hidden}
+.hk-total b{position:relative;z-index:1;font-size:16px}
+.hk-total i{position:absolute;left:0;top:0;bottom:0;background:#24524d26}
+.hk-toplist{margin:10px 0 0;font-size:13px}
+.hk-toplist small{color:var(--muted)}
+.hk-timeline{margin:6px 0 14px}
+.hk-track{position:relative;height:58px;border-radius:8px;background:#f3f2ee}
+.hk-phase-bar{position:absolute;top:8px;bottom:8px;display:flex;align-items:center;padding:0 6px;border-radius:6px;background:#d4e3df;border-right:2px solid #fff;overflow:hidden}
+.hk-phase-bar span{font-size:11.5px;font-weight:800;line-height:1.1;color:#24524d;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.hk-phase-bar.past{background:#e7e6e1}.hk-phase-bar.past span{color:#8a8a84}
+.hk-phase-bar.now{background:#24524d}.hk-phase-bar.now span{color:#fff}
+.hk-mark{position:absolute;top:-9px;transform:translateX(-50%);font-size:15px;color:#d97817;line-height:1}
+.hk-mark.done{color:var(--green)}.hk-mark.late{color:var(--red)}
+.hk-now{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--red)}
+.hk-now em{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:10.5px;font-style:normal;font-weight:900;color:var(--red);white-space:nowrap}
+.hk-scale{position:relative;display:flex;justify-content:space-between;margin-top:22px;font-size:11px;color:var(--muted)}
+.hk-year{position:absolute;transform:translateX(-50%);font-weight:900;color:var(--ink)}
+.hk-phases{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.hk-phase{display:grid;gap:5px;align-content:start;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.hk-phase.now{border-color:#24524d;box-shadow:inset 0 3px 0 #24524d}
+.hk-phase.past{opacity:.7}
+.hk-phase header{display:flex;justify-content:space-between;gap:6px;align-items:flex-start}
+.hk-phase header b{font-size:13.5px;line-height:1.25}
+.hk-phase small{font-size:11.5px;color:var(--muted)}
+.hk-phase p{margin:0;font-size:12.5px;line-height:1.4;color:#4b4b46}
+.hk-phase .hk-notes{font-size:11.5px;color:var(--muted);white-space:pre-line}
+.hk-plan h3{margin:16px 0 8px;font-size:15px}
+.hk-miles{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.hk-miles li{display:grid;grid-template-columns:minmax(150px,220px) 1fr auto;gap:10px;align-items:center;padding:9px 10px;border-radius:8px;background:var(--soft)}
+.hk-miles li.done{background:var(--green-soft)}
+.hk-miles li div{display:grid;gap:2px}.hk-miles small{color:var(--muted);font-size:12px}
+.hk-miles p{margin:0;font-size:12.5px}
+.hk-ind{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:12px 0 0;font-size:13px}
+.hk-macro{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 12px;list-style:none;margin:8px 0 10px;padding:10px 12px;border-radius:8px;background:#faf9f6;border:1px solid var(--line);font-size:12.5px}
+.hk-macro li{display:flex;gap:6px;align-items:flex-start;line-height:1.3}
+.hk-macro li>b{display:inline-grid;place-items:center;flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:#24524d;color:#fff;font-size:11px}
+.hk-macro small{display:block;color:var(--muted);font-size:11.5px}
+.hk-site-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.hk-site-row{display:grid;grid-template-columns:minmax(140px,180px) 1fr auto;gap:10px;align-items:center;padding:9px 10px;border-radius:8px;background:var(--soft)}
+.hk-site-name b{display:block;font-size:14px}.hk-site-name small{font-size:12px;color:var(--muted)}
+.hk-steps{display:flex;flex-wrap:wrap;gap:5px}
+.hk-step{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:#fff;font:inherit;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer;text-align:left}
+.hk-step:disabled{cursor:default}
+.hk-step i{font-style:normal;font-weight:900}
+.hk-doing{background:var(--amber-soft);border-color:#ebcf96;color:var(--amber)}
+.hk-done{background:var(--green-soft);border-color:#b5dbc3;color:var(--green)}
+.hk-none{font-size:12.5px;color:var(--muted)}
+.hk-seq{display:flex;gap:3px}
+.hk-seq-dot{width:28px;height:28px;border:1px solid var(--line);border-radius:50%;background:#fff;font:inherit;font-size:11.5px;font-weight:900;color:#8a8a84;cursor:pointer}
+.hk-seq-dot:disabled{cursor:default}
+.hk-seq-dot.on{background:#24524d;border-color:#24524d;color:#fff}
+.hk-gov-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.hk-gov-grid h3{margin:0 0 8px;font-size:15px}
+.hk-gov,.hk-risks,.hk-topics{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:12.5px}
+.hk-gov li,.hk-risks li{display:grid;gap:2px;padding:8px 10px;border-radius:8px;background:var(--soft)}
+.hk-gov p,.hk-risks p{margin:0;color:#4b4b46}
+.hk-gov small,.hk-risks small{color:var(--muted)}
+.hk-rhythm{justify-self:start;padding:1px 7px;border-radius:999px;background:#24524d;color:#fff;font-size:10.5px;font-weight:900}
+.hk-topics li{padding:6px 10px;border-left:3px solid #d97817;background:#fff8ee;border-radius:0 6px 6px 0}
+.hk-objectives>h2{margin-bottom:10px}
+.hk-report ul{margin:6px 0 10px;padding-left:18px;font-size:13.5px}
+.hk-warn li{color:#7a4b0c}
+.hk-form-wrap{overflow-x:auto;margin-top:10px}
+.hk-form{border-collapse:collapse;font-size:12.5px}
+.hk-form th,.hk-form td{padding:3px;border-bottom:1px solid var(--line);text-align:center}
+.hk-form tbody th input{min-width:190px}
+.hk-form input[type=number]{width:52px}
+.hk-waves-list{display:grid;gap:8px}
+.hk-waves-list fieldset{border:0;margin:0;padding:0}
+.hk-waves-list legend{font-weight:800;font-size:13.5px;margin-bottom:4px}
+.hk-radio{display:inline-flex;align-items:center;gap:5px}
+.hk-radio input{margin:0}
+.hk-radio:has(input:checked){background:var(--ink);border-color:var(--ink);color:#fff}
+@media (min-width:821px){.hk-legend{display:none}}
+@media (max-width:820px){
+  .hk-cap{grid-template-columns:1fr 1fr}
+  .hk-cap>div{padding:10px 11px}
+  .hk-cap b{font-size:13px}
+  .hk-row{grid-template-columns:minmax(84px,1.6fr) repeat(var(--hk-cols),minmax(20px,1fr)) minmax(38px,1fr);gap:2px}
+  .hk-matrix{gap:2px}
+  .hk-col em{display:none}
+  .hk-col small{font-size:9px}
+  .hk-col b{font-size:11.5px}
+  .hk-corner{font-size:10px;padding:0 3px}
+  .hk-site{min-height:38px;padding:0 4px;gap:4px;font-size:10.5px;border-radius:5px}
+  .hk-rank{width:17px;height:17px;font-size:10px}
+  .hk-badge,.hk-wave{font-size:8.5px;padding:0 4px}
+  .hk-score{min-height:38px;border-radius:5px;font-size:12.5px}
+  .hk-total{min-height:38px;padding:0 4px;border-radius:5px}
+  .hk-total b{font-size:12.5px}
+  .hk-track{height:64px}
+  .hk-phase-bar span{font-size:9.5px}
+  .hk-miles li{grid-template-columns:1fr;gap:5px}
+  .hk-site-row{grid-template-columns:1fr;gap:7px}
+  .hk-legend{grid-template-columns:1fr}
+}
+@media (max-width:820px){
+  .hk-badge{display:none}
+  .hk-scale>span:not(.hk-year){display:none}
+  .hk-scale{height:14px}
+}
