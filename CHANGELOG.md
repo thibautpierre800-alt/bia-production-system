@@ -1,5 +1,23 @@
 # Changelog
 
+## 8.14.0 — 6 novembre 2026
+
+**Ishikawa et 5 pourquoi : des post-it, des causes vérifiées par un fait, un arbre des pourquoi.**
+
+- Ishikawa en trois temps.
+  - **Causes** : un post-it par idée dans chacune des six familles (méthodes, machines, main-d’œuvre, matières, mesures, milieu), avec une question pour lancer l’équipe. Entrée pour noter la suivante ; on touche un post-it pour le corriger.
+  - **Vérifier** : pour chaque cause, comment la vérifier, le résultat, une photo de la preuve, et le statut à vérifier, confirmée ou écartée. Les causes écartées restent tracées.
+  - **Bilan** : l’arête de poisson en couleurs ; chaque cause confirmée part en 5 pourquoi ou en action datée.
+- 5 pourquoi en arbre.
+  - Plusieurs causes par niveau (« Autre cause »), et chaque réponse vérifiée, fausse ou à vérifier, avec sa preuve.
+  - La cause racine se choisit sur une feuille, avec sa contre-mesure.
+  - Le bilan relit la chaîne à l’envers avec « donc » pour tester la logique, et crée l’action.
+- Depuis l’A3, le 8D ou le QRQC, « Faire l’Ishikawa » et « Faire les 5 pourquoi » ouvrent l’analyse liée au dossier. Les cases d’analyse et de cause racine en affichent le résultat.
+- Une analyse se valide quand elle est complète ; la modifier ensuite la repasse en révision. Les anciens Ishikawa et 5 pourquoi en texte deviennent des post-it et un arbre à l’ouverture. Fiche imprimable.
+- Correction (5S, audit 50 critères, standard de poste, SMED) : la sauvegarde automatique ne fait plus perdre le curseur, et le clavier, au milieu d’une saisie.
+
+Données : `structured_data.ik` (Ishikawa) et `structured_data.why` (5 pourquoi). Les rubriques texte précédentes restent tenues à jour. Les actions portent `origin_id` = le document et `problem_id` = le dossier.
+
 ## 8.13.0 — 6 novembre 2026
 
 **SMED : chronométrer un changement au téléphone, séparer interne et externe, transformer et prouver le gain.**

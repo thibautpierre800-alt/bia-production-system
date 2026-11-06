@@ -171,7 +171,7 @@ function smOpen(id, tab = null) {
   modal(`${s.id} · ${s.title}`, `<div class="sm-study" data-sm-id="${esc(s.id)}"><p class="jn-where">${esc(getSiteName(s.site_id))} · pilote ${esc(s.owner || "à désigner")}${s.target_min ? ` · cible ${s.target_min} min` : ""}${proj ? ` · chantier ${esc(proj.id)}` : ""}</p>
     <div class="filters sm-tabs" role="tablist">${tabs.map(([k, l]) => `<button type="button" class="chip ${k === tab ? "active" : ""}" role="tab" aria-selected="${k === tab}" data-sm-tab="${k}">${l}</button>`).join("")}</div>
     <div class="sm-body">${smBody(s, tab)}</div></div>`);
-  modalSaver = () => { document.activeElement?.blur?.(); return true; };
+  modalSaver = () => { uxFlush(); return true; };
   smBind(s.id, tab);
 }
 function smRoot(id) { return $("modalContent")?.querySelector(`.sm-study[data-sm-id="${id}"]`); }

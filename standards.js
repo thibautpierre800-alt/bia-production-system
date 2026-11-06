@@ -189,7 +189,7 @@ function stBind(id) {
     toast(`${name} formé(e) à la version ${stDoc(id).version || 1}.`);
     stRedraw(id);
   });
-  modalSaver = () => { document.activeElement?.blur?.(); return true; };
+  modalSaver = () => { uxFlush(); return true; };
 }
 
 /* ---------- Branchements ---------- */

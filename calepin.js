@@ -697,3 +697,22 @@ function cpBind(root = document) {
 }
 const cpOsBindBase = osBind;
 osBind = function () { const out = cpOsBindBase.apply(this, arguments); cpBind(document); return out; };
+
+/* 8.14 · La sauvegarde automatique d'une fenêtre (0,65 s après la dernière frappe) ne retire plus le curseur du champ :
+ * les outils qui enregistrent « à la sortie du champ » appellent uxFlush(), qui ne quitte le champ qu'à la fermeture,
+ * au changement d'écran ou quand l'appli passe en arrière-plan. */
+let uxAutoSaving = false;
+scheduleModalSave = function () {
+  if (!modalSaver) return;
+  clearTimeout(modalTimer);
+  modalTimer = setTimeout(() => {
+    let ok;
+    uxAutoSaving = true;
+    try { ok = modalSaver?.(); } finally { uxAutoSaving = false; }
+    if (ok !== false) { modalDirty = false; const s = $("saveState"); if (s) s.textContent = "Enregistré sur cet appareil"; }
+  }, 650);
+};
+function uxFlush() { if (!uxAutoSaving) document.activeElement?.blur?.(); }
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && !$("modal")?.hidden && modalSaver) { clearTimeout(modalTimer); try { modalSaver(); } catch {} }
+});

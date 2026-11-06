@@ -28,6 +28,7 @@ const scripts = [
   "audit50.js",
   "standards.js",
   "smed.js",
+  "causes.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {

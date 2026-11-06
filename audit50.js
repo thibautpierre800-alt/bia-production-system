@@ -188,7 +188,7 @@ function auRender() {
   modal(`${a.id} · ${a.scope || "Audit terrain"}`, `<div class="cs-audit au-audit">${auNavHtml(a, step)}<div class="cs-step-body">${body}</div>
     <div class="form-actions cs-nav">${step > 0 ? `<button type="button" class="btn ghost" data-au-step="${step - 1}" aria-label="Étape précédente">←</button>` : ""}${next}<button type="button" class="btn secondary" data-au-later>Plus tard</button></div></div>`);
   const root = $("modalContent");
-  modalSaver = () => { document.activeElement?.blur?.(); auSyncBilan(); return true; };
+  modalSaver = () => { uxFlush(); auSyncBilan(); return true; };
   auBindNav(root);
   if (step < 10) root.querySelectorAll(".au-q").forEach((li) => auBindQ(li, auDomains()[step][0]));
   const file = $("auFile");
