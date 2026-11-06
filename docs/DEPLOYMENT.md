@@ -46,3 +46,7 @@ La branche `backup/before-7.7.0-2026-11-06` conserve le commit `f6790ce`, corres
 
 La branche `backup/before-7.8.0-2026-11-06` conserve le commit `a3dc77e`, correspondant à la version 7.7.0. La 7.8.0 ne modifie que l’interface (menu, en-tête, accueil, styles) : aucune donnée n’est transformée.
 
+## Retour à 7.8.0
+
+La branche `backup/before-7.9.0-2026-11-06` conserve le commit `a2fb3e5`, correspondant à la version 7.8.0. La 7.9.0 ne modifie que l’interface ; aucune donnée n’est transformée.
+

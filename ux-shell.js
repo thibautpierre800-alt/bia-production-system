@@ -26,8 +26,9 @@ function uxStages() {
   const allowed = uxAllowed();
   return UX_STAGES.map((s) => ({ ...s, ids: s.views.filter((v) => allowed.has(v)) })).filter((s) => s.ids.length).map((s, i) => ({ ...s, n: i + 1 }));
 }
-function uxStageOf(view) { return uxStages().find((s) => s.ids.includes(view)) || null; }
+function uxStageOf(view) { return uxStages().find((s) => s.ids.includes(view) || s.views.includes(view)) || null; }
 function uxSubIds(stage) {
+  if (!stage.ids.includes(state.view) && stage.views.includes(state.view)) return [...stage.ids, state.view].sort((a, b) => stage.views.indexOf(a) - stage.views.indexOf(b));
   if (interfaceMode() === "complete") return stage.ids;
   const visible = new Set(visibleNav().map((n) => n.id));
   const ids = stage.ids.filter((id) => visible.has(id) || id === state.view);
@@ -82,6 +83,14 @@ renderNav = function () {
       ${st.n ? `<span class="ux-count ${st.tone === "alert" ? "nav-badge" : ""} tone-${st.tone}" aria-label="${esc(st.text)}">${st.n}</span>` : ""}</button>
       </li>`;
   };
+  const mobile = $("mobileNav");
+  if (mobile) {
+    const home = stages.length < 5 ? `<button class="nav-button ux-mob ${state.view === "home" ? "active" : ""}" data-nav="home"><span class="nav-icon">${navIconSvg("home")}</span>Accueil</button>` : "";
+    mobile.innerHTML = home + stages.map((s) => {
+      const st = uxStatus(s.id), active = current?.id === s.id;
+      return `<button class="nav-button ux-mob ${active ? "active" : ""}" data-nav="${active ? state.view : s.ids[0]}" aria-current="${active ? "step" : "false"}"><span class="ux-mob-n" aria-hidden="true">${s.n}</span>${esc(s.label)}${st.tone === "alert" && st.n ? `<span class="nav-badge" aria-label="${esc(st.text)}">${st.n}</span>` : ""}</button>`;
+    }).join("");
+  }
   $("desktopNav").innerHTML = `<button class="nav-button ux-home ${state.view === "home" ? "active" : ""}" data-nav="home"><span class="nav-icon">${navIconSvg("home")}</span><span class="nav-label">Accueil</span></button>
     <p class="ux-nav-title">Le chemin</p><ol class="ux-path">${stages.map(step).join("")}</ol>
     ${more.length ? `<details class="nav-section ux-more" ${more.includes(state.view) ? "open" : ""}><summary>Plus</summary>${more.map((id) => `<button class="nav-button ${state.view === id ? "active" : ""}" data-nav="${id}"><span class="nav-icon">${navIconSvg(id)}</span>${esc(uxLabel(id))}</button>`).join("")}</details>` : ""}`;
@@ -122,10 +131,55 @@ function uxDecorate() {
     const active = loc.querySelector(".ux-pb-step.active");
     if (active) active.parentElement.scrollLeft = Math.max(0, active.offsetLeft - 16);
   }
+  uxHoistSections();
+  uxTidyPage();
   const summary = $("contextSummary");
   if (summary) summary.textContent = uxContextSummary();
   const foot = document.querySelector(".sidebar-foot > span:last-child");
   if (foot) foot.innerHTML = `<b>BIA LEAN OS ${esc(APP_VERSION)}</b><small>${data.meta?.demo ? "Exemples fictifs · " : ""}données sur cet appareil</small>`;
+}
+/* Les onglets propres à l'écran remontent sous la barre du chemin (même place, même style partout). */
+function uxHoistSections() {
+  const app = $("appView"), loc = $("pageLocation");
+  if (!app || !loc || state.view === "home") return;
+  const src = app.querySelector(":scope > .tabs, :scope > .pilotage-switch") || app.querySelector('.ap-toolbar .filters[aria-label="Vue"]');
+  if (!src) return;
+  const stage = uxStageOf(state.view), inStage = new Set(stage ? uxSubIds(stage) : []);
+  src.querySelectorAll("[data-nav]").forEach((b) => { if (inStage.has(b.dataset.nav) || !role().nav.includes(b.dataset.nav)) b.remove(); });
+  if (src.querySelectorAll("button").length < 2) return;
+  src.classList.add("ux-sections");
+  src.setAttribute("role", "group");
+  if (!src.getAttribute("aria-label")) src.setAttribute("aria-label", "Sections de l’écran");
+  loc.append(src);
+}
+/* Rangement : action égarée remise dans l'en-tête de page, longues listes repliées. */
+function uxTidyPage() {
+  const app = $("appView");
+  if (!app) return;
+  const head = app.querySelector(":scope > .page-head, :scope > .role-home > .page-head, :scope > .ap-page > .page-head");
+  const stray = app.firstElementChild;
+  if (head && stray && stray !== head && stray.matches("button, .btn")) head.append(stray);
+  if (head) {
+    const extra = [...head.children].slice(1).filter((x) => !x.classList.contains("ux-head-actions"));
+    if (extra.length) {
+      const box = head.querySelector(":scope > .ux-head-actions") || Object.assign(document.createElement("div"), { className: "ux-head-actions" });
+      extra.forEach((x) => (x.matches(".ap-head-actions") ? box.append(...x.children) : box.append(x)));
+      head.querySelector(":scope > .ap-head-actions")?.remove();
+      head.append(box);
+    }
+    const remind = app.querySelector(":scope > .ap-remind");
+    if (remind) head.after(remind);
+  }
+  app.querySelectorAll(".os-cards").forEach((list) => {
+    const items = [...list.children];
+    if (items.length <= 12 || list.dataset.uxAll) return;
+    items.slice(12).forEach((x) => (x.hidden = true));
+    const more = document.createElement("button");
+    more.type = "button"; more.className = "btn secondary ux-more-btn";
+    more.textContent = `Voir les ${items.length - 12} autres`;
+    more.onclick = () => { items.forEach((x) => (x.hidden = false)); list.dataset.uxAll = "1"; more.remove(); };
+    list.after(more);
+  });
 }
 const uxRenderBase = render;
 render = function () { uxCache = new Map(); try { const out = uxRenderBase.apply(this, arguments); uxDecorate(); return out; } finally { uxCache = null; } };

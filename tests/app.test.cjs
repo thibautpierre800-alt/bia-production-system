@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.equal(q('#gembaSite').options.length,1);
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-8-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.8.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-9-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.9.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -45,7 +45,7 @@ test('Interface essentielle, accueil par rôle et commande Créer réduisent le 
   const a=app(t),{run,q,all,click,fill}=a;
   run('state.role="operator";state.site="marzin";state.interfaceMode=preferredInterfaceMode("operator");state.view="home";render()');
   assert.equal(run('interfaceMode()'),'essential');
-  assert.equal(all('#mobileNav .nav-button').length,4);
+  assert.equal(all('#mobileNav .nav-button').length,5);
   assert.match(q('#appView').textContent,/Voir, signaler, agir/);
   assert.equal(run('visibleNav().some(item=>item.id==="training")'),false);
   click('[data-interface-mode-toggle]');assert.equal(run('interfaceMode()'),'complete');assert.equal(run('visibleNav().some(item=>item.id==="training")'),true);

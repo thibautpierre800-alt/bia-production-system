@@ -139,3 +139,57 @@ body.ux,body.ux html{background:var(--paper)}
   .ux .sqcdp-card{min-width:0}
 }
 @media(max-width:540px){.ux .sqcdp-grid{grid-template-columns:1fr}}
+
+/* 7.9 · une seule hiérarchie : chemin → écran → section */
+.ux #appView .page-head .eyebrow:first-child{display:none}
+.ux #appView .page-head h1{font-size:26px;margin-top:0}
+.ux #appView .page-head{align-items:flex-start;flex-wrap:wrap;gap:12px 20px}
+.ux #appView .page-head > .btn,.ux #appView .page-head > button{flex:0 0 auto}
+.ux .ux-sections{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin:12px 0 0;padding:0;border-bottom:1px solid var(--line);background:transparent;border-radius:0;box-shadow:none;grid-template-columns:none}
+.ux .ux-sections::-webkit-scrollbar{display:none}
+.ux .ux-sections > button,.ux .ux-sections .tab,.ux .ux-sections .chip,.ux .ux-sections .btn{flex:0 0 auto;min-height:42px;margin:0 0 -1px;padding:0 14px;border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;color:#55554f;font:inherit;font-size:13px;font-weight:800;box-shadow:none;white-space:nowrap;text-align:center;filter:none}
+.ux .ux-sections > button:hover{color:var(--ink);background:transparent}
+.ux .ux-sections > button.active,.ux .ux-sections > button[aria-pressed="true"],.ux .ux-sections > button.selected,.ux .ux-sections > button.primary{color:var(--ink);border-bottom-color:var(--orange);background:transparent}
+.ux .ux-sections.pilotage-switch [data-pilotage-mode]{display:inline-flex;align-items:center;min-height:42px;padding:0 14px;width:auto;height:auto}
+.ux .ux-sections.pilotage-switch [data-pilotage-mode] span{display:none}
+.ux .ux-sections.pilotage-switch [data-pilotage-mode] b{font-size:13px}
+.ux .ux-sections.pilotage-switch [data-pilotage-mode]::after,.ux .ux-sections.pilotage-switch [data-pilotage-mode]::before{display:none}
+.ux #appView .grid.cols-4 > .card,.ux #appView .grid.cols-3 > .card{padding:13px 15px}
+.ux #appView .card > .metric-value{font-size:26px;margin:6px 0 2px}
+.ux .list-search label{font-size:0;gap:0}
+.ux .list-search input{font-size:14px;min-height:42px;max-width:420px}
+.ux .ux-more-btn{display:block;margin:14px auto 0}
+.ux-home-btn{display:none}
+.ux-home-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ux-mob-n{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#e8e7e2;color:#3f3f3b;font-size:11px;font-weight:900;margin:0 auto}
+.ux .mobile-nav .nav-button.active .ux-mob-n{background:var(--orange);color:#161616}
+@media(max-width:820px){
+  .ux .mobile-nav{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);overflow:hidden;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .ux .mobile-nav .nav-button{min-width:0;width:100%;padding:6px 2px;font-size:10px;gap:3px;position:relative}
+  .ux .mobile-nav .nav-badge{position:absolute;top:2px;right:calc(50% - 24px);min-width:18px;height:18px;font-size:10px}
+  .ux-home-btn{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--ink);padding:0}
+  .ux #appView .page-head .lead{display:none}
+  .ux #appView .page-head h1{font-size:23px}
+  .ux #appView .page-head{margin-bottom:12px}
+  .ux .ux-sections{margin-top:8px}
+}
+.ux .ux-head-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-left:auto}
+.ux .ap-remind{padding:10px 14px;gap:6px;margin:0 0 14px}
+.ux .ap-remind .hint{font-size:12px}
+@media(max-width:820px){.ux .ux-head-actions{margin-left:0;justify-content:flex-start}}
+.ux .ux-sections{flex-wrap:nowrap}
+@media(max-width:820px){
+  .ux .ap-remind .hint{display:none}
+  .ux .ap-remind-head{flex-wrap:nowrap}
+  .ux .ap-remind-head b{flex:0 1 auto;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ux .ap-remind-head .inline-filter{flex:1 1 auto;font-size:0}
+  .ux .ap-remind-head .inline-filter select{font-size:13px;min-height:38px}
+  .ux .ap-remind-body .btn{min-height:38px}
+}
+@media(max-width:540px){.ux #appView .grid.cols-4:has(> .card > .metric-value),.ux #appView .grid.cols-3:has(> .card > .metric-value){grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ux #appView .page-head{flex-wrap:nowrap}
+.ux #appView .page-head > div:first-child{flex:1 1 auto;min-width:0}
+.ux .ux-head-actions{flex:0 0 auto;max-width:52%}
+.ux .ux-head-actions > .btn:not(.dark):not(.secondary):not(.ghost) ~ .btn:not(.dark):not(.secondary):not(.ghost){background:#fff;border:1px solid var(--line);color:var(--ink)}
+@media(max-width:820px){.ux #appView .page-head{flex-wrap:wrap}.ux .ux-head-actions{max-width:none}}
+.ux #main:focus{outline:none}

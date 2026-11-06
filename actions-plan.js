@@ -186,7 +186,7 @@ function renderActions() {
       || `<div class="empty">Aucune action pour ce filtre. <button type="button" class="chip" data-ap-clear>Tout afficher</button></div>`;
   }
   const buttons = readonly ? "" : `<div class="ap-head-actions">${queue.length ? `<button type="button" class="btn dark" data-ap-review>Lancer la revue · ${queue.length}</button>` : ""}<button type="button" class="btn" data-ap-quick>+ Action</button></div>`;
-  return `<div class="ap-page">${pageHead("Plan d’actions", "Ce qui doit avancer, et qui s’en occupe", "Les actions issues des Gemba, signaux, audits et A3, au même endroit. Les compteurs servent de filtres. La revue passe les actions une par une.", buttons)}
+  return `<div class="ap-page">${pageHead("Plan d’actions", "Plan d’actions", "Ce qui doit avancer, et qui s’en occupe : les actions des Gemba, signaux, audits et A3 au même endroit. Les compteurs filtrent, la revue passe les actions une par une.", buttons)}
     <div class="ap-counters" role="group" aria-label="Compteurs, cliquez pour filtrer">${counters}</div>
     <div class="ap-toolbar">
       <div class="filters" role="group" aria-label="Vue">${[["todo", "À traiter"], ["status", "Par statut"], ["board", "Panneau"]].map(([id, label]) => `<button type="button" class="chip ${view === id ? "active" : ""}" data-action-view="${id}" aria-pressed="${view === id}">${label}</button>`).join("")}</div>

@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.9.0 — 6 novembre 2026
+
+- La barre du bas (téléphone) suit le chemin du profil : Voir, Observer, Résoudre, Agir, Pérenniser (avec l’accueil quand le profil a moins de cinq étapes). Un bouton Accueil rejoint l’en-tête du téléphone. Les retards s’affichent en pastille rouge.
+- Une seule hiérarchie sur tous les écrans : chemin → écran → section. Les onglets propres à chaque écran (Analyser/Décider, N1–N4, Signaux/Gemba/Statistiques, Catalogue/Personnes…, Référentiels, vues du plan d’actions) remontent sous la barre du chemin, au même endroit et avec le même style.
+- Doublons retirés : lien « Audit Terrain · 50 critères » dans Terrain quand l’onglet Audits existe ; liens vers un écran hors profil supprimés (ils renvoyaient ailleurs).
+- En-têtes de page homogènes : sur-titres retirés (le chemin indique l’étape), titres plus courts (« Plan d’actions »), actions regroupées à droite, une seule action principale.
+- Longues listes repliées au-delà de 12 éléments (« Voir les N autres ») : la page Maturité passe d’environ 25 000 à quelques milliers de pixels.
+- Cartes chiffrées plus compactes, deux par ligne sur téléphone ; champ de recherche allégé ; rappels sous le titre et plus compacts.
+
+Aucun changement de données ni de droits : chaque profil ne voit que ses écrans, et les écrans gardent leurs fonctions.
+
 ## 7.8.0 — 6 novembre 2026
 
 - Le chemin d’usage Lean est visible partout : **Voir → Observer → Résoudre → Agir → Pérenniser**. Le menu ne montre plus que l’accueil, ces cinq étapes (avec ce qui attend à chaque étape) et « Plus » pour les ressources et l’administration.
