@@ -119,3 +119,10 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `documents[]` de type ISHIKAWA : `structured_data.ik = { causes[{ id, fam: "method"|"machine"|"manpower"|"material"|"measurement"|"environment", text, status: "verifier"|"confirmee"|"ecartee", test, proof, photo, why_id?, action_id?, action?, who?, when? }] }`. Les rubriques `method`… `environment` et `tests` sont recalculées.
 - `documents[]` de type 5WHY : `structured_data.why = { nodes[{ id, parent, text, status: "verifier"|"vrai"|"faux", proof, root?, cm?, who?, when?, action_id? }], from?: { doc, cause } }`. Les rubriques `why1`… `why5` (chemin de la première cause racine), `root_cause` et `countermeasure` sont recalculées.
 - Document validé : `validated_at`. Actions : `origin_type` « Ishikawa » ou « 5 pourquoi », `origin_id` = le document, `problem_id` = le dossier.
+
+## Extension 8.15.0 (additive)
+
+- `machines[]` : `{ id: "MA-001", site_id, zone_id?, name, criticality: "A"|"B"|"C", owner, cil[{ id, kind: "nettoyer"|"inspecter"|"lubrifier"|"serrer", what, how, freq: "poste"|"jour"|"semaine"|"mois", minutes }], cil_draft?: { started_at, by, res{ pointId: { v: "ok"|"ano", text?, color? } } }, created_at, updated_at }`.
+- `tpmTags[]` : `{ id: "ET-001", site_id, machine_id, kind, color: "bleue"|"rouge", what, photo, status: "ouverte"|"traitee", due_date, cil_point?, created_by, fix?, fix_photo?, fixed_at?, fixed_by?, created_at, updated_at }`.
+- `cilRuns[]` : `{ id: "CIL-001", site_id, machine_id, date, started_at, ended_at, by, results{ pointId: "ok"|"ano" }, tag_ids[] }`.
+- `breakdowns[]` : `{ id: "PA-001", site_id, machine_id, start, end|null, cause, fix, by, created_at, updated_at }`. MTTR = durée moyenne des pannes closes ; MTBF calendaire = temps moyen entre deux débuts de panne, sur 90 jours.

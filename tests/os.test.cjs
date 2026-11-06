@@ -580,7 +580,7 @@ test("Interface 8.0 · une seule navigation, sans pastilles, onglets fusionnés"
   a.run('uxGoStage("observer")');
   assert.equal(a.run("state.view"), "terrain");
   assert.equal(a.run("state.terrainTab"), "gemba");
-  assert.deepEqual(a.all("#pageLocation .ux-tab").map((b) => b.textContent), ["Gemba", "5S", "Rapport d’étonnement", "Signaux", "Audits", "Statistiques"]);
+  assert.deepEqual(a.all("#pageLocation .ux-tab").map((b) => b.textContent), ["Gemba", "5S", "TPM", "Rapport d’étonnement", "Signaux", "Audits", "Statistiques"]);
   assert.equal(a.q("#appView > .tabs"), null, "Sous-onglets fusionnés dans la ligne de l’étape");
   assert.ok(a.q("#contextPanel #siteSelect") && a.q("#contextPanel #roleSelect") && a.q("#contextPanel [data-interface-mode-toggle]") && a.q("#contextMore [data-nav]"));
   a.run('state.role="operator";state.site="marzin";render();uxGoStage("observer")');
@@ -1016,3 +1016,87 @@ test("Rapport d’étonnement 8.9 · thèmes tirés des Gemba, mots du responsab
   assert.notEqual(a.run("state.terrainTab"), "etonnement");
 });
 
+
+test("TPM 8.15 · machines, étiquettes bleues et rouges, standard CIL et tournée, pannes MTTR / MTBF, droits", (t) => {
+  const a = app(t);
+  a.run('state.site="marzin";state.role="lean";state.terrainTab="tpm";state.view="terrain";render()');
+  assert.ok(a.run('uxTabs(uxStages().find(s=>s.id==="observer")).some(t=>t.key==="tpm"&&t.set.terrainTab==="tpm")'), "Onglet TPM dans Observer");
+  assert.ok(a.q(".cs-empty [data-tm-newm]"), "Page vide : ajouter ses machines");
+  a.click(".cs-empty [data-tm-newm]");
+  a.fill("#tmMName", "Plaqueuse de chants 2");
+  a.click('[data-tm-crit="A"]');
+  a.submit("#tmMForm");
+  const mid = a.run("data.machines[0].id");
+  assert.equal(mid, "MA-001");
+  assert.ok(a.q(`.tm-sheet[data-tm-id="${mid}"] [data-tm-cadd]`), "Une nouvelle machine ouvre son standard CIL");
+  for (const [k, w, f] of [["nettoyer", "Guide du chant", "poste"], ["lubrifier", "Glissières", "semaine"]]) {
+    a.click("[data-tm-cadd]");
+    const pid = a.run("data.machines[0].cil.at(-1).id");
+    a.fill(`[data-tm-cp="${pid}"] [data-tm-cwhat]`, w);
+    a.click(`[data-tm-cp="${pid}"] [data-tm-ckind="${k}"]`);
+    a.click(`[data-tm-cp="${pid}"] [data-tm-cfreq="${f}"]`);
+  }
+  assert.deepEqual(JSON.parse(a.run("JSON.stringify(data.machines[0].cil.map(p=>[p.kind,p.what,p.freq]))")), [["nettoyer", "Guide du chant", "poste"], ["lubrifier", "Glissières", "semaine"]]);
+  assert.equal(a.run("tmCilDays(data.machines[0])"), 1, "Fréquence la plus courte");
+  assert.equal(a.run("tmCilDue(data.machines[0])"), a.run("today()"), "Première tournée due aujourd’hui");
+  a.click("[data-tm-cprint]");
+  assert.match(a.q(".tm-cilsheet").textContent, /Plaqueuse de chants 2[\s\S]*Guide du chant[\s\S]*Chaque poste/);
+  a.run(`tmOpen("${mid}","tournee")`);
+  a.click("[data-tm-start]");
+  const [p1, p2] = JSON.parse(a.run("JSON.stringify(data.machines[0].cil.map(p=>p.id))"));
+  a.click(`[data-tm-pt="${p1}"] [data-tm-v="ok"]`);
+  assert.ok(a.q("[data-tm-finish]").disabled, "Tous les points avant de terminer");
+  a.click(`[data-tm-pt="${p2}"] [data-tm-v="ano"]`);
+  a.fill(`[data-tm-pt="${p2}"] [data-tm-anotext]`, "Fuite de graisse glissière gauche");
+  a.click(`[data-tm-pt="${p2}"] [data-tm-anocolor="rouge"]`);
+  a.run(`closeModal();tmOpen("${mid}")`);
+  assert.ok(a.q("[data-tm-finish]"), "La tournée en cours reprend à la réouverture");
+  a.click("[data-tm-finish]");
+  const tag = JSON.parse(a.run("JSON.stringify(data.tpmTags[0])"));
+  assert.deepEqual([tag.id, tag.color, tag.kind, tag.what, tag.machine_id], ["ET-001", "rouge", "fuite", "Fuite de graisse glissière gauche", mid]);
+  assert.equal(tag.due_date, a.run("tmAddDays(today(),14)"));
+  assert.deepEqual(JSON.parse(a.run("JSON.stringify(data.cilRuns[0].results)")), { [p1]: "ok", [p2]: "ano" });
+  assert.equal(a.run("tmCilDue(data.machines[0])"), a.run("tmAddDays(today(),1)"));
+  a.run('closeModal();tmTagForm()');
+  a.fill("#tmTagWhat", "Carter fissuré");
+  a.click('[data-tm-kind="securite"]');
+  assert.ok(a.q('[data-tm-color="rouge"].on'), "Sécurité : étiquette rouge d’office");
+  assert.equal(a.q("#tmTagDue").value, a.run("tmAddDays(today(),1)"), "Sécurité : à traiter demain");
+  a.submit("#tmTagForm");
+  assert.equal(a.run("tmOpenTags().length"), 2);
+  a.run('tmTagForm("ET-001")');
+  a.click("[data-tm-fixit]");
+  assert.equal(a.run('data.tpmTags.find(t=>t.id==="ET-001").status'), "ouverte", "Pas de clôture sans dire ce qui a été fait");
+  a.fill("#tmTagFix", "Joint changé");
+  a.click("[data-tm-fixit]");
+  assert.deepEqual(JSON.parse(a.run('JSON.stringify((({status,fix})=>[status,fix])(data.tpmTags.find(t=>t.id==="ET-001")))')), ["traitee", "Joint changé"]);
+  a.run(`const h=36e5;commitData(()=>{data.breakdowns=[{id:"PA-001",machine_id:"${mid}",site_id:"marzin",start:new Date(Date.now()-20*24*h).toISOString(),end:new Date(Date.now()-20*24*h+2*h).toISOString()},{id:"PA-002",machine_id:"${mid}",site_id:"marzin",start:new Date(Date.now()-10*24*h).toISOString(),end:new Date(Date.now()-10*24*h+h).toISOString()}]});closeModal();tmDownForm(null,{machineId:"${mid}"})`);
+  a.fill("#tmDownCause", "Disjonction moteur");
+  a.submit("#tmDownForm");
+  assert.ok(a.q(".tm-downbox"), "Panne en cours affichée sur la machine");
+  a.run(`tmDownForm(null,{machineId:"${mid}"})`);
+  a.submit("#tmDownForm");
+  assert.equal(a.run("data.breakdowns.length"), 3, "Une seule panne en cours par machine");
+  a.run(`tmOpen("${mid}","pannes")`);
+  a.click("[data-tm-restart]");
+  const s = JSON.parse(a.run(`JSON.stringify(tmStats("${mid}"))`));
+  assert.equal(s.n, 3);
+  assert.equal(Math.round(s.lost * 10) / 10, 3);
+  assert.equal(Math.round(s.mttr * 10) / 10, 1);
+  assert.equal(Math.round(s.mtbf / 24), 10, "MTBF calendaire : 10 jours entre deux pannes");
+  a.run('closeModal();state.view="home";render()');
+  a.run(`commitData(()=>data.breakdowns.unshift({id:"PA-009",machine_id:"${mid}",site_id:"marzin",start:new Date(Date.now()-36e5).toISOString(),end:null}));render()`);
+  assert.match(a.q(".jn-watch").textContent, /Plaqueuse de chants 2 à l’arrêt/, "Machine en panne dans « À surveiller »");
+  a.run('state.view="terrain";state.terrainTab="tpm";render()');
+  assert.match(a.q(".tm-card").textContent, /En panne depuis/);
+  assert.ok(a.q(".tm-pareto"), "Pareto des heures perdues");
+  assert.equal(a.run("osIntegrity(data).length"), 0);
+  assert.equal(a.run("validateImport(JSON.parse(JSON.stringify(data))).tpmTags.length"), 2, "Sauvegarde : étiquettes conservées");
+  a.run('state.role="operator";render()');
+  assert.ok(!a.q("[data-tm-newm]"), "Un opérateur n’ajoute pas de machine");
+  if (a.run("tmCan()") && a.run('tmWritable("marzin")')) {
+    a.run(`tmOpen("${mid}","cil")`);
+    assert.ok(!a.q("[data-tm-cadd]"), "Ni ne modifie le standard CIL");
+    assert.ok(a.q("[data-tm-cwhat]").disabled);
+  }
+});

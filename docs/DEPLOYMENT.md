@@ -117,3 +117,7 @@ La branche `backup/before-8.13.0-2026-11-06` conserve le commit `0bf5436`, corre
 ## Retour à 8.13.0
 
 La branche `backup/before-8.14.0-2026-11-06` conserve le commit `9da7f57`, correspondant à la version 8.13.0. La 8.14.0 ajoute `causes.js` et les champs `structured_data.ik` et `structured_data.why` des documents Ishikawa et 5 pourquoi. La 8.13.0 les ignore et affiche les rubriques texte, que la 8.14.0 tient à jour.
+
+## Retour à 8.14.0
+
+La branche `backup/before-8.15.0-2026-11-06` conserve le commit `feee7a6`, correspondant à la version 8.14.0. La 8.15.0 ajoute l’onglet TPM (`tpm.js`) et les collections `machines`, `tpmTags`, `cilRuns` et `breakdowns`, que la 8.14.0 ignore et conserve.
