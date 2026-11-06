@@ -58,7 +58,7 @@ async function hkReadXlsx(file) {
     });
     for (const xf of st.getElementsByTagName("cellXfs")[0]?.getElementsByTagName("xf") || []) fillOf.push(fills[Number(xf.getAttribute("fillId"))] || null);
   }
-  const sheets = {}, colors = {};
+  const sheets = {}, colors = {}, merges = {};
   for (const s of xml(book).getElementsByTagName("sheet")) {
     const target = String(rels[s.getAttribute("r:id")] || "").replace(/^\/?(xl\/)?/, ""), raw = target ? await zip.read("xl/" + target) : null;
     if (!raw) continue;
@@ -76,8 +76,9 @@ async function hkReadXlsx(file) {
     }
     sheets[s.getAttribute("name")] = cells;
     colors[s.getAttribute("name")] = painted;
+    merges[s.getAttribute("name")] = [...xml(raw).getElementsByTagName("mergeCell")].map((m) => m.getAttribute("ref")).filter(Boolean);
   }
-  return { sheets, colors };
+  return { sheets, colors, merges };
 }
 
 /* ---------- Interprétation du classeur (pure, testable) ---------- */
@@ -132,6 +133,8 @@ function hkFindSheet(sheets, re) {
   return name ? sheets[name] : null;
 }
 // Tableau sous un en-tête reconnu : lignes jusqu’à la première ligne vide en première colonne.
+// Titres de section de l’onglet : une table s’arrête là, même sans ligne vide avant.
+const HK_SECTION = /^(gouvernance|instances?|jalons?|risques?|indicateursdesuivi|lesucces|phase)$/;
 function hkTable(rows, headTest, columns) {
   for (const [r, list] of rows) {
     if (!headTest(list)) continue;
@@ -144,7 +147,7 @@ function hkTable(rows, headTest, columns) {
       if (r2 !== expected) break;
       expected++;
       const lead = l2.find((x) => x.ci === first);
-      if (!lead || !hkText(lead.v)) break;
+      if (!lead || !hkText(lead.v) || HK_SECTION.test(hkNorm(l2[0]?.v))) break;
       const row = {};
       for (const [key, ci] of Object.entries(map)) row[key] = ci ? l2.find((x) => x.ci === ci)?.v ?? null : null;
       row._extra = l2.filter((x) => !Object.values(map).includes(x.ci)).map((x) => hkText(x.v)).filter(Boolean);
@@ -286,11 +289,31 @@ function hkParsePlanning(cells, report, painted = {}) {
     if (!paintedRows.has(r)) paintedRows.set(r, []);
     paintedRows.get(r).push({ ci: hkCol(m[1]), color });
   }
+  // Barres du Gantt telles que dessinées dans le fichier : semaines contiguës de même couleur.
   const span = (r) => {
     const cellsOn = (paintedRows.get(r) || []).filter((x) => !/^theme/.test(x.color)).sort((a, b) => a.ci - b.ci);
     if (!cellsOn.length) return {};
-    return { from: weeks.get(cellsOn[0].ci), to: hkAddDays(weeks.get(cellsOn.at(-1).ci), 6), late: cellsOn.some((x) => x.color === HK_LATE), milestone: cellsOn.some((x) => x.color === HK_MILESTONE) };
+    const segments = [];
+    for (const x of cellsOn) {
+      const last = segments.at(-1);
+      if (last && last.color === x.color && x.ci === last.ci + 1) { last.ci = x.ci; last.to = hkAddDays(weeks.get(x.ci), 6); }
+      else segments.push({ ci: x.ci, from: weeks.get(x.ci), to: hkAddDays(weeks.get(x.ci), 6), color: x.color });
+    }
+    return { from: segments[0].from, to: segments.at(-1).to, late: cellsOn.some((x) => x.color === HK_LATE), milestone: cellsOn.some((x) => x.color === HK_MILESTONE), segments: segments.map(({ from, to, color }) => ({ from, to, color })) };
   };
+  // Le planning commence à sa première semaine : la case « Date » vaut souvent =AUJOURDHUI().
+  const weekDates = [...weeks.values()].sort();
+  if (weekDates.length) { out.start = weekDates[0]; out.weeks = { from: weekDates[0], to: hkAddDays(weekDates.at(-1), 6) }; }
+  // Légende des couleurs, en haut de la feuille : case colorée + texte à sa droite.
+  out.legend = [];
+  for (const [ref, color] of Object.entries(painted || {})) {
+    const m = /^([A-Z]+)(\d+)$/.exec(ref);
+    if (!m || Number(m[2]) >= headR || /^theme/.test(color)) continue;
+    const label = hkText((rows.get(Number(m[2])) || []).find((x) => x.ci === hkCol(m[1]) + 1)?.v);
+    if (label && !out.legend.some((l) => l.color === color)) out.legend.push({ color, label });
+  }
+  out.order = [];
+  out.groupNames = {};
   let group = null;
   for (const [r, list] of rows) {
     if (r <= headR) continue;
@@ -307,6 +330,8 @@ function hkParsePlanning(cells, report, painted = {}) {
       const id = hkSiteId(name);
       group = id ? { site: id } : /pilotage|macro|calendrier/i.test(name) ? { macro: true } : null;
       if (id) out.tracks[id] ||= [];
+      const key = id || (group?.macro ? "macro" : null);
+      if (key && !out.order.includes(key)) { out.order.push(key); out.groupNames[key] = name; }
       continue;
     }
     if (!name || !group || group === "topics") continue;
@@ -320,8 +345,42 @@ function hkParsePlanning(cells, report, painted = {}) {
   return out;
 }
 
+// Calendrier d’intégration : une ligne par semaine (« Sem. 46 »), une colonne par jour.
+function hkParseAgenda(cells, painted = {}, merges = [], startIso = null) {
+  const rows = hkRows(cells), days = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+  let head = null;
+  for (const [r, list] of rows) { const found = list.filter((x) => days.includes(hkNorm(x.v))); if (found.length >= 3) { head = { r, cols: new Map(found.map((x) => [x.ci, days.indexOf(hkNorm(x.v))])) }; break; } }
+  if (!head) return [];
+  const spans = new Map();
+  for (const ref of merges || []) { const m = /^([A-Z]+)(\d+):([A-Z]+)(\d+)$/.exec(ref); if (m) spans.set(`${m[2]}:${hkCol(m[1])}`, hkCol(m[3]) - hkCol(m[1]) + 1); }
+  const baseYear = Number((startIso || today()).slice(0, 4)), startWeek = startIso ? hkIsoWeek(startIso) : 1, out = [];
+  for (const [r, list] of rows) {
+    if (r <= head.r) continue;
+    const label = hkText(list.find((x) => x.ci === 1)?.v), m = /sem\w*\.?\s*(\d{1,2})/i.exec(label);
+    if (!m) continue;
+    const week = Number(m[1]), year = week < startWeek - 26 ? baseYear + 1 : baseYear, monday = hkIsoWeekStart(year, week), items = [];
+    for (const [ci, d] of head.cols) {
+      const text = hkText(list.find((x) => x.ci === ci)?.v), blocked = !text && !!(painted || {})[`${String.fromCharCode(64 + ci)}${r}`];
+      if (text || blocked) items.push({ day: d, span: spans.get(`${r}:${ci}`) || 1, text, blocked });
+    }
+    out.push({ week, from: monday, items });
+  }
+  return out;
+}
+function hkIsoWeek(iso) {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7) + 3);
+  return 1 + Math.floor((d - Date.UTC(d.getUTCFullYear(), 0, 1)) / 604800000);
+}
+// Lundi de la semaine qui contient la date.
+function hkWeekMonday(iso) {
+  const d = new Date(iso + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+
 // Classeur → plan Hoshin. Le rapport liste ce qui a été trouvé et ce qui a été ignoré.
-function hkFromWorkbook(sheets, fileName = "", colors = {}) {
+function hkFromWorkbook(sheets, fileName = "", colors = {}, merges = {}) {
   const report = { found: [], warnings: [] }, plan = { source: { file: fileName, imported_at: now(), by: osActor() } };
   const prio = hkFindSheet(sheets, /prio/) || Object.values(sheets || {}).find((c) => Object.values(c).some((v) => hkNorm(v) === "poids"));
   plan.matrix = prio ? hkParseMatrix(prio, report) : null;
@@ -338,6 +397,9 @@ function hkFromWorkbook(sheets, fileName = "", colors = {}) {
   Object.assign(plan, planning ? hkParsePlanning(planning, report, colors?.[planningName] || {}) : { tracks: {}, macroTasks: [], topics: [] });
   const dated = Object.values(plan.tracks).flat().concat(plan.macroTasks).filter((x) => x.from).length;
   if (dated) report.found.push(`${dated} tâches datées dans le planning (Gantt)`);
+  const agendaName = Object.keys(sheets || {}).find((n) => /calendrier/.test(hkNorm(n)));
+  plan.agenda = agendaName ? hkParseAgenda(sheets[agendaName], colors?.[agendaName], merges?.[agendaName], plan.start) : [];
+  if (plan.agenda.length) report.found.push(`Calendrier d’intégration : ${plan.agenda.length} semaines`);
   const tracked = Object.entries(plan.tracks).filter(([, s]) => s.length);
   if (tracked.length) report.found.push(`Parcours détaillés : ${tracked.map(([id]) => getSiteName(id)).join(", ")}`);
   plan.title = plan.project || "Déploiement de l’amélioration continue";
@@ -381,7 +443,8 @@ function hkAddMonths(iso, months) {
   return d.toISOString().slice(0, 10);
 }
 function hkTimeline(plan) {
-  const start = plan?.start || plan?.phases?.length && today();
+  // Les phases se comptent en mois calendaires à partir du mois de démarrage (« nov dec »).
+  const start = plan?.start ? hkMonthStart(plan.start) : plan?.phases?.length ? hkMonthStart(today()) : null;
   let at = start;
   const phases = (plan?.phases || []).map((p) => {
     const from = at, to = Number.isFinite(p.months) && p.months > 0 ? hkAddMonths(from, p.months) : from;
@@ -426,19 +489,6 @@ function hkMatrixView(plan) {
   return `<section class="panel section hk-prio" aria-labelledby="hkPrioTitle"><div class="section-title"><div><h2 id="hkPrioTitle">Priorités des sites</h2><p class="hint">${m.date ? `Matrice arbitrée le ${shortDate(m.date)} · ` : ""}chaque critère noté de 1 (faible) à 5 (fort), pondéré de 1 à 3 ; total = somme des notes × poids.${m.scale ? ` Fichier : ${esc(m.scale)}.` : ""}</p></div>${hkCanPlan() ? `<div class="row-actions"><button type="button" class="btn secondary small" data-hk-edit-matrix>Modifier</button><button type="button" class="btn secondary small" data-hk-waves>Vagues</button></div>` : ""}</div>${legend}<div class="hk-matrix-wrap"><div class="hk-matrix" role="table" aria-label="Matrice de priorité des sites" style="--hk-cols:${m.criteria.length}">${head}${body}</div></div>${group ? topList : ""}${mismatch.length ? `<p class="hint">Total recalculé différent du fichier pour ${mismatch.map(([id, t]) => `${esc(getSiteName(id))} (fichier ${osNum(t)})`).join(", ")} : vérifiez les notes.</p>` : ""}${!group ? `<p class="hint">Rang de votre site sur ${ranking.length} entités. Le détail des autres sites reste au niveau Groupe.</p>` : ""}</section>`;
 }
 
-function hkPlanView(plan, tl) {
-  if (!tl.phases.length) return "";
-  const startMs = Date.parse(tl.start), span = Math.max(1, Date.parse(tl.end) - startMs), pos = (iso) => Math.max(0, Math.min(100, ((Date.parse(iso) - startMs) / span) * 100));
-  const nowPct = today() >= tl.start && today() <= tl.end ? pos(today()) : null;
-  const bars = tl.phases.map((p, i) => `<div class="hk-phase-bar ${i === tl.current ? "now" : p.to <= today() ? "past" : ""}" style="left:${pos(p.from)}%;width:${Math.max(2, pos(p.to) - pos(p.from))}%" title="${esc(p.name)} · ${shortDate(p.from)} → ${shortDate(p.to)}"><span>${esc(p.name.replace(/^\d+\.\s*/, ""))}</span></div>`).join("");
-  const marks = (plan.milestones || []).filter((m) => m.date).map((m) => `<span class="hk-mark ${m.done ? "done" : m.date < today() ? "late" : ""}" style="left:${pos(m.date)}%" title="${esc(m.name)} · ${shortDate(m.date)}">◆</span>`).join("");
-  const years = [];
-  for (let y = Number(tl.start.slice(0, 4)); y <= Number(tl.end.slice(0, 4)); y++) { const d = `${y}-01-01`; if (d > tl.start && d < tl.end) years.push(`<span class="hk-year" style="left:${pos(d)}%">${y}</span>`); }
-  const cards = tl.phases.map((p, i) => `<article class="hk-phase ${i === tl.current ? "now" : p.to <= today() ? "past" : ""}"><header><b>${esc(p.name)}</b>${i === tl.current ? pill("En cours", "progress") : p.to <= today() ? pill("Passée", "neutral") : ""}</header><small>${shortDate(p.from)} → ${shortDate(p.to)}${p.duration ? ` · ${esc(p.duration)}` : ""}</small>${p.actions ? `<p>${esc(p.actions)}</p>` : ""}${p.deliverables ? `<p class="hk-deliv"><b>Livrable :</b> ${esc(p.deliverables)}</p>` : ""}${p.notes ? `<p class="hk-notes">${esc(p.notes)}</p>` : ""}</article>`).join("");
-  const miles = (plan.milestones || []).map((m, i) => `<li class="${m.done ? "done" : ""}"><div><b>${esc(m.name)}</b><small>${m.date ? shortDate(m.date) : ""}${m.dateLabel ? ` · ${esc(m.dateLabel)}` : ""}</small></div><p>${esc(m.criteria)}</p>${hkCanPlan() ? `<button type="button" class="in-chip ${m.done ? "active" : ""}" data-hk-milestone="${i}" aria-pressed="${!!m.done}">${m.done ? "Franchi ✓" : "Marquer franchi"}</button>` : m.done ? pill("Franchi", "done") : m.date && m.date < today() ? pill("Échéance passée", "open") : pill("À venir", "neutral")}</li>`).join("");
-  return `<section class="panel section hk-plan" aria-labelledby="hkPlanTitle"><h2 id="hkPlanTitle">Plan de déploiement</h2><div class="hk-timeline" role="img" aria-label="Frise des phases du ${shortDate(tl.start)} au ${shortDate(tl.end)}"><div class="hk-track">${bars}${marks}${nowPct !== null ? `<span class="hk-now" style="left:${nowPct}%" title="Aujourd’hui · ${shortDate(today())}"></span>` : ""}</div><div class="hk-scale"><span>${shortDate(tl.start)}</span>${years.join("")}<span>${shortDate(tl.end)}</span></div></div><div class="hk-phases">${cards}</div>${miles ? `<h3>Jalons de décision</h3><ul class="hk-miles">${miles}</ul>` : ""}${plan.indicators ? `<p class="hk-ind"><b>Indicateurs suivis :</b> ${esc(plan.indicators)} <button type="button" class="btn ghost small" data-hk-nav="pilotage">Voir les indicateurs</button></p>` : ""}</section>`;
-}
-
 function hkSitesView(plan) {
   if (!plan) return "";
   // Même ordre que la matrice de priorité, quand elle existe.
@@ -446,21 +496,13 @@ function hkSitesView(plan) {
   const sites = hkVisibleSites().sort((a, b) => (rank.indexOf(a.id) + 1 || 99) - (rank.indexOf(b.id) + 1 || 99));
   const rows = sites.map((s) => {
     const steps = plan.tracks?.[s.id] || [], wave = plan.waves?.[s.id] || "", reached = Number(plan.sequoia?.[s.id] || 0);
-    const chips = steps.length ? steps.map((st, i) => `<button type="button" class="hk-step ${HK_STATUS[st.status]?.[1] || "hk-todo"}" ${hkCanSite(s.id) ? `data-hk-step="${esc(JSON.stringify({ site: s.id, i }))}"` : "disabled"} aria-label="${esc(st.name)} : ${HK_STATUS[st.status]?.[0] || "À faire"}"><i aria-hidden="true">${st.status === "done" ? "✓" : st.status === "doing" ? "●" : "○"}</i>${esc(st.name)}</button>`).join("") : `<span class="hk-none">Parcours à définir dans le planning</span>`;
+    const chips = steps.length ? steps.map((st, i) => `<button type="button" class="hk-step ${HK_STATUS[st.status]?.[1] || "hk-todo"}" ${hkCanSite(s.id) ? `data-hk-step="${esc(JSON.stringify({ site: s.id, i }))}"` : "disabled"} aria-label="${esc(st.name)} : ${HK_STATUS[st.status]?.[0] || "À faire"}"><i aria-hidden="true">${st.status === "done" ? "✓" : st.status === "doing" ? "●" : "○"}</i>${esc(st.name)}${st.from ? `<small class="hk-when">S${hkIsoWeek(st.from)}${hkIsoWeek(st.from) !== hkIsoWeek(hkAddDays(st.to, -6)) ? `–S${hkIsoWeek(hkAddDays(st.to, -6))}` : ""}</small>` : ""}</button>`).join("") : `<span class="hk-none">Parcours à définir dans le planning</span>`;
     const done = steps.filter((x) => x.status === "done").length;
     const seq = macro.length ? `<div class="hk-seq" role="group" aria-label="Suivi de production ${esc(s.name)} : étape ${reached} sur ${macro.length}">${macro.map((m, i) => `<button type="button" class="hk-seq-dot ${i < reached ? "on" : ""}" ${hkCanSite(s.id) ? `data-hk-seq="${esc(JSON.stringify({ site: s.id, n: i + 1 === reached ? i : i + 1 }))}"` : "disabled"} title="${esc(m.title)}" aria-label="${esc(m.title)}${i < reached ? " : atteinte" : ""}">${i + 1}</button>`).join("")}</div>` : "";
     return `<li class="hk-site-row"><div class="hk-site-name"><b>${esc(s.name)}</b><small>${wave ? esc(HK_WAVES.find((w) => w[0] === wave)?.[1]) + " · " : ""}${steps.length ? `${done}/${steps.length} étapes faites` : "—"}</small></div><div class="hk-steps">${chips}</div>${seq}</li>`;
   }).join("");
   const macroLegend = macro.length ? `<ol class="hk-macro">${macro.map((m, i) => `<li><b>${i + 1}</b><span>${esc(m.title)}${m.description ? `<small>${esc(m.description.replace(/\n/g, " · "))}</small>` : ""}</span></li>`).join("")}</ol>` : "";
-  return `<section class="panel section hk-sites" aria-labelledby="hkSitesTitle"><h2 id="hkSitesTitle">Avancement par site</h2><p class="hint">Dans l’ordre des priorités. ${hkCanSite(state.site === "group" ? OPERATIONAL_SITES[0]?.id : state.site) ? "Touchez une étape pour la faire avancer (à faire → en cours → fait)." : "Étapes du planning de chaque site."}${macro.length ? " Pastilles : suivi de production, de la découverte au suivi automatique." : ""}</p>${macroLegend}<ul class="hk-site-list">${rows}</ul></section>`;
-}
-
-function hkGovView(plan) {
-  if (!plan || (!plan.governance?.length && !plan.risks?.length && !plan.topics?.length)) return "";
-  const gov = plan.governance?.length ? `<div><h3>Gouvernance</h3><ul class="hk-gov">${plan.governance.map((g) => `<li><b>${esc(g.instance)}</b><span class="hk-rhythm">${esc(g.rhythm)}</span><small>${esc(g.composition)}</small><p>${esc(g.role)}</p></li>`).join("")}</ul></div>` : "";
-  const risks = plan.risks?.length ? `<div><h3>Risques et parades</h3><ul class="hk-risks">${plan.risks.map((r) => `<li><b>${esc(r.risk)}</b>${r.value ? ` <small>${esc(r.value)}</small>` : ""}<p>→ ${esc(r.mitigation)}</p></li>`).join("")}</ul></div>` : "";
-  const topics = plan.topics?.length ? `<div><h3>Aspects à aborder</h3><ul class="hk-topics">${plan.topics.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>` : "";
-  return `<section class="panel section hk-gov-panel"><div class="hk-gov-grid">${gov}${risks}${topics}</div></section>`;
+  return `<section class="panel section hk-sites" aria-labelledby="hkSitesTitle"><h2 id="hkSitesTitle">Avancement par site</h2><p class="hint">Dans l’ordre des priorités, avec les semaines de l’onglet « planning ». ${hkCanSite(state.site === "group" ? OPERATIONAL_SITES[0]?.id : state.site) ? "Touchez une étape pour la faire avancer (à faire → en cours → fait)." : "Étapes du planning de chaque site."}${macro.length ? " Pastilles : suivi de production, de la découverte au suivi automatique." : ""}</p>${macroLegend}<ul class="hk-site-list">${rows}</ul></section>`;
 }
 
 const hkHoshinBase = renderOSHoshin;
@@ -471,7 +513,7 @@ renderOSHoshin = function () {
   const objTools = plan && hkCanPlan() ? `<div class="hk-obj-sync"><p>${synced ? `${synced} objectifs suivent le plan (cap, jalons, parcours de site).` : "Le plan peut devenir la cascade d’objectifs : le cap en axe, un objectif Groupe par jalon, un objectif par site."}</p><button type="button" class="btn ${synced ? "secondary" : ""}" data-hk-sync-objectives>${synced ? "Mettre à jour les objectifs depuis le plan" : "Créer les objectifs à partir du plan"}</button>${role().nav.includes("roadmap") ? '<button type="button" class="btn ghost" data-hk-roadmap>Voir la roadmap</button>' : ""}</div>` : "";
   const intro = plan ? `<p class="hk-source">Plan issu de « ${esc(plan.source?.file || "saisie dans l’appli")} »${plan.source?.imported_at ? `, importé le ${shortDate(plan.source.imported_at)}` : ""}. Il reste sur cet appareil, comme toutes vos données.</p>` : `<div class="hk-empty"><b>Le Hoshin part des priorités des sites.</b><p>Importez le fichier qui a servi à les fixer (« Déploiement AC ») : matrice de priorité pondérée, phases, jalons, gouvernance, risques, macro-étapes et planning par site. Le fichier est lu sur cet appareil ; son contenu n’est ni envoyé ni publié.</p></div>`;
   const base = hkHoshinBase().replace(/^[\s\S]*?(<section class="os-hoshin-tree">)/, "$1");
-  return `${pageHead("Voir · Hoshin Kanri", "Cap, priorités et plan", "Le cap du Groupe, les priorités des sites et le plan de déploiement, puis la déclinaison en objectifs.", tools)}${hkCap(plan, tl)}${intro}${hkMatrixView(plan)}${hkPlanView(plan, tl)}${hkSitesView(plan)}${hkGovView(plan)}<section class="section hk-objectives"><h2>Déclinaison des objectifs</h2>${objTools}${base}</section>`;
+  return `${pageHead("Voir · Hoshin Kanri", "Cap, priorités et plan", "Le cap du Groupe, les priorités des sites, l’avancement de chaque site et la déclinaison en objectifs. Les phases et les jalons sont dans la Roadmap.", tools)}${hkCap(plan, tl)}${intro}${hkMatrixView(plan)}${hkSitesView(plan)}${hkTopics(plan)}<section class="section hk-objectives"><h2>Déclinaison des objectifs</h2>${objTools}${base}</section>`;
 };
 
 /* ---------- Objectifs issus du plan ---------- */
@@ -494,23 +536,45 @@ function hkObjectivesFromPlan(plan) {
   }
   return out;
 }
+// À appeler dans un commitData : crée ou met à jour la cascade issue du plan.
+function hkApplyObjectives(plan) {
+  const items = hkObjectivesFromPlan(plan), owner = plan.team || "Responsable Lean Groupe", ids = {};
+  let created = 0, updated = 0;
+  const byKey = new Map(data.objectives.filter((o) => o.plan_key && !o.archived_at).map((o) => [o.plan_key, o]));
+  for (const it of items) {
+    let o = byKey.get(it.key);
+    const row = { title: it.title, site_id: it.site_id, level: it.level, year: Number(it.due_date.slice(0, 4)), due_date: it.due_date, description: it.description, plan_key: it.key, source: "Plan de déploiement" };
+    if (o) { Object.assign(o, row, { updated_at: now() }); updated++; }
+    else { o = { id: uid("OBJ"), ...row, owner, status: "En cours", created_at: now() }; data.objectives.push(o); created++; }
+    ids[it.key] = o.id;
+  }
+  for (const it of items) data.objectives.find((x) => x.id === ids[it.key]).parent_id = it.parent ? ids[it.parent] : null;
+  data.activity.push({ id: uid("EVT"), at: now(), actor: osActor(), event: "Objectifs Hoshin alignés sur le plan", record_id: null, fields: ["objectives"], site_id: "group" });
+  return { created, updated };
+}
+// Exemples fictifs de stratégie (objectifs Hoshin, priorités roadmap) encore actifs :
+// identifiés par les identifiants du scénario de démonstration, jamais par leur contenu.
+function hkDemoStrategy() {
+  if (!data.meta?.demo) return { objectives: [], roadmap: [] };
+  let demoObjectives = [];
+  try { demoObjectives = osFreshData(true).objectives.map((o) => o.id); } catch { demoObjectives = []; }
+  const demoRoadmap = (typeof DEMO !== "undefined" ? DEMO.roadmap || [] : []).map((r) => r.id);
+  return {
+    objectives: data.objectives.filter((o) => !o.archived_at && !o.plan_key && demoObjectives.includes(o.id)).map((o) => o.id),
+    roadmap: (data.roadmap || []).filter((r) => !r.archived_at && demoRoadmap.includes(r.id)).map((r) => r.id),
+  };
+}
+function hkArchiveDemo(ids) {
+  const at = now();
+  for (const o of data.objectives) if (ids.objectives.includes(o.id)) o.archived_at = at;
+  for (const r of data.roadmap || []) if (ids.roadmap.includes(r.id)) r.archived_at = at;
+  if (ids.objectives.length || ids.roadmap.length) data.activity.push({ id: uid("EVT"), at, actor: osActor(), event: "Exemples fictifs retirés du Hoshin et de la Roadmap", record_id: null, fields: ["objectives", "roadmap"], site_id: "group" });
+}
 function hkSyncObjectives() {
   const plan = hkPlan();
   if (!plan || !hkCanPlan()) return;
-  const items = hkObjectivesFromPlan(plan), owner = plan.team || "Responsable Lean Groupe";
   let created = 0, updated = 0;
-  const ok = commitData(() => {
-    const byKey = new Map(data.objectives.filter((o) => o.plan_key && !o.archived_at).map((o) => [o.plan_key, o])), ids = {};
-    for (const it of items) {
-      let o = byKey.get(it.key);
-      const row = { title: it.title, site_id: it.site_id, level: it.level, year: Number(it.due_date.slice(0, 4)), due_date: it.due_date, description: it.description, plan_key: it.key, source: "Plan de déploiement" };
-      if (o) { Object.assign(o, row, { updated_at: now() }); updated++; }
-      else { o = { id: uid("OBJ"), ...row, owner, status: "En cours", created_at: now() }; data.objectives.push(o); created++; }
-      ids[it.key] = o.id;
-    }
-    for (const it of items) data.objectives.find((x) => x.id === ids[it.key]).parent_id = it.parent ? ids[it.parent] : null;
-    data.activity.push({ id: uid("EVT"), at: now(), actor: osActor(), event: "Objectifs Hoshin alignés sur le plan", record_id: null, fields: ["objectives"], site_id: "group" });
-  });
+  const ok = commitData(() => { ({ created, updated } = hkApplyObjectives(plan)); });
   if (!ok) return;
   render();
   toast(`${created} objectif${created > 1 ? "s" : ""} créé${created > 1 ? "s" : ""}, ${updated} mis à jour depuis le plan.`);
@@ -521,60 +585,91 @@ function hkSyncObjectives() {
 function hkMonthStart(iso) {
   return iso.slice(0, 8) + "01";
 }
-function hkWindow(plan, key) {
-  const tl = hkTimeline(plan), start = tl.start || today();
-  // « Tout le plan » couvre les phases, les jalons et les étapes datées.
-  const end = [tl.phases.length ? tl.end : hkAddMonths(start, 12), ...(plan?.milestones || []).map((m) => m.date), ...Object.values(plan?.tracks || {}).flat().map((x) => x.to)].filter(Boolean).sort().at(-1);
-  if (key === "all") return { from: start, to: end };
-  const from = [start, hkAddMonths(hkMonthStart(today()), -1)].sort().at(-1);
-  return { from, to: hkAddMonths(from, Number(key) || 6) };
+function hkTopics(plan) {
+  if (!plan?.topics?.length) return "";
+  return `<section class="panel section hk-topics-panel"><h2>Aspects à aborder</h2><ul class="hk-topics">${plan.topics.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></section>`;
 }
-function hkGantt(plan) {
-  const key = ["6", "12", "all"].includes(state.rmWindow) ? state.rmWindow : "6", win = hkWindow(plan, key), from = Date.parse(win.from), span = Math.max(1, Date.parse(win.to) - from);
-  const x = (iso) => ((Date.parse(iso) - from) / span) * 100;
-  const bar = (a, b) => {
-    if (!a || !b || b < win.from || a > win.to) return null;
-    const l = Math.max(0, x(a)), r = Math.min(100, x(hkAddDays(b, 1)));
-    return `left:${l.toFixed(2)}%;width:${Math.max(0.8, r - l).toFixed(2)}%`;
-  };
+
+/* ---------- Roadmap : l’onglet « phases et actions » ---------- */
+
+const HK_MONTH_SHORT = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+function hkMonthLabel(iso, withYear = true) {
+  return `${HK_MONTH_SHORT.at(Number(iso.slice(5, 7)) - 1)}${withYear ? ` ${iso.slice(0, 4)}` : ""}`;
+}
+// Période d’une phase en mois : « nov. – déc. 2026 », « déc. 2027 – juil. 2028 ».
+function hkPeriod(from, to) {
+  const last = hkAddDays(to, -1);
+  if (hkMonthStart(from) === hkMonthStart(last)) return hkMonthLabel(from);
+  return from.slice(0, 4) === last.slice(0, 4) ? `${hkMonthLabel(from, false)} – ${hkMonthLabel(last)}` : `${hkMonthLabel(from)} – ${hkMonthLabel(last)}`;
+}
+// Sous-bandes lues dans le texte de la phase : pilotes, « vague 1 … vague 2 …, N mois par vague ».
+function hkPhaseBands(p, waves) {
+  const sitesOf = (w) => OPERATIONAL_SITES.filter((s) => waves?.[s.id] === w).map((s) => s.name);
+  const text = `${p.name} ${p.actions}`;
+  if (/pilote/i.test(p.name)) return [{ from: p.from, to: p.to, label: "BU pilotes", sites: sitesOf("pilot") }];
+  const per = /(\d+)\s*mois par vague/i.exec(text), count = (text.match(/vague\s*\d/gi) || []).length;
+  if (!per || count < 2) return [];
+  const out = [];
+  let at = p.from;
+  for (let i = 1; i <= count; i++) {
+    const to = i === count ? p.to : hkAddMonths(at, Number(per[1]));
+    out.push({ from: at, to, label: `Vague ${i}`, sites: sitesOf(`wave${i}`) });
+    at = to;
+  }
+  return out;
+}
+function hkPhaseRoadmap(plan, tl) {
+  if (!tl.phases.length) return "";
+  const from = Date.parse(tl.start), span = Math.max(1, Date.parse(tl.end) - from), x = (iso) => Math.max(0, Math.min(100, ((Date.parse(iso) - from) / span) * 100));
   const months = [];
-  for (let d = hkMonthStart(win.from); d <= win.to; d = hkAddMonths(d, 1)) if (d >= win.from || d === hkMonthStart(win.from)) months.push(d);
-  const monthLabel = (d) => new Date(d + "T00:00:00Z").toLocaleDateString("fr-FR", { month: "short", timeZone: "UTC" }).replace(".", "") + (d.slice(5, 7) === "01" || d === months[0] ? ` ${d.slice(0, 4)}` : "");
-  const grid = months.map((d) => `<span class="rm-month" style="left:${Math.max(0, x(d)).toFixed(2)}%">${esc(monthLabel(d))}</span>`).join("");
-  const lines = months.map((d) => (x(d) > 0 ? `<i class="rm-vline" style="left:${x(d).toFixed(2)}%"></i>` : "")).join("");
-  const nowLine = today() >= win.from && today() <= win.to ? `<i class="rm-now" style="left:${x(today()).toFixed(2)}%" title="Aujourd’hui · ${shortDate(today())}"></i>` : "";
-  const miles = (plan.milestones || []).filter((m) => m.date && m.date >= win.from && m.date <= win.to).map((m) => `<i class="rm-mile ${m.done ? "done" : ""}" style="left:${x(m.date).toFixed(2)}%" title="${esc(m.name)} · ${shortDate(m.date)}"></i>`).join("");
-  const overlay = `<div class="rm-overlay" aria-hidden="true">${lines}${miles}${nowLine}</div>`;
-  const row = (label, bars, cls = "") => `<div class="rm-row ${cls}"><div class="rm-label">${label}</div><div class="rm-lane">${bars}</div></div>`;
-  const tl = hkTimeline(plan);
-  const phaseRow = row("<b>Phases</b>", tl.phases.map((p, i) => { const st = bar(p.from, hkAddDays(p.to, -1)); return st ? `<span class="rm-bar rm-phase ${i === tl.current ? "now" : ""}" style="${st}" title="${esc(p.name)} · ${shortDate(p.from)} → ${shortDate(p.to)}">${esc(p.name.replace(/^\d+\.\s*/, ""))}</span>` : ""; }).join(""), "rm-program");
-  const mileRow = (plan.milestones || []).some((m) => m.date && m.date >= win.from && m.date <= win.to) ? row("<b>Jalons</b>", (plan.milestones || []).filter((m) => m.date && m.date >= win.from && m.date <= win.to).map((m) => `<span class="rm-diamond ${m.done ? "done" : m.date < today() ? "late" : ""}" style="left:${x(m.date).toFixed(2)}%" title="${esc(m.name)} · ${shortDate(m.date)}">◆<em>${esc(m.name)}</em></span>`).join(""), "rm-miles") : "";
-  const stepBar = (siteId, st, i) => {
-    const css = bar(st.from, st.to);
-    if (!css) return "";
-    const can = siteId && hkCanSite(siteId);
-    return `<button type="button" class="rm-bar rm-step ${HK_STATUS[st.status]?.[1] || "hk-todo"} ${st.late ? "late" : ""}" style="${css}" ${can ? `data-hk-step="${esc(JSON.stringify({ site: siteId, i }))}"` : "disabled"} title="${esc(st.name)} · ${shortDate(st.from)} → ${shortDate(st.to)} · ${HK_STATUS[st.status]?.[0] || "À faire"}${st.late ? " · en retard" : ""}"><span>${esc(st.name)}</span></button>`;
-  };
-  const macro = (plan.macroTasks || []).filter((t) => t.from);
-  const macroRows = macro.map((t) => row(`<span>${esc(t.name)}</span>${t.who ? `<small>${esc(t.who)}</small>` : ""}`, stepBar(null, t, 0))).join("");
-  const rank = hkRanking(plan.matrix).map((r) => r.id);
-  const sites = hkVisibleSites().sort((a, b) => (rank.indexOf(a.id) + 1 || 99) - (rank.indexOf(b.id) + 1 || 99));
-  const siteRows = sites.map((s) => {
-    const steps = plan.tracks?.[s.id] || [], wave = plan.waves?.[s.id];
-    const head = row(`<b>${esc(s.name)}</b><small>${wave ? esc(HK_WAVES.find((w) => w[0] === wave)?.[1]) + " · " : ""}${steps.length ? `${steps.filter((x) => x.status === "done").length}/${steps.length} faites` : "parcours à définir"}</small>`, steps.filter((st) => st.from).length ? "" : `<span class="rm-empty">${steps.length ? "Étapes non datées dans le planning" : "Parcours à définir dans le planning"}</span>`, "rm-site");
-    return head + steps.map((st, i) => (st.from ? row(`<span>${esc(st.name)}</span>`, stepBar(s.id, st, i)) : "")).join("");
-  }).join("");
-  const chips = `<div class="in-chips in-chips-small" role="group" aria-label="Période affichée">${[["6", "6 mois"], ["12", "12 mois"], ["all", "Tout le plan"]].map(([k, l]) => `<button type="button" class="in-chip ${k === key ? "active" : ""}" data-rm-window="${k}" aria-pressed="${k === key}">${l}</button>`).join("")}</div>`;
-  return `<section class="panel section rm-gantt-panel" aria-labelledby="rmGanttTitle"><div class="section-title"><div><h2 id="rmGanttTitle">Calendrier du déploiement</h2><p class="hint">${shortDate(win.from)} → ${shortDate(win.to)} · touchez une étape pour la faire avancer ; elle avance aussi dans le Hoshin.</p></div>${chips}</div><div class="rm-gantt-wrap"><div class="rm-gantt"><div class="rm-row rm-head"><div class="rm-label"></div><div class="rm-lane">${grid}</div></div><div class="rm-body">${overlay}${phaseRow}${mileRow}${macroRows}${siteRows}</div></div></div><p class="rm-key"><span class="rm-k hk-todo"></span>À faire <span class="rm-k hk-doing"></span>En cours <span class="rm-k hk-done"></span>Fait <span class="rm-k late"></span>En retard dans le fichier <span class="rm-k-mile">◆</span>Jalon <span class="rm-k-now"></span>Aujourd’hui</p></section>`;
+  for (let d = tl.start; d < tl.end; d = hkAddMonths(d, 1)) months.push(d);
+  const monthRow = months.map((d) => `<span class="rp-month ${d.slice(5, 7) === "01" ? "jan" : ""}" style="left:${x(d).toFixed(2)}%;width:${(x(hkAddMonths(d, 1)) - x(d)).toFixed(2)}%">${HK_MONTH_SHORT.at(Number(d.slice(5, 7)) - 1).replace(".", "")}</span>`).join("");
+  const years = [];
+  for (let y = Number(tl.start.slice(0, 4)); y <= Number(tl.end.slice(0, 4)); y++) {
+    const a = [tl.start, `${y}-01-01`].sort().at(-1), b = [tl.end, `${y + 1}-01-01`].sort()[0];
+    if (a < b) years.push(`<span class="rp-year" style="left:${x(a).toFixed(2)}%;width:${(x(b) - x(a)).toFixed(2)}%">${y}</span>`);
+  }
+  const phaseBars = tl.phases.map((p, i) => `<div class="rp-phase ${i === tl.current ? "now" : p.to <= today() ? "past" : ""}" style="left:${x(p.from).toFixed(2)}%;width:${(x(p.to) - x(p.from)).toFixed(2)}%" title="${esc(p.name)} · ${esc(hkPeriod(p.from, p.to))}"><b>${esc(p.name)}</b><small>${esc(hkPeriod(p.from, p.to))}</small></div>`).join("");
+  const bands = tl.phases.flatMap((p) => hkPhaseBands(p, plan.waves)).map((bd) => `<div class="rp-band" style="left:${x(bd.from).toFixed(2)}%;width:${(x(bd.to) - x(bd.from)).toFixed(2)}%" title="${esc(bd.label)} · ${esc(hkPeriod(bd.from, bd.to))}"><b>${esc(bd.label)}</b><small>${bd.sites.length ? esc(bd.sites.join(", ")) : "sites à désigner"}</small></div>`).join("");
+  const miles = (plan.milestones || []).filter((m) => m.date);
+  const gates = miles.map((m, i) => `<div class="rp-gate ${m.done ? "done" : m.date < today() ? "late" : ""} ${i % 2 ? "low" : ""} ${x(m.date) > 82 ? "end" : ""}" style="left:${x(m.date).toFixed(2)}%"><i aria-hidden="true">◆</i><b>${esc(m.name)}</b><small>${shortDate(m.date)}</small></div>`).join("");
+  const nowLine = today() >= tl.start && today() < tl.end ? `<i class="rp-now" style="left:${x(today()).toFixed(2)}%" title="Aujourd’hui · ${shortDate(today())}"></i>` : "";
+  return `<section class="panel section rp-panel" aria-labelledby="rpTitle"><div class="section-title"><div><h2 id="rpTitle">Les phases dans le temps</h2><p class="hint">${tl.phases.length} phases, ${osNum(tl.total)} mois, de ${hkMonthLabel(tl.start)} à ${hkMonthLabel(hkAddDays(tl.end, -1))} : durées de l’onglet « phases et actions ».</p></div></div><div class="rp-wrap"><div class="rp-chart" role="img" aria-label="Phases de ${hkMonthLabel(tl.start)} à ${hkMonthLabel(hkAddDays(tl.end, -1))}">${`<div class="rp-years">${years.join("")}</div><div class="rp-months">${monthRow}</div>`}<div class="rp-lane rp-lane-phases">${phaseBars}</div>${bands ? `<div class="rp-lane rp-lane-bands">${bands}</div>` : ""}${gates ? `<div class="rp-lane rp-lane-gates">${gates}</div>` : ""}${nowLine}</div></div></section>`;
+}
+function hkPhaseTable(plan, tl) {
+  if (!tl.phases.length) return "";
+  const rows = tl.phases.map((p, i) => `<tr class="${i === tl.current ? "now" : p.to <= today() ? "past" : ""}"><th scope="row" data-label="Phase"><b>${esc(p.name)}</b>${i === tl.current ? pill("En cours", "progress") : ""}</th><td data-label="Période">${esc(hkPeriod(p.from, p.to))}<small>${esc(p.duration || "")}</small></td><td data-label="Actions clés">${esc(p.actions)}</td><td data-label="Livrable(s)">${esc(p.deliverables).replace(/\n/g, "<br>")}</td><td data-label="Planning détaillé">${esc(p.notes).replace(/\n/g, "<br>")}</td></tr>`).join("");
+  return `<section class="panel section rp-table-panel" aria-labelledby="rpPhasesTitle"><h2 id="rpPhasesTitle">Phases et actions</h2><div class="rp-table-wrap"><table class="rp-table"><thead><tr><th scope="col">Phase</th><th scope="col">Période</th><th scope="col">Actions clés</th><th scope="col">Livrable(s)</th><th scope="col">Planning détaillé</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+}
+function hkMilestoneTable(plan) {
+  const miles = plan.milestones || [];
+  if (!miles.length && !plan.indicators && !plan.success) return "";
+  const rows = miles.map((m, i) => `<tr class="${m.done ? "done" : ""}"><th scope="row" data-label="Jalon"><b>${esc(m.name)}</b></th><td data-label="Date">${m.dateLabel ? esc(m.dateLabel) : m.date ? shortDate(m.date) : ""}${m.date && m.dateLabel ? `<small>${shortDate(m.date)}</small>` : ""}</td><td data-label="Critères pour passer">${esc(m.criteria)}</td><td data-label="État">${hkCanPlan() ? `<button type="button" class="in-chip ${m.done ? "active" : ""}" data-hk-milestone="${i}" aria-pressed="${!!m.done}">${m.done ? "Franchi ✓" : "Marquer franchi"}</button>` : m.done ? pill("Franchi", "done") : m.date && m.date < today() ? pill("Échéance passée", "open") : pill("À venir", "neutral")}</td></tr>`).join("");
+  return `<section class="panel section rp-table-panel" aria-labelledby="rpMilesTitle"><h2 id="rpMilesTitle">Indicateurs de succès et jalons de décision</h2>${plan.success ? `<p>${esc(plan.success)}</p>` : ""}${rows ? `<div class="rp-table-wrap"><table class="rp-table rp-miles"><thead><tr><th scope="col">Jalon</th><th scope="col">Date</th><th scope="col">Critères pour passer</th><th scope="col">État</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}${plan.indicators ? `<p class="hk-ind"><b>Indicateurs de suivi :</b> ${esc(plan.indicators)} ${role().nav.includes("pilotage") ? '<button type="button" class="btn ghost small" data-hk-nav="pilotage">Voir les indicateurs</button>' : ""}</p>` : ""}</section>`;
+}
+function hkGovTables(plan) {
+  const gov = plan.governance || [], risks = plan.risks || [];
+  if (!gov.length && !risks.length) return "";
+  const g = gov.length ? `<h3>Gouvernance</h3><div class="rp-table-wrap"><table class="rp-table"><thead><tr><th scope="col">Instance</th><th scope="col">Rythme</th><th scope="col">Composition</th><th scope="col">Rôle</th></tr></thead><tbody>${gov.map((x) => `<tr><th scope="row" data-label="Instance"><b>${esc(x.instance)}</b></th><td data-label="Rythme">${esc(x.rhythm)}</td><td data-label="Composition">${esc(x.composition)}</td><td data-label="Rôle">${esc(x.role)}</td></tr>`).join("")}</tbody></table></div>` : "";
+  // Colonne « Valeur » montrée seulement si le fichier la renseigne.
+  const val = risks.some((x) => x.value);
+  const r = risks.length ? `<h3>Risques et parades</h3><div class="rp-table-wrap"><table class="rp-table"><thead><tr><th scope="col">Risque</th>${val ? '<th scope="col">Valeur</th>' : ""}<th scope="col">Parade</th></tr></thead><tbody>${risks.map((x) => `<tr><th scope="row" data-label="Risque"><b>${esc(x.risk)}</b></th>${val ? `<td data-label="Valeur">${esc(x.value)}</td>` : ""}<td data-label="Parade">${esc(x.mitigation)}</td></tr>`).join("")}</tbody></table></div>` : "";
+  return `<section class="panel section rp-table-panel">${g}${r}</section>`;
 }
 
 const hkRoadmapBase = renderRoadmap;
 renderRoadmap = function () {
   const plan = hkPlan(), tl = hkTimeline(plan);
-  const base = hkRoadmapBase(), board = /<div class="roadmap-board[\s\S]*$/.exec(base)?.[0] || "";
+  // Les priorités archivées (exemples fictifs retirés) ne s’affichent plus.
+  const all = data.roadmap || [];
+  data.roadmap = all.filter((r) => !r.archived_at);
+  let base;
+  try { base = hkRoadmapBase(); } finally { data.roadmap = all; }
+  const active = all.filter((r) => !r.archived_at).length, board = /<div class="roadmap-board[\s\S]*$/.exec(base)?.[0] || "";
   const add = osManager() && !role().readonly ? '<button class="btn secondary" data-new-roadmap>+ Priorité</button>' : "";
-  const link = role().nav.includes("hoshin") || role().nav.includes("pilotage") ? '<button type="button" class="btn ghost small" data-rm-hoshin>Priorités et objectifs dans le Hoshin</button>' : "";
-  return `${pageHead("Voir · Roadmap", "Roadmap de déploiement", "Le même plan que le Hoshin, dans le temps : phases, jalons et étapes de chaque site.", add)}${hkCap(plan, tl)}${plan ? `<p class="hk-source">Une seule source : le plan importé dans le Hoshin (« ${esc(plan.source?.file || "saisie dans l’appli")} »). ${link}</p>${hkGantt(plan)}` : `<div class="hk-empty"><b>Pas encore de plan de déploiement.</b><p>Importez le fichier de déploiement dans Voir › Hoshin : la roadmap affichera ici les mêmes phases, jalons et étapes par site.</p>${link}</div>`}<h2 class="section rm-prio-title">Priorités de la roadmap</h2><p class="hint">Résultat attendu, propriétaire, indicateur et date pour chaque priorité ; à rattacher aux phases du plan.</p>${board.replace(/^<div class="roadmap-board section">/, '<div class="roadmap-board">')}`;
+  const body = plan && tl.phases.length ? `<p class="hk-source">Onglet « phases et actions » de « ${esc(plan.source?.file || "saisie dans l’appli")} »${plan.source?.imported_at ? `, importé le ${shortDate(plan.source.imported_at)}` : ""}.</p>${hkPhaseRoadmap(plan, tl)}${hkPhaseTable(plan, tl)}${hkMilestoneTable(plan)}${hkGovTables(plan)}` : `<div class="hk-empty"><b>Pas encore de plan de déploiement.</b><p>Importez le fichier de déploiement dans Voir › Hoshin : la roadmap reprendra ici son onglet « phases et actions ».</p></div>`;
+  const prio = active || !plan ? `<h2 class="section rm-prio-title">Priorités hors plan</h2><p class="hint">Résultat attendu, propriétaire, indicateur et date pour chaque priorité.</p>${board.replace(/^<div class="roadmap-board section">/, '<div class="roadmap-board">')}` : "";
+  return `${pageHead("Voir · Roadmap", "Roadmap de déploiement", "Les phases, les jalons et le pilotage du déploiement, tels que dans le fichier.", add)}${hkCap(plan, tl)}${body}${prio}`;
 };
 
 /* ---------- Actions ---------- */
@@ -582,19 +677,23 @@ renderRoadmap = function () {
 async function hkImport(file) {
   if (!hkCanPlan()) return toast("Import réservé au Responsable Lean Groupe.");
   let parsed;
-  try { const book = await hkReadXlsx(file); parsed = hkFromWorkbook(book.sheets, file.name, book.colors); }
+  try { const book = await hkReadXlsx(file); parsed = hkFromWorkbook(book.sheets, file.name, book.colors, book.merges); }
   catch (e) { return toast(e.message || "Fichier illisible."); }
   const { plan, report } = parsed;
   if (!plan.matrix && !plan.phases.length) return toast("Ni matrice de priorité ni phases reconnues dans ce fichier.");
-  modal("Importer le plan de déploiement", `<div class="hk-report"><p>Lu dans « ${esc(file.name)} » :</p><ul>${report.found.map((f) => `<li>✓ ${esc(f)}</li>`).join("")}</ul>${report.warnings.length ? `<p class="hint">À vérifier :</p><ul class="hk-warn">${report.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}<p class="hint">${hkPlan() ? "Le plan actuel sera remplacé ; les étapes déjà suivies, les vagues et les jalons franchis sont conservés." : "Le plan sera enregistré sur cet appareil."} Le fichier n’est ni envoyé ni publié.</p><div class="form-actions"><button type="button" class="btn" id="hkConfirmImport">Enregistrer le plan</button><button type="button" class="btn secondary" data-close-modal>Annuler</button></div></div>`);
+  const demo = hkDemoStrategy(), demoCount = demo.objectives.length + demo.roadmap.length;
+  modal("Importer le plan de déploiement", `<div class="hk-report"><p>Lu dans « ${esc(file.name)} » :</p><ul>${report.found.map((f) => `<li>✓ ${esc(f)}</li>`).join("")}</ul>${report.warnings.length ? `<p class="hint">À vérifier :</p><ul class="hk-warn">${report.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}<div class="hk-import-opts"><label class="hk-check"><input type="checkbox" id="hkOptObjectives" checked> Créer ou mettre à jour les objectifs Hoshin à partir du plan (cap, jalons, parcours de site)</label>${demoCount ? `<label class="hk-check"><input type="checkbox" id="hkOptDemo" checked> Retirer les exemples fictifs du Hoshin et de la Roadmap (${demo.objectives.length} objectif${demo.objectives.length > 1 ? "s" : ""}, ${demo.roadmap.length} priorité${demo.roadmap.length > 1 ? "s" : ""}) ; ils restent dans l’archive</label>` : ""}</div><p class="hint">${hkPlan() ? "Le plan actuel sera remplacé ; les étapes déjà suivies, les vagues et les jalons franchis sont conservés." : "Le plan sera enregistré sur cet appareil."} Le fichier n’est ni envoyé ni publié.</p><div class="form-actions"><button type="button" class="btn" id="hkConfirmImport">Enregistrer le plan</button><button type="button" class="btn secondary" data-close-modal>Annuler</button></div></div>`);
   $("hkConfirmImport").onclick = () => {
+    const withObjectives = $("hkOptObjectives")?.checked, withoutDemo = $("hkOptDemo")?.checked;
     if (!commitData(() => {
       data.hoshinPlan = hkMerge(plan, hkPlan());
       data.activity.push({ id: uid("EVT"), at: now(), actor: osActor(), event: "Plan Hoshin importé", record_id: null, fields: ["hoshinPlan"], site_id: "group" });
+      if (withoutDemo) hkArchiveDemo(demo);
+      if (withObjectives) hkApplyObjectives(data.hoshinPlan);
     })) return;
     closeModal();
     render();
-    toast("Plan de déploiement enregistré.");
+    toast("Plan de déploiement enregistré : Hoshin et Roadmap suivent le fichier.");
   };
 }
 
@@ -649,7 +748,6 @@ function hkBind(root = document) {
   root.querySelectorAll("[data-hk-sync-objectives]").forEach((b) => (b.onclick = () => hkSyncObjectives()));
   root.querySelectorAll("[data-hk-roadmap]").forEach((b) => (b.onclick = () => switchView("roadmap")));
   root.querySelectorAll("[data-rm-hoshin]").forEach((b) => (b.onclick = () => switchView(role().nav.includes("hoshin") ? "hoshin" : "pilotage")));
-  root.querySelectorAll("[data-rm-window]").forEach((b) => (b.onclick = () => { state.rmWindow = b.dataset.rmWindow; render(); }));
   root.querySelectorAll("[data-hk-nav]").forEach((b) => (b.onclick = () => { state.pilotageMode = "analysis"; state.osTab = "tower"; switchView(b.dataset.hkNav); }));
   root.querySelectorAll("[data-hk-milestone]").forEach((b) => (b.onclick = () => {
     const i = Number(b.dataset.hkMilestone);
@@ -662,6 +760,11 @@ function hkBind(root = document) {
     const step = hkPlan()?.tracks?.[a.site]?.[a.i];
     if (!step || !hkCanSite(a.site)) return;
     if (commitData(() => { const s = data.hoshinPlan.tracks[a.site][a.i]; s.status = s.status === "todo" ? "doing" : s.status === "doing" ? "done" : "todo"; s.updated_at = now(); })) render();
+  }));
+  root.querySelectorAll("[data-hk-macro]").forEach((b) => (b.onclick = () => {
+    const i = Number(b.dataset.hkMacro);
+    if (!hkCanPlan() || !hkPlan()?.macroTasks?.[i]) return;
+    if (commitData(() => { const t = data.hoshinPlan.macroTasks[i]; t.status = t.status === "todo" ? "doing" : t.status === "doing" ? "done" : "todo"; t.updated_at = now(); })) render();
   }));
   root.querySelectorAll("[data-hk-seq]").forEach((b) => (b.onclick = () => {
     let a;

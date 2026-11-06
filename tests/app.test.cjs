@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-4-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.4.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-5-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.5.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -58,7 +58,7 @@ test('Accueil, raccourcis terrain et écran SQCDP Groupe vertical sont explicite
   const a=app(t),{run,q,all,click}=a;
   run('state.role="lean";state.site="group";state.view="home";render()');
   assert.match(q('#appView').textContent,/Ma journée/);
-  assert.ok(q('.jn-gemba')&&q('.jn-actions'));
+  assert.equal(q('.jn-gemba'),null,'Pas de Gemba à l’accueil : il se démarre depuis + ou Observer');assert.ok(q('.jn-actions'));
   assert.match(q('.jn-watch').textContent,/Risque critique/);
   assert.equal(all('.quick-action-dock .quick-action').length,1);
   assert.deepEqual(all('.quick-action-dock .quick-action').map(x=>x.getAttribute('aria-label')),['Créer un dossier']);
@@ -204,12 +204,14 @@ test('Hoshin Kanri : cap, priorités classées, plan, avancement par site et dro
   run('state.role="lean";state.site="group";state.view="hoshin";render()');
   assert.match(q('.hk-cap').textContent,/D’artisan industriel à industriel artisan/);assert.ok(q('.hk-empty'),'Sans fichier : on explique quoi importer');
   assert.ok(q('[data-hk-import]'));
-  run(`const x=hkFromWorkbook(${JSON.stringify(HK_SAMPLE)},"plan.xlsx");x.plan.start=osDateOffset(-10);commitData(()=>{data.hoshinPlan=x.plan});render()`);
+  run(`const x=hkFromWorkbook(${JSON.stringify(HK_SAMPLE)},"plan.xlsx");x.plan.start=today().slice(0,8)+"01";commitData(()=>{data.hoshinPlan=x.plan});render()`);
   assert.deepEqual(all('.hk-row:not(.hk-head) .hk-site').map(x=>x.textContent.replace(/TOP|\d/g,'').trim()),['Le Moine','Marzin','Ag Déco']);
   assert.equal(all('.hk-top').length,2);assert.deepEqual(all('.hk-total b').map(b=>b.textContent),['24','16','14']);
   assert.equal(all('#appView select').length,0,'Aucun menu déroulant');
-  assert.match(q('.hk-cap').textContent,/Lancement/);assert.equal(all('.hk-phase.now').length,1);
-  assert.equal(all('.hk-miles li').length,2);click('[data-hk-milestone="0"]');assert.equal(run('data.hoshinPlan.milestones[0].done'),true);
+  assert.match(q('.hk-cap').textContent,/Lancement/);assert.equal(q('.rp-table'),null,'Les phases sont dans la Roadmap');
+  run('state.view="roadmap";render()');assert.equal(all('.rp-table tr.now').length,1);
+  assert.equal(all('.rp-miles tbody tr').length,2);click('[data-hk-milestone="0"]');assert.equal(run('data.hoshinPlan.milestones[0].done'),true);
+  run('state.view="hoshin";render()');
   click('[data-hk-step*="marzin"]');assert.equal(run('data.hoshinPlan.tracks.marzin[0].status'),'todo','Fait → à faire');
   click('[data-hk-seq*="marzin"]');assert.equal(run('data.hoshinPlan.sequoia.marzin'),1);
   click('[data-hk-edit-matrix]');fill('#hkMatrixForm [name="s-marzin-c1"]','5');submit('#hkMatrixForm');
@@ -226,28 +228,63 @@ test('Hoshin Kanri : cap, priorités classées, plan, avancement par site et dro
   const b=app(t,a.stored());b.run('state.role="lean";state.site="group";state.view="hoshin";render()');assert.equal(b.all('.hk-total b')[0].textContent,'24');assert.equal(b.run('data.hoshinPlan.waves["le-moine"]'),'pilot','Plan conservé après rechargement');
   assert.ok(b.q('.os-hoshin-tree'),'La déclinaison des objectifs reste en dessous');
 });
-test('Roadmap et objectifs : le même plan que le Hoshin, daté par le Gantt du fichier',t=>{
+test('Roadmap : l’onglet « phases et actions » ; objectifs et avancement issus du fichier',t=>{
   const a=app(t),{run,q,all,click}=a;
-  // Gantt fictif : semaines S51-S52 2026 puis S1-S3 2027, barres vertes, une barre rouge (retard).
-  const book=JSON.parse(JSON.stringify(HK_SAMPLE));Object.assign(book.planning,{J6:2026,L6:2027,J8:'S51',K8:'S52',L8:'S1',M8:'S2',N8:'S3'});
-  const colors={planning:{J13:'FF92D050',K13:'FF92D050',L14:'FF92D050',M14:'FFFF0000',N14:'FF92D050',J12:'theme8',K12:'theme8',J10:'FF92D050'}};
+  // Gantt fictif : semaines S51-S52 2026 puis S1-S3 2027, barres vertes, une barre rouge (retard), légende en tête.
+  const book=JSON.parse(JSON.stringify(HK_SAMPLE));Object.assign(book.planning,{J6:2026,L6:2027,J8:'S51',K8:'S52',L8:'S1',M8:'S2',N8:'S3',Y1:'tâche en cours délai OK',Y3:'Tâche en retard'});
+  book['phases et actions'].A3='1. BU pilotes (2)';book['phases et actions'].B3='4 mois';book['phases et actions'].A4='2. Généralisation';book['phases et actions'].B4='4 mois';book['phases et actions'].C4='Vague 1 (1 BU) puis vague 2 (1 BU), 2 mois par vague';
+  const colors={planning:{X1:'FF92D050',X3:'FFFF0000',J13:'FF92D050',K13:'FF92D050',L14:'FF92D050',M14:'FFFF0000',N14:'FF92D050',J12:'theme8',K12:'theme8',J10:'FF92D050'}};
   const x=JSON.parse(run(`JSON.stringify(hkFromWorkbook(${JSON.stringify(book)},"plan.xlsx",${JSON.stringify(colors)}))`));
   assert.deepEqual(x.plan.tracks.marzin.map(s=>[s.from,s.to,!!s.late]),[['2026-12-14','2026-12-27',false],['2027-01-04','2027-01-24',true]]);
+  assert.deepEqual(x.plan.tracks.marzin[1].segments.map(g=>[g.from,g.color]),[['2027-01-04','FF92D050'],['2027-01-11','FFFF0000'],['2027-01-18','FF92D050']]);
+  assert.equal(x.plan.start,'2026-12-14','Début = première semaine du Gantt, pas la case « Date » (=AUJOURDHUI)');
+  assert.deepEqual(x.plan.legend.map(l=>l.label),['tâche en cours délai OK','Tâche en retard']);assert.deepEqual(x.plan.order,['macro','marzin','ag-deco']);
   assert.equal(x.plan.macroTasks[0].from,'2026-12-14');assert.ok(x.report.found.some(f=>/3 tâches datées/.test(f)));
-  run(`const y=hkFromWorkbook(${JSON.stringify(book)},"plan.xlsx",${JSON.stringify(colors)});y.plan.waves={marzin:"pilot"};commitData(()=>{data.hoshinPlan=y.plan});state.role="lean";state.site="group";state.view="hoshin";render()`);
+  run(`const y=hkFromWorkbook(${JSON.stringify(book)},"plan.xlsx",${JSON.stringify(colors)});y.plan.waves={marzin:"pilot","ag-deco":"wave2"};commitData(()=>{data.hoshinPlan=y.plan});state.role="lean";state.site="group";state.view="hoshin";render()`);
+  assert.match(q('[data-hk-step*="marzin"]').textContent,/S51–S52/,'Semaines du planning sur chaque étape');
   const before=run('data.objectives.length');click('[data-hk-sync-objectives]');
   const made=run('JSON.stringify(data.objectives.filter(o=>o.plan_key).map(o=>[o.plan_key,o.level,o.due_date,(data.objectives.find(p=>p.id===o.parent_id)||{}).plan_key||null]))');
   assert.deepEqual(JSON.parse(made),[['cap','Axe stratégique','2027-12-31',null],['jalon:goessai','Groupe','2027-06-30','cap'],['jalon:fin','Groupe','2027-12-31','cap'],['site:marzin','Site','2027-01-24','jalon:goessai']]);
   assert.equal(run('data.objectives.length'),before+4);click('[data-hk-sync-objectives]');assert.equal(run('data.objectives.length'),before+4,'Pas de doublon');
-  assert.match(q('.os-hoshin-tree').textContent,/D’artisan industriel à industriel artisan/);
-  run('state.view="roadmap";state.rmWindow="all";render()');
-  assert.match(q('#appView h1').textContent,/Roadmap de déploiement/);assert.match(q('.hk-cap').textContent,/Lancement/);
-  assert.equal(all('.rm-phase').length,2,'Les phases du plan');assert.equal(all('.rm-step[data-hk-step*="marzin"]').length,2);assert.equal(all('.rm-step.late').length,1);
-  assert.ok(q('.rm-diamond'),'Jalons dans le calendrier');assert.ok(all('.roadmap-item').length>0,'Les priorités de la roadmap restent');
-  click('.rm-step[data-hk-step*="marzin"]');assert.equal(run('data.hoshinPlan.tracks.marzin[0].status'),'todo','Fait → à faire, partagé avec le Hoshin');
-  run('state.view="hoshin";render()');assert.ok(q('[data-hk-step*="marzin"].hk-todo'));
-  run('state.role="dg";state.view="roadmap";render()');assert.equal(all('.rm-step[data-hk-step]').length,0,'DG : lecture seule');assert.equal(q('[data-new-roadmap]'),null);
+  run('state.view="roadmap";render()');
+  assert.match(q('#appView h1').textContent,/Roadmap de déploiement/);assert.match(q('.hk-source').textContent,/phases et actions/);
+  assert.deepEqual(all('.rp-phase b').map(b=>b.textContent),['0. Lancement','1. BU pilotes (2)','2. Généralisation']);
+  assert.deepEqual(all('.rp-phase small').map(b=>b.textContent),['déc. 2026','janv. – avr. 2027','mai – août 2027'],'Mois calendaires depuis le mois de démarrage');
+  assert.deepEqual(all('.rp-band b').map(b=>b.textContent),['BU pilotes','Vague 1','Vague 2']);assert.match(all('.rp-band')[0].textContent,/Marzin/);assert.match(all('.rp-band')[2].textContent,/Ag Déco/);
+  assert.equal(all('.rp-gate').length,2);assert.equal(all('.rp-table').length>=3,true,'Phases, jalons, gouvernance et risques en tableaux, comme l’onglet');
+  assert.match(q('.rp-table').textContent,/Actions clés[\s\S]*Livrable[\s\S]*Planning détaillé/);
+  assert.equal(all('.rm-step, .rm-gantt').length,0,'Plus de Gantt du planning dans la Roadmap');
+  assert.ok(all('.roadmap-item').length>0,'Les priorités hors plan restent');
+  run('state.role="dg";render()');assert.equal(all('[data-hk-milestone]').length,0,'DG : lecture seule');assert.equal(q('[data-new-roadmap]'),null);
   const b=app(t);b.run('state.role="lean";state.site="group";state.view="roadmap";render()');assert.ok(b.q('.hk-empty'),'Sans plan : renvoi vers le Hoshin');
+});
+test('Import : exemples fictifs retirés, objectifs créés, calendrier d’intégration lu',t=>{
+  const a=app(t),{run,q,all}=a;
+  const book=JSON.parse(JSON.stringify(HK_SAMPLE));book['calendrier intégration']={A1:'Planning fictif',B2:'Lundi',C2:'Mardi',D2:'Mercredi',E2:'Jeudi',F2:'Vendredi',A3:'Sem. 45\n02/11 - 06/11',B3:'Visite site A',C3:'Atelier B',F3:'Point C',A4:'Sem. 46',B4:'Site D',E4:'Réunion E'};
+  const merges={'calendrier intégration':['C3:D3']},colors={'calendrier intégration':{D4:'theme1'}};
+  const agenda=JSON.parse(run(`JSON.stringify(hkFromWorkbook(${JSON.stringify(book)},"plan.xlsx",${JSON.stringify(colors)},${JSON.stringify(merges)}).plan.agenda)`));
+  assert.deepEqual(agenda.map(w=>[w.week,w.from]),[[45,'2026-11-02'],[46,'2026-11-09']]);
+  assert.deepEqual(agenda[0].items.map(i=>[i.day,i.span,i.text]),[[0,1,'Visite site A'],[1,2,'Atelier B'],[4,1,'Point C']]);
+  assert.deepEqual(agenda[1].items.map(i=>[i.day,!!i.blocked]),[[0,false],[2,true],[3,false]]);
+  const demo=JSON.parse(run('JSON.stringify(hkDemoStrategy())'));assert.ok(demo.objectives.length>0&&demo.roadmap.length>0,'Le scénario fictif est reconnu par ses identifiants');
+  run(`const y=hkFromWorkbook(${JSON.stringify(book)},"plan.xlsx",{},${JSON.stringify(merges)});commitData(()=>{data.hoshinPlan=hkMerge(y.plan,null);hkArchiveDemo(hkDemoStrategy());hkApplyObjectives(data.hoshinPlan)})`);
+  assert.equal(run('osActive(data.objectives).filter(o=>!o.plan_key).length'),0,'Hoshin : plus d’objectif fictif actif');
+  assert.equal(run('data.roadmap.filter(r=>!r.archived_at).length'),0);assert.ok(run('data.objectives.some(o=>o.archived_at)'),'Archivés, pas supprimés');
+  run('state.role="lean";state.site="group";state.view="roadmap";render()');assert.equal(q('.rm-prio-title'),null,'Plus de priorités fictives');
+  run('state.view="hoshin";render()');assert.equal(all('.os-objective').length,4);
+});
+test('Accueil : seulement l’information utile, selon le profil',t=>{
+  const a=app(t),{run,q,all}=a;
+  run('state.role="lean";state.site="group";state.view="home";render()');
+  assert.equal(q('.jn-gemba'),null);assert.equal(q('.jn-week'),null,'Sans calendrier importé : pas de carte vide');assert.equal(q('.jn-plan'),null);
+  assert.ok(q('.jn-kpi'),'Indicateurs en écart');assert.ok(all('.jn-kpi [data-os="kpiDetail"]').length>0);
+  const monday=run('hkWeekMonday(today())'),week=run('hkIsoWeek(today())');
+  run(`data.hoshinPlan={source:{file:"x"},start:"${monday}",phases:[{name:"0. Cadrage",months:2}],milestones:[{name:"Go",date:"2099-01-31",criteria:"ok"}],tracks:{marzin:[{name:"Pré-diagnostic",status:"todo",from:"${monday}",to:hkAddDays("${monday}",13)}],sodeplax:[{name:"Pré-diagnostic",status:"todo",from:"${monday}",to:hkAddDays("${monday}",13)}]},agenda:[{week:${week},from:"${monday}",items:[{day:0,span:1,text:"Visite fictive"},{day:2,span:2,text:"Atelier fictif"}]}],waves:{},sequoia:{}};render()`);
+  assert.match(q('.jn-week').textContent,/Visite fictive[\s\S]*Atelier fictif/);assert.equal(all('.jn-agenda li').length,2);
+  assert.match(q('.jn-plan').textContent,/0\. Cadrage[\s\S]*Prochain jalon[\s\S]*Go/);assert.match(q('.jn-steps').textContent,/Marzin, Sodeplax/,'Sites aux mêmes étapes regroupés');
+  run('state.role="director";state.site="marzin";render()');assert.equal(q('.jn-week'),null,'Le calendrier d’intégration est celui du Responsable Lean');assert.doesNotMatch(q('.jn-steps').textContent,/Sodeplax/);
+  run('state.role="dg";state.site="group";render()');assert.ok(q('.jn-plan'));assert.equal(q('.jn-week'),null);
+  run('state.role="operator";state.site="marzin";render()');assert.ok(q('.jn-signal'));assert.equal(q('.jn-plan'),null);
 });
 test('Mantra du Groupe : la signature d’origine est visible',t=>{
   const a=app(t),{run,q}=a;

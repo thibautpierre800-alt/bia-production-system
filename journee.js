@@ -95,24 +95,86 @@ function jnActionsCard() {
 }
 function jnWatchCard() {
   const items = homePriorityItems().filter((i) => i.kind !== "action").slice(0, 3), dg = state.role === "dg";
-  if (!items.length && !dg) return "";
+  // Les suites du terrain n’apparaissent que s’il y en a : constats à trier, retours prévus.
+  const terrain = [];
+  if (!dg && jnCanGemba()) {
+    const sort = jnSortItems(), back = jnReturns();
+    if (sort.length) terrain.push(`<button type="button" class="jn-row" data-jn-sort><span class="jn-row-main"><span class="jn-tag tone-progress">Terrain</span><b>${jnPlural(sort.length, "constat à trier", "constats à trier")}</b><span class="hint">Gemba en attente de décision</span></span></button>`);
+    back.slice(0, 2).forEach((g) => terrain.push(`<button type="button" class="jn-row" data-jn-open="${esc(g.id)}"><span class="jn-row-main"><span class="jn-tag tone-${g.review_date < today() ? "bad" : "warn"}">Retour terrain</span><b>${esc(g.zone || "Visite")} · ${esc(getSiteName(g.site_id))}</b><span class="hint">${esc(shortDate(g.review_date))}</span></span></button>`));
+  }
+  if (!items.length && !terrain.length) return "";
   return `<section class="jn-card jn-watch" aria-label="${dg ? "À décider" : "À surveiller"}"><div class="jn-card-head"><h2>${dg ? "À décider" : "À surveiller"}</h2></div>
-    <div class="jn-rows">${items.map((i) => `<button type="button" class="jn-row" data-open-record="${esc(i.id)}"><span class="jn-row-main"><span class="jn-tag tone-${esc(i.tone)}">${esc(i.label)}</span><b>${esc(i.title)}</b><span class="hint">${esc(i.meta)}</span></span></button>`).join("") || '<p class="jn-empty">Rien à arbitrer pour l’instant.</p>'}</div></section>`;
+    <div class="jn-rows">${items.map((i) => `<button type="button" class="jn-row" data-open-record="${esc(i.id)}"><span class="jn-row-main"><span class="jn-tag tone-${esc(i.tone)}">${esc(i.label)}</span><b>${esc(i.title)}</b><span class="hint">${esc(i.meta)}</span></span></button>`).join("")}${terrain.join("")}</div></section>`;
+}
+// Cette semaine : le calendrier d’intégration importé (onglet du fichier de déploiement).
+function jnWeekCard() {
+  const plan = typeof hkPlan === "function" ? hkPlan() : null;
+  if (!plan?.agenda?.length || !(typeof hkCanPlan === "function" && hkCanPlan())) return "";
+  const monday = hkWeekMonday(today());
+  let week = plan.agenda.find((w) => w.from === monday), label = "Cette semaine";
+  if (!week) { week = plan.agenda.filter((w) => w.from > monday).sort((a, b) => a.from.localeCompare(b.from))[0]; label = "Semaine prochaine"; }
+  if (!week || !week.items.some((i) => i.text)) return "";
+  const names = ["Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam.", "Dim."];
+  const rows = week.items.slice().sort((a, b) => a.day - b.day).map((i) => {
+    const date = hkAddDays(week.from, i.day), end = i.span > 1 ? hkAddDays(week.from, i.day + i.span - 1) : null;
+    const when = `${names.at(i.day)} ${Number(date.slice(8))}${end ? ` – ${names.at(i.day + i.span - 1)} ${Number(end.slice(8))}` : ""}`;
+    const state_ = (end || date) < today() ? "past" : date <= today() && today() <= (end || date) ? "today" : "";
+    return `<li class="${state_}"><span class="jn-when">${esc(when)}</span><span>${i.text ? esc(i.text).replace(/\n/g, " · ") : "—"}</span></li>`;
+  }).join("");
+  return `<section class="jn-card jn-week" aria-label="${label}"><div class="jn-card-head"><h2>${label}</h2><span class="hint">S${week.week}</span></div><ul class="jn-agenda">${rows}</ul></section>`;
+}
+// Le plan de déploiement aujourd’hui : phase en cours, prochain jalon, étapes des sites en cours.
+function jnPlanCard() {
+  const plan = typeof hkPlan === "function" ? hkPlan() : null;
+  if (!plan || !role().nav.some((v) => v === "roadmap" || v === "hoshin")) return "";
+  const tl = hkTimeline(plan), cur = tl.current >= 0 ? tl.phases[tl.current] : null;
+  const next = (plan.milestones || []).filter((m) => m.date && !m.done && m.date >= today()).sort((a, b) => a.date.localeCompare(b.date))[0];
+  const days = next ? Math.round((Date.parse(next.date) - Date.parse(today())) / 86400000) : null;
+  const sites = OPERATIONAL_SITES.filter((s) => state.site === "group" || s.id === state.site);
+  const now = sites.flatMap((s) => (plan.tracks?.[s.id] || []).filter((st) => st.status !== "done" && st.from && st.from <= today() && today() <= st.to).map((st) => ({ s, st })));
+  const bySite = new Map();
+  for (const x of now) { if (!bySite.has(x.s.id)) bySite.set(x.s.id, []); bySite.get(x.s.id).push(x.st); }
+  if (!cur && !next && !bySite.size) return "";
+  // Les sites qui ont les mêmes étapes en cours sont regroupés sur une ligne.
+  const same = new Map();
+  for (const [id, steps] of bySite) {
+    const key = steps.map((st) => st.name).join(" · ") + "|" + steps.map((st) => st.to).sort()[0];
+    if (!same.has(key)) same.set(key, { sites: [], steps, to: steps.map((st) => st.to).sort()[0] });
+    same.get(key).sites.push(getSiteName(id));
+  }
+  const rows = [...same.values()].slice(0, 4).map((g) => `<li><b>${esc(g.sites.join(", "))}</b><span>${g.steps.map((st) => esc(st.name)).join(" · ")}</span><small>jusqu’au ${shortDate(g.to)}</small></li>`).join("");
+  return `<section class="jn-card jn-plan" aria-label="Plan de déploiement"><div class="jn-card-head"><h2>Plan de déploiement</h2><button type="button" class="jn-link" data-nav="${role().nav.includes("roadmap") ? "roadmap" : "hoshin"}">Roadmap</button></div>
+    ${cur ? `<p class="jn-summary"><b>${esc(cur.name)}</b> · ${esc(hkPeriod(cur.from, cur.to))}</p>` : ""}
+    ${next ? `<p class="jn-next"><span class="jn-tag tone-progress">Prochain jalon</span><b>${esc(next.name)}</b> · ${shortDate(next.date)} · dans ${days} jour${days > 1 ? "s" : ""}</p>` : ""}
+    ${rows ? `<ul class="jn-steps">${rows}</ul>` : ""}</section>`;
+}
+// Indicateurs en écart, du plus éloigné de la cible au moins éloigné.
+function jnKpiCard() {
+  if (!role().nav.includes("pilotage") || typeof inReading !== "function") return "";
+  const sites = OPERATIONAL_SITES.filter((s) => state.site === "group" || s.id === state.site);
+  const gaps = [];
+  for (const s of sites) for (const k of inKpis()) {
+    const r = inReading(s.id, k, today(), state.site === "group" ? null : state.workshop || null);
+    if (r.status === "gap") gaps.push({ s, k, r });
+  }
+  if (!gaps.length) return "";
+  gaps.sort((a, b) => (a.r.gap ?? 0) - (b.r.gap ?? 0));
+  const rows = gaps.slice(0, 4).map(({ s, k, r }) => `<button type="button" class="jn-row" data-os="kpiDetail" data-args="${esc(JSON.stringify({ siteId: s.id, kpiId: k.id, period: today() }))}"><span class="jn-row-main"><b>${esc(s.name)} · ${esc(inShort(k))} ${esc(osNum(r.m.value, 1))}${r.unit ? " " + esc(r.unit) : ""}</b><span class="hint">cible ${esc(osNum(r.target))}${r.unit ? " " + esc(r.unit) : ""}${r.trend.count > 1 ? ` · ${r.trend.count} relevés hors cible de suite` : ""}</span></span><span class="jn-tag tone-critical">Écart</span></button>`).join("");
+  return `<section class="jn-card jn-kpi" aria-label="Indicateurs en écart"><div class="jn-card-head"><h2>Indicateurs en écart</h2><button type="button" class="jn-link" data-nav="pilotage">Tous les indicateurs</button></div><p class="jn-summary">${jnPlural(gaps.length, "indicateur en écart", "indicateurs en écart")} sur ${sites.length > 1 ? `${sites.length} sites` : "le site"}</p><div class="jn-rows">${rows}</div></section>`;
 }
 function jnSignalCard() {
   const idea = role().nav.includes("kaizen") ? `<button type="button" class="btn secondary" data-os="new" data-args="${esc(JSON.stringify({ key: "kaizens" }))}">Proposer une idée</button>` : "";
   return `<section class="jn-card jn-signal" aria-label="Signaler"><div class="jn-card-head"><h2>Un problème au poste ?</h2></div><p class="jn-lead">Un fait, une photo : votre responsable est prévenu.</p><div class="jn-buttons"><button type="button" class="btn jn-big" data-new-signal>Signaler</button>${idea}</div></section>`;
 }
+// 8.5 · L’accueil ne montre que de l’information utile pour la journée ; une carte
+// sans contenu n’est pas affichée. Le Gemba se démarre depuis « + » ou Observer.
 renderHome = function () {
   const r = state.role, cards = [];
-  if (r === "dg") cards.push(jnWatchCard(), jnActionsCard());
-  else {
-    if (r === "operator" && role().nav.includes("terrain")) cards.push(jnSignalCard());
-    if (jnCanGemba()) cards.push(jnGembaCard());
-    if (role().nav.includes("actions")) cards.push(jnActionsCard());
-    cards.push(jnWatchCard());
-  }
-  return `<div class="jn-home role-${esc(r)}">${jnHead()}<div class="jn-grid">${cards.filter(Boolean).join("")}</div></div>`;
+  if (r === "dg") cards.push(jnWatchCard(), jnKpiCard(), jnPlanCard(), jnActionsCard());
+  else if (r === "operator") cards.push(role().nav.includes("terrain") ? jnSignalCard() : "", role().nav.includes("actions") ? jnActionsCard() : "");
+  else cards.push(jnWeekCard(), jnPlanCard(), role().nav.includes("actions") ? jnActionsCard() : "", jnKpiCard(), jnWatchCard());
+  const shown = cards.filter(Boolean);
+  return `<div class="jn-home role-${esc(r)}">${jnHead()}${shown.length ? `<div class="jn-grid">${shown.join("")}</div>` : '<p class="jn-empty jn-quiet">Rien d’urgent aujourd’hui.</p>'}</div>`;
 };
 
 /* ---------- Gemba express : démarrer ---------- */
