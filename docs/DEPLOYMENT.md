@@ -81,3 +81,7 @@ La branche `backup/before-8.5.0-2026-11-06` conserve le commit `ef2a930`, corres
 ## Retour à 8.5.0
 
 La branche `backup/before-8.6.0-2026-11-06` conserve le commit `0ba1aa3`, correspondant à la version 8.5.0. La 8.6.0 ne change que l’affichage des dossiers de résolution (`modeles.js`, styles dans `ux.css`) et ne crée aucun champ ; revenue en 8.5.0, les dossiers s’ouvrent comme avant.
+
+## Retour à 8.6.0
+
+La branche `backup/before-8.6.1-2026-11-06` conserve le commit `cc353c3`, correspondant à la version 8.6.0. La 8.6.1 n’ajoute que de l’affichage (graphiques dans les fiches) ; aucune donnée n’est créée ni modifiée.
