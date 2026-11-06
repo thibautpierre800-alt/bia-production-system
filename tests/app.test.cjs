@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-2-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.2.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-3-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.3.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -172,6 +172,59 @@ test('Le Moine, septième entité : ajoutée sans perte de données et sans vale
   c.run('state.role="lean";state.site="le-moine";render()');
   const d=app(t);d.run('state.role="director";state.site="le-moine";state.view="pilotage";state.pilotageMode="analysis";state.osTab="tower";render()');
   assert.ok(d.all('.in-tile').length>0);assert.match(d.q('#appView').textContent,/Le Moine/);
+});
+// Classeur fictif, construit sur le modèle du fichier de déploiement (aucune donnée réelle).
+const HK_SAMPLE={
+  'matrice de prio':{A1:'AC',B1:'1 faible - 5 fort',C1:'1 - 3 pour la ponderation',C2:'Critère A',D2:'Critère B',E2:'Critère C',F2:'Critère D',G2:'TOTAL',A3:'le 01/09/2026',B3:'poids',C3:1,D3:3,E3:2,F3:2,B4:'MARZIN',C4:2,D4:4,E4:1,G4:16,B5:'AG DECO',C5:5,D5:1,E5:3,G5:14,B6:'LEMOINE',C6:1,D6:5,E6:4,G6:24,B7:'USINE INCONNUE',C7:3,D7:3,E7:3,B10:'TOP 2',C10:'LEMOINE',D10:'note fictive',C11:'MARZIN'},
+  'phases et actions':{A1:'Phase',B1:'Durée',C1:'Actions clés',D1:'Livrable(s)',E1:'planning détaillé',A2:'0. Lancement',B2:'1 mois',C2:'Cadrer',D2:'Lettre',A3:'1. Essai',B3:'2 mois',C3:'Tester',D3:'Bilan',A5:'Gouvernance',A6:'Instance',B6:'Rythme',C6:'Composition',D6:'Rôle',A7:'Comité',B7:'Mensuel',C7:'Direction',D7:'Arbitrer',A9:'Jalon',B9:'Date',C9:'Critères pour passer',A10:'Go essai',B10:'Fin juin 2027',C10:'Essai prêt',A11:'Fin',B11:46752,C11:'Bilan fait',A12:'Indicateurs de suivi : TRS, rebuts',A14:'Risques',B14:'valeur',C14:'Parade',A15:'Manque de temps',C15:'Réunions courtes'},
+  'Macros étapes':{B3:'Étape un',D3:'Étape deux',F3:'Étape trois',B7:'Description',D7:'DESCRIPTION',F7:'DESCRIPTION',B8:'Texte un',D8:'Texte deux',F8:'Texte trois'},
+  'planning':{A1:'Date ',B1:46327,A2:'Projet',B2:'Programme fictif',A3:'Equipe',B3:'Équipe test',A4:'Objectif',B4:'Essai',A8:'N° Tâche',B8:'Tâches',C8:'Qui',D8:'Délai',E8:'% Réalisé',A9:1,B9:'Pilotage et Calendrier Macro',A10:1.1,B10:'Cadrage',C10:'LP',D10:'1 mois',A12:2,B12:'MARZIN',A13:2.1,B13:'Pré-diagnostic',E13:1,A14:2.2,B14:'Mise en place',E14:0.5,A15:2.3,A16:3,B16:'AG DECO',A20:'',B20:'Les aspects à aborder :',B21:'Flux physiques',B22:'Qualité produit',A24:'INDICATEURS',B26:'nombre de tâches'}
+};
+test('Hoshin Kanri : lecture du fichier de déploiement (matrice, phases, jalons, planning)',t=>{
+  const a=app(t),{run}=a;
+  const r=run(`(()=>{const x=hkFromWorkbook(${JSON.stringify(HK_SAMPLE)},"plan.xlsx");return JSON.stringify(x)})()`),{plan,report}=JSON.parse(r);
+  assert.equal(plan.matrix.date,'2026-09-01');assert.deepEqual(plan.matrix.criteria.map(c=>c.weight),[1,3,2,2]);
+  assert.deepEqual(Object.keys(plan.matrix.scores).sort(),['ag-deco','le-moine','marzin']);
+  assert.equal(plan.matrix.scores['le-moine'].c4,null,'Critère vide : non noté');
+  assert.deepEqual(plan.matrix.top.map(t=>t.site_id),['le-moine','marzin']);assert.equal(plan.matrix.top[0].note,'note fictive');
+  assert.ok(report.warnings.some(w=>/USINE INCONNUE/.test(w)));assert.ok(report.warnings.some(w=>/Critère D/.test(w)));
+  assert.deepEqual(plan.phases.map(p=>[p.name,p.months]),[['0. Lancement',1],['1. Essai',2]]);
+  assert.deepEqual(plan.milestones.map(m=>[m.name,m.date]),[['Go essai','2027-06-30'],['Fin','2027-12-31']]);
+  assert.equal(plan.governance[0].rhythm,'Mensuel');assert.equal(plan.risks[0].mitigation,'Réunions courtes');assert.equal(plan.indicators,'TRS, rebuts');
+  assert.deepEqual(plan.macroSteps.map(m=>m.title),['Étape un','Étape deux','Étape trois']);assert.equal(plan.macroSteps[1].description,'Texte deux');
+  assert.equal(plan.start,'2026-11-01');assert.equal(plan.title,'Programme fictif');
+  assert.deepEqual(plan.tracks.marzin.map(s=>[s.name,s.status]),[['Pré-diagnostic','done'],['Mise en place','doing']]);
+  assert.deepEqual(plan.tracks['ag-deco'],[]);assert.equal(plan.macroTasks.length,1);
+  assert.deepEqual(plan.topics,['Flux physiques','Qualité produit']);
+  assert.equal(run(`hkTotal(${JSON.stringify(plan.matrix)},"le-moine")`),24);
+  assert.deepEqual(Array.from(run(`hkRanking(${JSON.stringify(plan.matrix)}).map(r=>r.id)`)),['le-moine','marzin','ag-deco']);
+});
+test('Hoshin Kanri : cap, priorités classées, plan, avancement par site et droits',t=>{
+  const a=app(t),{run,q,all,click,fill,submit}=a;
+  run('state.role="lean";state.site="group";state.view="hoshin";render()');
+  assert.match(q('.hk-cap').textContent,/D’artisan industriel à industriel artisan/);assert.ok(q('.hk-empty'),'Sans fichier : on explique quoi importer');
+  assert.ok(q('[data-hk-import]'));
+  run(`const x=hkFromWorkbook(${JSON.stringify(HK_SAMPLE)},"plan.xlsx");x.plan.start=osDateOffset(-10);commitData(()=>{data.hoshinPlan=x.plan});render()`);
+  assert.deepEqual(all('.hk-row:not(.hk-head) .hk-site').map(x=>x.textContent.replace(/TOP|\d/g,'').trim()),['Le Moine','Marzin','Ag Déco']);
+  assert.equal(all('.hk-top').length,2);assert.deepEqual(all('.hk-total b').map(b=>b.textContent),['24','16','14']);
+  assert.equal(all('#appView select').length,0,'Aucun menu déroulant');
+  assert.match(q('.hk-cap').textContent,/Lancement/);assert.equal(all('.hk-phase.now').length,1);
+  assert.equal(all('.hk-miles li').length,2);click('[data-hk-milestone="0"]');assert.equal(run('data.hoshinPlan.milestones[0].done'),true);
+  click('[data-hk-step*="marzin"]');assert.equal(run('data.hoshinPlan.tracks.marzin[0].status'),'todo','Fait → à faire');
+  click('[data-hk-seq*="marzin"]');assert.equal(run('data.hoshinPlan.sequoia.marzin'),1);
+  click('[data-hk-edit-matrix]');fill('#hkMatrixForm [name="s-marzin-c1"]','5');submit('#hkMatrixForm');
+  assert.equal(run('hkTotal(data.hoshinPlan.matrix,"marzin")'),19);
+  click('[data-hk-waves]');q('#hkWavesForm input[name="wave-le-moine"][value="pilot"]').checked=true;submit('#hkWavesForm');assert.equal(run('data.hoshinPlan.waves["le-moine"]'),'pilot');
+  assert.match(q('.hk-prio').textContent,/Pilote/);
+  const kept=run(`JSON.stringify(hkMerge(hkFromWorkbook(${JSON.stringify(HK_SAMPLE)},"plan.xlsx").plan,data.hoshinPlan))`);
+  const merged=JSON.parse(kept);assert.equal(merged.waves['le-moine'],'pilot');assert.equal(merged.milestones[0].done,true);assert.equal(merged.sequoia.marzin,1);
+  run('state.role="director";state.site="marzin";render()');
+  assert.equal(all('.hk-row:not(.hk-head)').length,1,'Directeur : sa ligne seulement');assert.equal(q('[data-hk-import]'),null);assert.equal(q('[data-hk-edit-matrix]'),null);
+  assert.equal(all('.hk-site-row').length,1);click('[data-hk-step*="marzin"]');assert.equal(run('data.hoshinPlan.tracks.marzin[0].status'),'doing','Le directeur fait avancer son site');
+  run('state.role="dg";state.site="group";render()');assert.equal(all('[data-hk-step]').length,0);assert.equal(all('[data-hk-milestone]').length,0);assert.equal(q('[data-hk-import]'),null);
+  assert.equal(all('.hk-row:not(.hk-head)').length,3,'La DG voit tout le classement');
+  const b=app(t,a.stored());b.run('state.role="lean";state.site="group";state.view="hoshin";render()');assert.equal(b.all('.hk-total b')[0].textContent,'24');assert.equal(b.run('data.hoshinPlan.waves["le-moine"]'),'pilot','Plan conservé après rechargement');
+  assert.ok(b.q('.os-hoshin-tree'),'La déclinaison des objectifs reste en dessous');
 });
 test('Mantra du Groupe : la signature d’origine est visible',t=>{
   const a=app(t),{run,q}=a;

@@ -20,6 +20,7 @@ const scripts = [
   "journee.js",
   "indicateurs.js",
   "maturite.js",
+  "hoshin.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {
