@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-7-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.7.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-8-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.8.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -644,5 +644,5 @@ test('Photos : format invalide refusé, dernière sélection prioritaire',async 
   run('modal("Photo",\'<input id="testPhoto" type="file"><div id="testPreview"></div>\');window.photoResolvers=[];imageDataUrl=()=>new Promise(resolve=>photoResolvers.push(resolve));window.testPicker=photoPicker("testPhoto","testPreview","")');
   const input=q('#testPhoto');Object.defineProperty(input,'files',{value:[new w.File(['x'],'a.jpg',{type:'image/jpeg'})],configurable:true});input.dispatchEvent(new w.Event('change'));
   Object.defineProperty(input,'files',{value:[new w.File(['y'],'b.jpg',{type:'image/jpeg'})],configurable:true});input.dispatchEvent(new w.Event('change'));
-  run('photoResolvers[1]("data:image/jpeg;base64,Yg==")');await new Promise(r=>setImmediate(r));run('photoResolvers[0]("data:image/jpeg;base64,YQ==")');await new Promise(r=>setImmediate(r));assert.equal(run('testPicker.value'),'data:image/jpeg;base64,Yg==');
+  run('photoResolvers[1]("data:image/jpeg;base64,Yg==")');await new Promise(r=>setImmediate(r));run('photoResolvers[0]("data:image/jpeg;base64,YQ==")');await new Promise(r=>setImmediate(r));for(let i=0;i<100&&run('testPicker.busy');i++)await new Promise(r=>setTimeout(r,20));assert.equal(run('safePhoto(testPicker.value)'),'data:image/jpeg;base64,Yg==');
 });

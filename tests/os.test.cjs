@@ -635,3 +635,68 @@ test("Ma journée 8.0 · accueil par profil et Gemba express jusqu’au plan d�
   assert.equal(a.q("[data-new-gemba]"), null);
 });
 
+test("Calepin Gemba 8.8 · nature des notes, risque immédiat, photos, compte rendu et remarques sur l’appli", (t) => {
+  const a = app(t);
+  a.run('state.site="group";state.role="lean";state.view="terrain";state.terrainTab="gemba";render()');
+  assert.match(a.q("#appView").textContent, /même sans réseau/);
+  a.run("jnStart()");
+  a.fill("#jnZone", "Stockage et logistique");
+  a.submit("#jnStartForm");
+  const gid = a.run("data.gembas[0].id");
+  assert.equal(a.all("[data-cp-kind]").length, 5, "Cinq natures de note");
+  a.click('[data-cp-kind="question"]');
+  assert.equal(a.q("#cpFactLabel").textContent, "La question");
+  a.fill("#jnFact", "Qui affecte les emplacements au sol ?");
+  a.click('[data-jn-fam="Flux"]');
+  a.click('[data-jn-save="next"]');
+  a.click('[data-cp-kind="risque"]');
+  a.run('$("jnFamValue").value="";document.querySelectorAll("[data-jn-fam]").forEach(b=>b.classList.remove("active"))');
+  a.click("[data-cp-urgent]");
+  assert.equal(a.q("#jnFamValue").value, "Sécurité", "Un risque immédiat se range en sécurité par défaut");
+  a.fill("#jnFact", "Coffret électrique au sol, câbles exposés");
+  a.click('[data-jn-save="next"]');
+  a.click('[data-cp-kind="positif"]');
+  a.fill("#jnFact", "Feuilles vertes de suivi claires");
+  a.click('[data-jn-save="done"]');
+  a.run(`jnConstat("${gid}",null,{photos:["data:image/jpeg;base64,YQ=="]})`);
+  assert.equal(a.all("#cpPhotos .cp-ph").length, 1, "Photo d’abord : la note s’ouvre avec la photo");
+  a.fill("#jnFact", "Palettes au sol devant le rack 4");
+  a.click('[data-jn-save="done"]');
+  const obs = JSON.parse(a.run(`JSON.stringify(data.gembas.find(g=>g.id==="${gid}").observations.map(o=>[o.kind,o.urgent,o.decision,o.category,o.photos.length,o.photo,!!o.noted_at]))`));
+  assert.deepEqual(obs, [
+    ["question", false, "À décider", "Flux", 0, "", true],
+    ["risque", true, "À décider", "Sécurité", 0, "", true],
+    ["positif", false, "Conforme", "Sécurité", 0, "", true],
+    ["fait", false, "À décider", "Sécurité", 1, "data:image/jpeg;base64,YQ==", true],
+  ]);
+  a.run(`openGemba("${gid}")`);
+  assert.match(a.q(".cp-alert").textContent, /1 risque immédiat/);
+  assert.match(a.q(".cp-count").textContent, /1 question · 1 point fort · 1 photo/);
+  assert.ok(a.q(".cp-obs.urgent"));
+  a.fill("#cpPeople", "Chef d’équipe logistique");
+  assert.equal(a.run(`data.gembas.find(g=>g.id==="${gid}").people`), "Chef d’équipe logistique");
+  a.run(`jnSort("${gid}")`);
+  assert.match(a.q(".jn-sort-card").textContent, /Risque immédiat.*Coffret/, "Le risque immédiat se trie en premier");
+  a.click('[data-jn-pick="action"]');
+  a.fill("#jnWhat", "Relever le coffret et protéger les câbles");
+  a.fill("#jnOwner", "Pierre Thibaut");
+  a.click('[data-jn-confirm="action"]');
+  assert.equal(a.run("data.actions[0].priority"), "Haute");
+  a.run(`cpReport("${gid}")`);
+  const report = a.q(".cp-report").textContent;
+  for (const part of ["Risques immédiats", "Points forts", "Constats · Sécurité", "Questions ouvertes", "Actions décidées", "Chef d’équipe logistique"]) assert.ok(report.includes(part), part);
+  assert.match(a.run(`cpReportText(data.gembas.find(g=>g.id==="${gid}"))`), /RISQUES IMMÉDIATS[\s\S]*→ Action A-[\s\S]*pas un plan d’action définitif/);
+  // Sauvegarde : les photos de la base voyagent avec le fichier et reviennent à l’import.
+  a.run(`window.cpRaw=JSON.parse(JSON.stringify(data));cpRaw.gembas.find(g=>g.id==="${gid}").observations[0].photo="photo:PH-1-abcde";cpRaw.photos={"PH-1-abcde":"data:image/jpeg;base64,Yg==","../x":"data:image/jpeg;base64,Yg=="};window.cpOut=validateImport(cpRaw)`);
+  assert.equal(a.run(`safePhoto(cpOut.gembas.find(g=>g.id==="${gid}").observations[0].photo)`), "data:image/jpeg;base64,Yg==");
+  assert.equal(a.run("photoImage('photo:PH-404-zzzzz')").includes("src="), false, "Une photo absente n’affiche rien de faux");
+  // Remarques sur l’appli : notées sur place, copiables pour la prochaine version.
+  a.run("closeModal();openCreateMenu()");
+  a.click("[data-cp-note]");
+  a.fill("#cpNoteText", "Trop de clics pour ajouter une photo");
+  a.submit("#cpNoteForm");
+  assert.equal(a.run("cpNotes().length"), 1);
+  assert.match(a.run("cpNotesText(cpNotes())"), /Ça gêne · .* : Trop de clics pour ajouter une photo/);
+  assert.equal(a.all(".cp-note-list li").length, 1);
+});
+

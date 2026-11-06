@@ -339,6 +339,33 @@ async function main() {
       ),
       true,
     );
+    // 8.8 · A photo kept in the browser photo base survives a reload and
+    // travels with an exported backup.
+    const ref = await page.evaluate(async (id) => {
+      const r = await phStore("data:image/jpeg;base64,YWJj");
+      commitData(() => { const g = data.gembas.find((x) => x.id === id); g.observations[0].photo = r; g.observations[0].photos = [r]; });
+      return r;
+    }, gembaId);
+    assert.match(ref, /^photo:PH-/);
+    assert.ok(!(await page.evaluate(() => localStorage.getItem(STORAGE_KEY))).includes("YWJj"), "La photo n’alourdit pas la sauvegarde locale");
+    await page.reload();
+    assert.equal(
+      await page.evaluate(async (r) => { await phReady; await phGet(r.slice(6)); return phSrc(r) || (await phGet(r.slice(6)))?.data; }, ref),
+      "data:image/jpeg;base64,YWJj",
+    );
+    const exported = await page.evaluate(async () => {
+      let text = "";
+      const create = URL.createObjectURL;
+      URL.createObjectURL = (blob) => { blob.text().then((t) => (text = t)); return "blob:test"; };
+      const click = HTMLAnchorElement.prototype.click;
+      HTMLAnchorElement.prototype.click = () => {};
+      await exportData();
+      await new Promise((r) => setTimeout(r, 50));
+      URL.createObjectURL = create;
+      HTMLAnchorElement.prototype.click = click;
+      return JSON.parse(text).photos;
+    });
+    assert.equal(exported[ref.slice(6)], "data:image/jpeg;base64,YWJj");
     await page.goto(url + "#hoshin");
     await page.reload();
     assert.match(await page.locator("#appView").innerText(), /Hoshin/);

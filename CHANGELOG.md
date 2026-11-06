@@ -1,5 +1,21 @@
 # Changelog
 
+## 8.8.0 — 6 novembre 2026
+
+**Calepin Gemba : noter sur le terrain au téléphone, avec photos, hors ligne.**
+
+- Une note en dix secondes : « Photo d’abord » ouvre l’appareil photo, puis une phrase ; ou « + Note ». Chaque note a sa nature (constat, risque à vérifier, question, piste, point fort), sa famille, son heure, et peut être marquée « Risque immédiat ».
+- Jusqu’à trois photos par note, prises à l’appareil ou choisies dans la galerie, annotées au doigt (entourer en rouge, jaune ou blanc).
+- Les photos sont rangées dans la base photos du navigateur : des centaines de photos sans saturer la sauvegarde locale. La sauvegarde exportée (Compte) embarque les photos et les restaure à l’import. Le stockage persistant est demandé au navigateur.
+- La visite affiche le décompte (constats, risques, questions, pistes, points forts, photos) et les risques immédiats à traiter ; « Avec qui ? » garde les personnes rencontrées.
+- Au tri, les risques immédiats passent en premier ; une action qui en sort est prioritaire (Haute), un signal est de gravité Haute. Un point fort est gardé sans tri.
+- Compte rendu de visite : risques immédiats, points forts, constats par famille, questions ouvertes, pistes, actions décidées, photos ; imprimable sur une page, copiable pour un mail, partageable depuis le téléphone. Il rappelle que ce sont des observations à confirmer, pas un plan d’action définitif.
+- Hors ligne : bandeau « Hors ligne · tout reste enregistré sur cet appareil ». Installation sur l’écran d’accueil (Android : bouton « Installer » ; iPhone : Partager → Sur l’écran d’accueil), icônes du téléphone ajoutées.
+- L’accueil signale le Gemba en cours, à reprendre d’un geste.
+- Remarques sur l’appli : depuis « + », noter ce qui gêne ou manque sur l’écran concerné ; la liste se copie pour préparer la version suivante.
+
+Champs ajoutés aux constats, sans rien retirer : `kind`, `urgent`, `photos`, `noted_at` ; à la visite : `people`. `photo` reste la première photo.
+
 ## 8.7.0 — 6 novembre 2026
 
 **On écrit directement dans les cases du modèle, et chaque outil dit quand et pourquoi l’utiliser.**
