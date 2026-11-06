@@ -109,3 +109,7 @@ La branche `backup/before-8.11.0-2026-11-06` conserve le commit `a4dde7a`, corre
 ## Retour à 8.11.0
 
 La branche `backup/before-8.12.0-2026-11-06` conserve le commit `10dd828`, correspondant à la version 8.11.0. La 8.12.0 ajoute l’éditeur de standard (`standards.js`) et `structured_data.st` dans les documents STANDARD ; la 8.11.0 ignore ce champ et ouvre ces documents avec l’ancien formulaire en six rubriques.
+
+## Retour à 8.12.0
+
+La branche `backup/before-8.13.0-2026-11-06` conserve le commit `0bf5436`, correspondant à la version 8.12.0. La 8.13.0 ajoute l’onglet SMED (`smed.js`) et la collection `smed`, que la 8.12.0 ignore et conserve. Les actions issues du SMED restent dans le plan d’actions ; les standards de changement restent des standards de poste.
