@@ -92,3 +92,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `gembas[].people` : personnes rencontrées pendant la visite.
 - Photos : une valeur `photo:<id>` désigne une photo de la base photos du navigateur (IndexedDB `bia-photos`). Une sauvegarde exportée ajoute `photos: {<id>: data URL}` ; l’import les range dans la base, ou les réintègre dans la fiche si la base est indisponible. Les anciennes photos intégrées (`data:image/…`) restent valides.
 - Remarques sur l’appli : clé locale `biaAppNotes`, hors des données métier.
+
+## Extension 8.9.0 (additive)
+
+- `etonnement` : objet par périmètre (`group` ou identifiant de site) → `{ message, from, to, themes: { <famille>: { analysis, stake, reco, action } }, updated_at }`. Les constats eux-mêmes restent dans les Gemba : le rapport ne recopie que les mots du responsable Lean.
