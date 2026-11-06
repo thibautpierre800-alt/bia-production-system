@@ -307,7 +307,7 @@ test("G · benchmark → site en difficulté → pratique validée ailleurs, san
   demo(a);
   a.run('state.view="pilotage";state.osTab="tower";render()');
   assert.equal(a.all(".os-kpi-cell").length, 0);
-  assert.ok(a.all(".control-analysis-table tbody tr").length >= 5);
+  assert.ok(a.all(".in-cell.gap, .in-cell.warn").length >= 5);
   assert.match(a.q("#appView").textContent, /Pilotage · Analyser/);
   assert.match(a.q("#appView").textContent, /Décider/);
   const result = JSON.parse(
@@ -317,7 +317,8 @@ test("G · benchmark → site en difficulté → pratique validée ailleurs, san
   );
   assert.ok(result.practices.includes("BP-transfert"));
   assert.equal(result.basis.length, 5);
-  assert.match(a.q("#appView").textContent, /Suggestion à examiner/);
+  assert.match(a.q("#appView").textContent, /À creuser/);
+  assert.match(a.q(".in-drifts").textContent, /Pratique validée ailleurs/);
   a.run('osOpenTrace("BP-transfert")');
   assert.match(a.q("#modalContent").textContent, /TRS/);
 });

@@ -108,8 +108,8 @@ async function main() {
       render();
     });
     assert.ok(
-      (await page.locator(".control-analysis-table tbody tr").count()) >= 5,
-      "La Control Tower doit afficher les priorités multisites",
+      (await page.locator(".in-cell.gap, .in-cell.warn").count()) >= 5,
+      "Analyser doit montrer tous les indicateurs multisites",
     );
     assert.equal(await page.locator(".pilotage-switch").count(), 1);
     assert.deepEqual(await page.locator("[data-pilotage-mode] b").allTextContents(), ["Analyser", "Décider"]);
@@ -447,7 +447,6 @@ async function main() {
     assert.ok(await page.evaluate(()=>data.documents.find(d=>d.id==="DOC-VSM-demo").vsm.baseline));
 
     await page.evaluate(()=>{closeModal();state.view="pilotage";state.site="marzin";state.osTab="tower";state.pilotageMode="analysis";render()});
-    await page.locator('.os-environment summary').click();
     await page.locator('[data-improvement="environment"]').click();
     for(const [name,value] of Object.entries({title:"Atelier / famille pilote",good_units:"100",energy_kwh:"300",evidence:"Compteur atelier mesuré"}))await page.locator(`#osForm [name="${name}"]`).fill(value);
     await page.locator('#osForm [name="waste_type"]').selectOption("Défauts");
@@ -464,11 +463,12 @@ async function main() {
     assert.equal(aiCalls,1);
     await page.evaluate(()=>{closeModal();delete data.settings.assistantEndpoint;save();state.site="group";state.view="pilotage";state.osTab="tower";render()});
     await page.setViewportSize({width:1440,height:1100});
-    assert.equal(await page.locator('.os-site-summary').count(),6);
-    await page.locator('.os-multisite-map').screenshot({path:path.join(output,"multisite-74-desktop.png"),animations:"disabled"});
+    assert.equal(await page.locator('.in-site').count(),6);
+    assert.equal(await page.locator('#appView select').count(),0);
+    await page.locator('.in-wall').screenshot({path:path.join(output,"multisite-74-desktop.png"),animations:"disabled"});
     await page.setViewportSize({width:390,height:844});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
-    await page.locator('.os-multisite-map').screenshot({path:path.join(output,"multisite-74-mobile.png"),animations:"disabled"});
+    await page.locator('.in-wall').screenshot({path:path.join(output,"multisite-74-mobile.png"),animations:"disabled"});
     report.improvements74={sustainment:true,vsmImport:true,environment:true,aiMockOnly:true,multisite:true};
 
     // Offline reload uses one installed release, under a non-root base URL.
