@@ -10,7 +10,19 @@ const root = path.resolve(process.argv[2] || "."),
     ".css": "text/css; charset=utf-8",
     ".json": "application/json",
     ".svg": "image/svg+xml",
-  };
+    ".png": "image/png",
+    ".webmanifest": "application/manifest+json",
+  },
+  // BIA_CSP=1 applique les en-têtes conseillés pour le serveur du Groupe
+  // (deploy/), pour vérifier que l'application les respecte.
+  csp =
+    process.env.BIA_CSP === "1"
+      ? {
+          "Content-Security-Policy":
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'",
+          "Referrer-Policy": "same-origin",
+        }
+      : {};
 http
   .createServer((req, res) => {
     let pathname;
@@ -39,6 +51,7 @@ http
         "Content-Type": types[path.extname(file)] || "application/octet-stream",
         "Cache-Control": "no-cache",
         "X-Content-Type-Options": "nosniff",
+        ...csp,
       });
       res.end(bytes);
     });

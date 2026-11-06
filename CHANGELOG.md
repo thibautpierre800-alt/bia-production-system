@@ -13,6 +13,8 @@
 
 Nouvelle donnée : `data.etonnement`, par périmètre (Groupe ou site), conservée par la sauvegarde exportée.
 
+Pour le service informatique : `deploy/` (configurations IIS, nginx et Apache avec en-têtes de sécurité vérifiés sur tous les écrans, procédure de mise en ligne, de reprise des données et de retour arrière) et `docs/API.md` (contrat proposé pour l’étape 2 : connexion par le compte de l’entreprise, fiches, photos, droits, stockage, reprise). `scripts/serve.cjs` sert les PNG et, avec `BIA_CSP=1`, applique les mêmes en-têtes.
+
 ## 8.8.0 — 6 novembre 2026
 
 **Calepin Gemba : noter sur le terrain au téléphone, avec photos, hors ligne.**

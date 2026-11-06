@@ -43,7 +43,7 @@ Dans Administration, **Explorer le scénario complet** charge un cas industriel 
 
 ## Périmètre de mise en service
 
-Les données sont enregistrées dans le navigateur utilisé, avec contrôle du quota et des conflits entre onglets. Exporter régulièrement une sauvegarde JSON depuis Compte. Le hors connexion demande une première ouverture connectée réussie. La file locale prépare un paquet JSON exploitable par un futur serveur, mais ne transmet encore aucune donnée.
+Les données sont enregistrées dans le navigateur utilisé, avec contrôle du quota et des conflits entre onglets. Les photos sont rangées dans la base photos du navigateur et incluses dans la sauvegarde exportée. Exporter régulièrement une sauvegarde JSON depuis Compte. Le hors connexion demande une première ouverture connectée réussie. La file locale prépare un paquet JSON exploitable par un futur serveur, mais ne transmet encore aucune donnée.
 
 Les cinq profils — DG, Responsable Lean, Directeur de site, Chef d’équipe et Opérateur — sont des **permissions fonctionnelles locales**, sélectionnables pour les usages et la démonstration. L’interface Essentielle réduit seulement la navigation ; l’interface Complète réaffiche les modules autorisés. Ces profils ne constituent pas une authentification et ne protègent pas une base partagée. Il n’existe pas de synchronisation entre appareils. SEQUOIA, ERP, MES et SQL ne sont pas connectés. Le CSV fonctionne ; les secrets et connexions automatiques devront être gérés par un service serveur autorisé.
 
@@ -54,6 +54,8 @@ Les cinq profils — DG, Responsable Lean, Directeur de site, Chef d’équipe e
 - [Modèle de données et migration](docs/DATA_MODEL.md)
 - [Installation et tests](docs/INSTALLATION.md)
 - [Déploiement et retour arrière](docs/DEPLOYMENT.md)
+- [Mettre l’application sur le serveur du Groupe](deploy/README.md) : IIS, nginx ou Apache, en-têtes de sécurité, reprise des données
+- [Étape 2 · données partagées : le contrat proposé](docs/API.md)
 - [Contrats de connecteurs](docs/CONNECTORS.md)
 - [Réception et limites de mise en service](docs/RECEPTION.md)
 - [Changelog](CHANGELOG.md)

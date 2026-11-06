@@ -1,0 +1,17 @@
+# BIA Lean OS · Apache 2.4. À placer à la racine du dossier publié (contenu de dist/).
+# Modules : mod_headers, mod_mime (et AllowOverride FileInfo Indexes pour ce dossier).
+DirectoryIndex index.html
+AddType text/javascript .js
+AddType application/json .json
+AddType application/manifest+json .webmanifest
+AddType image/svg+xml .svg
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "same-origin"
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header set Cache-Control "public, max-age=604800"
+  <FilesMatch "^(index\.html|service-worker\.js|manifest\.json)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
