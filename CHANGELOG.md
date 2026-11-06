@@ -1,5 +1,19 @@
 # Changelog
 
+## 8.0.0 — 6 novembre 2026
+
+**Le quotidien : une seule navigation, et ce qui sert chaque jour (Gemba, plan d’actions) en premier.**
+
+- Une seule navigation : le menu de gauche sur ordinateur, la barre du bas sur téléphone (Accueil et les étapes du chemin). La barre d’étapes en haut des pages, le bouton maison et le menu ☰ du téléphone disparaissent ; « Plus » (outils, compte, paramètres) passe dans le bouton de contexte.
+- Plus aucune pastille numérotée : ni numéro d’étape, ni compteur dans les menus. Une icône et un mot par étape. La cloche affiche un point, pas un nombre.
+- Une seule ligne d’onglets en haut de page, et seulement si l’étape a plusieurs écrans. Écrans et sous-onglets fusionnés : Observer = Gemba · Signaux · Audits · Statistiques. Toucher l’étape en cours ramène à son premier onglet. Titre masqué quand il répète l’onglet actif.
+- Accueil « Ma journée », par profil : carte Gemba (démarrer, reprendre la visite en cours, constats à trier, retours terrain prévus), Mes actions (en retard, cette semaine, à vérifier ; un geste ouvre la fiche rapide ; point de la semaine), À surveiller (trois sujets au plus). DG : À décider et actions en retard, sans saisie. Opérateur : Signaler et ses actions. Bandeau, compteurs, tuiles et « Reprendre mon travail » retirés.
+- Gemba express : démarrer avec le site et la zone (suggestions des zones déjà visitées), question et retour prévu facultatifs ; un constat = une phrase, une photo, une famille ; « Enregistrer et suivant ». Tri des constats un par un : Action (pilote et échéance en puces, l’action part dans le plan avec sa date promise), Signal, Analyse (A3, 8D, QRQC), Rien à faire, Plus tard. Terminer la visite demande que chaque constat ait une suite. Le « + » propose « Constat de Gemba » en premier. Le formulaire complet reste accessible.
+- Liste des Gemba épurée : En cours, À revoir sur le terrain, Terminés (repliés).
+- Plan d’actions : la liste commence dès le premier écran du téléphone. Une ligne de filtres (pilote, Toutes, En retard, Cette semaine, À vérifier, Sécurité, Sans nouvelle, Standby ; les filtres vides sont masqués). Regroupement, « Je suis », agenda et recherche rangés derrière « Filtres ». « Faire le point » en bouton secondaire, « + Action » seul bouton principal.
+
+Aucune donnée ni aucun droit ne change : visites, constats et actions gardent le même modèle ; chaque profil garde ses écrans.
+
 ## 7.9.0 — 6 novembre 2026
 
 - La barre du bas (téléphone) suit le chemin du profil : Voir, Observer, Résoudre, Agir, Pérenniser (avec l’accueil quand le profil a moins de cinq étapes). Un bouton Accueil rejoint l’en-tête du téléphone. Les retards s’affichent en pastille rouge.

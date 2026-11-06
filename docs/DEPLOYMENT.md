@@ -50,3 +50,6 @@ La branche `backup/before-7.8.0-2026-11-06` conserve le commit `a3dc77e`, corres
 
 La branche `backup/before-7.9.0-2026-11-06` conserve le commit `a2fb3e5`, correspondant à la version 7.8.0. La 7.9.0 ne modifie que l’interface ; aucune donnée n’est transformée.
 
+## Retour à 7.9.0
+
+La branche `backup/before-8.0.0-2026-11-06` conserve le commit `c519ca0`, correspondant à la version 7.9.0. La 8.0.0 ne modifie que l’interface (navigation, accueil, saisie Gemba, plan d’actions) : aucune donnée n’est transformée. Les visites et constats saisis en 8.0 restent lisibles en 7.9.

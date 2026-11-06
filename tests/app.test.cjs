@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -34,10 +34,10 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('state.role="director";state.site="marzin";render();actionForm()');
   assert.equal(q('#actionSite').options.length,1);assert.equal(q('#actionSite').value,'marzin');
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
-  run('closeModal();gembaForm()');assert.equal(q('#gembaSite').options.length,1);
+  run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v7-9-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='7.9.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-0-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.0.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -45,8 +45,8 @@ test('Interface essentielle, accueil par rôle et commande Créer réduisent le 
   const a=app(t),{run,q,all,click,fill}=a;
   run('state.role="operator";state.site="marzin";state.interfaceMode=preferredInterfaceMode("operator");state.view="home";render()');
   assert.equal(run('interfaceMode()'),'essential');
-  assert.equal(all('#mobileNav .nav-button').length,5);
-  assert.match(q('#appView').textContent,/Voir, signaler, agir/);
+  assert.equal(all('#mobileNav .nav-button').length,6);
+  assert.match(q('#appView').textContent,/Un problème au poste/);
   assert.equal(run('visibleNav().some(item=>item.id==="training")'),false);
   click('[data-interface-mode-toggle]');assert.equal(run('interfaceMode()'),'complete');assert.equal(run('visibleNav().some(item=>item.id==="training")'),true);
   fill('#roleSelect','teamlead');assert.equal(run('interfaceMode()'),'essential');assert.equal(run('state.dailyLevel'),1);
@@ -57,8 +57,9 @@ test('Interface essentielle, accueil par rôle et commande Créer réduisent le 
 test('Accueil, raccourcis terrain et écran SQCDP Groupe vertical sont explicites',t=>{
   const a=app(t),{run,q,all,click}=a;
   run('state.role="lean";state.site="group";state.view="home";render()');
-  assert.match(q('#appView').textContent,/D’artisan industriel à industriel artisan\./);
-  assert.deepEqual(all('.home-alert-count').map(x=>x.textContent.trim()),['2décision(s) attendue(s)','1risque(s) critique(s) ouvert(s)']);
+  assert.match(q('#appView').textContent,/Ma journée/);
+  assert.ok(q('.jn-gemba')&&q('.jn-actions'));
+  assert.match(q('.jn-watch').textContent,/Risque critique/);
   assert.equal(all('.quick-action-dock .quick-action').length,1);
   assert.deepEqual(all('.quick-action-dock .quick-action').map(x=>x.getAttribute('aria-label')),['Créer un dossier']);
   assert.equal(all('.quick-action-dock b,.quick-action-dock small').length,0);
@@ -172,8 +173,8 @@ test('Audit historique identifié et ouverture sans brouillon vide',t=>{
   run('auditForm();requestCloseModal()');assert.equal(run('data.audits.length'),before);
 });
 test('Gemba : plusieurs constats, action traçable, retour terrain et clôture',t=>{
-  const a=app(t),{run,fill,submit,click,q}=a;run('gembaForm()');fill('#gembaZone','Poste de coupe');fill('#gembaObjective','Comprendre les déplacements');fill('#gembaAuthor','Animateur');submit('#gembaForm');const id=run('data.gembas[0].id');
-  click('[data-gemba-observe]');fill('#observationFact','Outil éloigné du poste');fill('#observationDecision','Action');fill('#observationAction','Installer un support');fill('#observationOwner','Maintenance');fill('#observationDue',run('today()'));submit('#observationForm');
+  const a=app(t),{run,fill,submit,click,q}=a;run('gembaForm()');fill('#jnZone','Poste de coupe');fill('#jnQuestion','Comprendre les déplacements');submit('#jnStartForm');const id=run('data.gembas[0].id');assert.equal(run('data.gembas[0].objective'),'Comprendre les déplacements');
+  run(`gembaObservationForm('${id}')`);fill('#observationFact','Outil éloigné du poste');fill('#observationDecision','Action');fill('#observationAction','Installer un support');fill('#observationOwner','Maintenance');fill('#observationDue',run('today()'));submit('#observationForm');
   assert.equal(run('data.gembas[0].observations.length'),1);const action=run('data.gembas[0].observations[0].action_id');assert.ok(action);assert.equal(run(`data.actions.find(a=>a.id==='${action}').origin_id`),id);
   run(`gembaObservationForm('${id}',data.gembas[0].observations[0].id)`);submit('#observationForm');assert.equal(run(`data.actions.filter(a=>a.origin_id==='${id}').length`),1);
   run(`finishGemba('${id}')`);assert.ok(run('data.gembas[0].visited_at'));

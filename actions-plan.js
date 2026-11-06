@@ -108,7 +108,7 @@ function apRow(a, compact = false) {
     <span class="ap-meta">${esc(a.id)} · ${esc(getSiteName(a.site_id))} · ${esc(actionFamily(a))} · ${esc(origin)}</span>
     ${u && !compact ? `<span class="ap-news"><b>Dernier point</b> (${apAgo(u.at)}) : ${esc(u.text)}</span>` : ""}
     ${warn.length ? `<span class="ap-warns">${warn.map((w) => `<span class="ap-warn">${esc(w)}</span>`).join("")}</span>` : ""}</span>
-    <span class="ap-row-side"><span class="ap-due ${due.cls}">${esc(due.label)}</span>${pill(a.status, actionTone(a))}<span class="ap-owner">${esc(a.owner || "À désigner")}</span></span>
+    <span class="ap-row-side"><span class="ap-due ${due.cls}">${esc(due.label)}</span>${a.status === "Clôturée" ? "" : pill(a.status, actionTone(a))}<span class="ap-owner">${esc(a.owner || "À désigner")}</span></span>
   </button>`;
 }
 
@@ -147,9 +147,11 @@ function renderActions() {
     filter = AP_FILTERS.some(([k]) => k === state.actionFilter) ? state.actionFilter : "all",
     group = ["due", "owner", "family", "site"].includes(state.actionGroup) ? state.actionGroup : "due",
     queue = apReviewQueue(all);
-  const counters = AP_FILTERS.map(([k, label]) => {
+  const short = { all: "Toutes", late: "En retard", week: "Cette semaine", verify: "À vérifier", safety: "Sécurité", stale: "Sans nouvelle", standby: "Standby" };
+  const counters = ["all", "late", "week", "verify", "safety", "stale", "standby"].map((k) => {
     const n = base.filter((a) => apMatches(k, a)).length, on = filter === k, alarm = (k === "late" || k === "safety") && n > 0;
-    return `<button type="button" class="ap-counter${on ? " active" : ""}${alarm ? " alarm" : ""}" data-action-filter="${k}" aria-pressed="${on}"><b>${n}</b><span>${label}</span></button>`;
+    if (!n && !on && k !== "all") return "";
+    return `<button type="button" class="ap-counter${on ? " active" : ""}${alarm ? " alarm" : ""}" data-action-filter="${k}" aria-pressed="${on}"><span>${short[k]}</span><b>${n}</b></button>`;
   }).join("");
   const scope = [
     state.actionFamily && state.actionFamily !== "all" ? state.actionFamily : "",
@@ -185,17 +187,19 @@ function renderActions() {
     body = sections.filter((s) => s.list.length).map((s) => `<section class="ap-section" aria-label="${esc(s.title)}"><div class="ap-section-head"><h2 class="${s.tone}">${esc(s.title)} · ${s.list.length}</h2>${s.hint ? `<span class="hint">${esc(s.hint)}</span>` : ""}</div>${s.list.map((a) => apRow(a)).join("")}</section>`).join("")
       || `<div class="empty">Aucune action pour ce filtre. <button type="button" class="chip" data-ap-clear>Tout afficher</button></div>`;
   }
-  const buttons = readonly ? "" : `<div class="ap-head-actions">${queue.length ? `<button type="button" class="btn dark" data-ap-review>Lancer la revue · ${queue.length}</button>` : ""}<button type="button" class="btn" data-ap-quick>+ Action</button></div>`;
-  return `<div class="ap-page">${pageHead("Plan d’actions", "Plan d’actions", "Ce qui doit avancer, et qui s’en occupe : les actions des Gemba, signaux, audits et A3 au même endroit. Les compteurs filtrent, la revue passe les actions une par une.", buttons)}
-    <div class="ap-counters" role="group" aria-label="Compteurs, cliquez pour filtrer">${counters}</div>
+  const buttons = readonly ? "" : `<div class="ap-head-actions">${queue.length ? '<button type="button" class="btn secondary" data-ap-review>Faire le point</button>' : ""}<button type="button" class="btn" data-ap-quick>+ Action</button></div>`;
+  const me = apMe(), ownerPick = `<label class="ap-owner-pick"><span class="ap-sr">Pilote</span><select data-action-owner-filter aria-label="Pilote"><option value="all">Tous pilotes</option>${me ? `<option value="me" ${state.actionOwner === "me" ? "selected" : ""}>Mes actions</option>` : ""}${owners.map((o) => `<option value="${esc(o)}" ${state.actionOwner === o ? "selected" : ""}>${esc(o)}</option>`).join("")}<option value="none" ${state.actionOwner === "none" ? "selected" : ""}>À désigner</option></select></label>`;
+  const more = view === "board" ? "" : `<details class="ap-more"${state.apMoreOpen ? " open" : ""}><summary>Filtres</summary><div class="ap-more-body">
+      ${view === "todo" ? `<label class="inline-filter">Regrouper par <select data-action-group>${[["due", "Échéance"], ["owner", "Pilote"], ["family", "Famille"], ["site", "Site"]].map(([v, l]) => `<option value="${v}" ${group === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>` : ""}
+      ${readonly ? "" : apMeSelect()}
+      <button type="button" class="chip" data-ap-ics-view title="Fichier agenda des échéances affichées, avec rappel la veille">Ajouter à l’agenda (.ics)</button>
+      ${listSearch("Rechercher une action")}</div></details>`;
+  return `<div class="ap-page">${pageHead("Plan d’actions", "Plan d’actions", "Les actions des Gemba, signaux, audits et A3, au même endroit.", buttons)}
     <div class="ap-toolbar">
       <div class="filters" role="group" aria-label="Vue">${[["todo", "À traiter"], ["status", "Par statut"], ["board", "Panneau"]].map(([id, label]) => `<button type="button" class="chip ${view === id ? "active" : ""}" data-action-view="${id}" aria-pressed="${view === id}">${label}</button>`).join("")}</div>
-      ${view === "todo" ? `<label class="inline-filter">Regrouper par <select data-action-group>${[["due", "Échéance"], ["owner", "Pilote"], ["family", "Famille"], ["site", "Site"]].map(([v, l]) => `<option value="${v}" ${group === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>` : ""}
-      ${view !== "board" ? `<label class="inline-filter">Pilote <select data-action-owner-filter><option value="all">Tous</option>${apMe() ? `<option value="me" ${state.actionOwner === "me" ? "selected" : ""}>Mes actions (${esc(apMe())})</option>` : ""}${owners.map((o) => `<option value="${esc(o)}" ${state.actionOwner === o ? "selected" : ""}>${esc(o)}</option>`).join("")}<option value="none" ${state.actionOwner === "none" ? "selected" : ""}>À désigner</option></select></label>` : ""}
-      ${view !== "board" ? '<button type="button" class="chip" data-ap-ics-view title="Fichier agenda des échéances à venir affichées, avec rappel la veille">Agenda (.ics)</button>' : ""}
-      ${scope ? `<button type="button" class="chip active" data-ap-scope-clear aria-label="Retirer le filtre ${esc(scope)}">${esc(scope)} ✕</button>` : ""}
     </div>
-    ${view !== "board" ? listSearch("Rechercher une action") : ""}${body}</div>`;
+    ${view === "board" ? "" : `<div class="ap-filterbar">${ownerPick}<div class="ap-counters" role="group" aria-label="Filtrer">${counters}</div>${scope ? `<button type="button" class="chip active" data-ap-scope-clear aria-label="Retirer le filtre ${esc(scope)}">${esc(scope)} ✕</button>` : ""}</div>${more}`}
+    ${body}</div>`;
 }
 
 /* ---------- Panneau ---------- */
@@ -566,6 +570,7 @@ function apBind() {
   document.querySelectorAll("[data-ap-open]").forEach((b) => (b.onclick = () => apOpen(b.dataset.apOpen)));
   document.querySelectorAll("[data-ap-quick]").forEach((b) => (b.onclick = apQuickForm));
   document.querySelectorAll("[data-ap-review]").forEach((b) => (b.onclick = apStartReview));
+  document.querySelectorAll(".ap-more").forEach((d) => (d.ontoggle = () => { state.apMoreOpen = d.open; }));
   document.querySelectorAll("[data-action-filter]").forEach((b) => (b.onclick = () => { const k = b.dataset.actionFilter; state.actionFilter = state.actionFilter === k && k !== "all" ? "all" : k; render(); }));
   document.querySelectorAll("[data-action-group]").forEach((s) => (s.onchange = () => { state.actionGroup = s.value; render(); }));
   document.querySelectorAll("[data-ap-scope-clear]").forEach((b) => (b.onclick = () => { state.actionFamily = "all"; state.actionSite = "all"; render(); }));
@@ -671,11 +676,7 @@ function apDownloadIcs(actions, name) {
   toast(`${list.length} échéance(s) prête(s) pour l’agenda : ouvrez le fichier pour les ajouter à Outlook, avec un rappel la veille à 9 h.`);
 }
 
-/* Intégration : page, accueil, fiche, cloche. */
-const apRenderActionsWithAgenda = renderActions;
-renderActions = function () { return apReminderStrip("actions") + apRenderActionsWithAgenda(); };
-const apRenderHomeBase = renderHome;
-renderHome = function () { return apReminderStrip("home") + apRenderHomeBase(); };
+/* Intégration : fiche, cloche (le choix « Je suis » est dans Filtres et sur l’accueil). */
 
 const apOpenFicheBase = apOpen;
 apOpen = function (id, ask = "") {
