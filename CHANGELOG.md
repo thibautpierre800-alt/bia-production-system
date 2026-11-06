@@ -1,5 +1,21 @@
 # Changelog
 
+## 8.10.0 — 6 novembre 2026
+
+**5S : un vrai outil, zone par zone, pensé pour le téléphone.**
+
+Inspiré de ce que proposent les logiciels 5S du marché (zones, photo de l’état de référence, audit court sur mobile, radar, étiquettes rouges), avec l’ergonomie du terrain.
+
+- Nouvel onglet Observer › 5S (Responsable Lean, directeurs, chefs d’équipe), juste après Gemba ; aussi dans « + » (Audit 5S, Étiquette rouge).
+- Des zones : un périmètre tenu par une équipe, avec un pilote, une cible (80 % par défaut), un rythme d’audit (semaine, quinzaine, mois) et jusqu’à trois photos de l’état de référence. Chaque zone a sa carte : score, tendance, les 5 S en barres colorées, prochain audit, étiquettes rouges. Au niveau Groupe, les zones sont rangées par site avec leur moyenne.
+- L’audit au téléphone : une étape par S, trois questions concrètes chacune (dont la règle des 30 secondes et les accès sécurité dégagés), trois gros boutons Non / Partiel / Oui ou « Sans objet », la photo de référence sous les yeux. Une note et une photo ne sont demandées qu’en cas d’écart. Le brouillon est gardé à chaque geste ; « Plus tard » ou la croix ne perdent rien. Pour le 5e S, l’appli rappelle la date du dernier audit et l’avancement de ses actions.
+- Le bilan : score et radar des 5 S contre la cible et l’audit précédent ; chaque écart peut devenir une action du plan (un « Non » est coché d’office, un écart sécurité est prioritaire et à traiter sous 48 h).
+- Étiquettes rouges numérotées (ER-001…) : photo, objet, raison, décision (jeter, déplacer, réparer, garder), responsable et échéance ; étiquette imprimable à poser sur l’objet ; traitement tracé.
+- Fiche de zone à afficher au poste : photo de référence, radar, tendance, prochain audit, actions et étiquettes en cours, sur une page A4.
+- L’accueil signale les audits 5S en retard et les étiquettes rouges dépassées. Audits renvoie vers le 5S ; les audits 5S n’entrent plus dans les chiffres de l’audit terrain 50 critères. La fiche « 5S utile et maintenu » de la bibliothèque mène au 5S.
+
+Données : `zones[].five_s` (rythme, cible, photos de référence), audits de type « 5S » avec `zone_id` et `five_s` (réponses, scores par S), nouvelle collection `redTags`. Rien n’est retiré : l’ancien modèle de document « Audit 5S » et les audits existants restent lisibles.
+
 ## 8.9.0 — 6 novembre 2026
 
 **Rapport d’étonnement : la synthèse des Gemba pour le COMEX, prête à imprimer.**
