@@ -526,7 +526,7 @@ function osFreshData(demo) {
   base.trends = [];
   base.meta.demo = true;
   base.meta.demo_revision = 4;
-  base.meta.demo_story = "Six sites fictifs, écarts reliés aux signaux, actions, problèmes, Kaizen et transferts.";
+  base.meta.demo_story = "Six sites au scénario fictif, écarts reliés aux signaux, actions, problèmes, Kaizen et transferts. Le Moine reste à renseigner.";
   const siteIds = base.sites.filter((s) => s.kind === "site").map((s) => s.id),
     periods = [-28, -21, -14, -7, 0];
   const profiles={
@@ -537,7 +537,8 @@ function osFreshData(demo) {
     profiline:{trs:[82,83,84,86,87],scrap:[2.8,2.6,2.4,2.2,2.1],safety_signal:[0,0,0,0,0],service:[94,95,96,97,98],staffing:[97,97,98,99,100]},
     sodeplax:{trs:[80,80.5,81,82,83],scrap:[3.2,3.1,3,2.8,2.7],safety_signal:[0,0,0,0,0],service:[93,93,94,94,95],staffing:[95,95,96,96,97]}
   };
-  for (const siteId of siteIds)
+  // Le Moine n’a pas de scénario fictif : ses cases restent « sans mesure ».
+  for (const siteId of siteIds.filter((id) => profiles[id]))
     for (const k of base.kpis)
       for (const [pi, days] of periods.entries()) {
         const value=profiles[siteId]?.[k.code]?.[pi],
@@ -1148,7 +1149,7 @@ function osFreshData(demo) {
       profiline: [0, 1, 2],
       sodeplax: [0, 0, 1],
     };
-  for (const [si, s] of siteIds.entries())
+  for (const [si, s] of siteIds.filter((id) => maturityLift[id]).entries())
     for (const [ci, date] of maturityDates.entries())
       for (const [pi, pillar] of base.settings.pillars.entries()) {
         const baseline = 1 + ((si + pi) % 3),

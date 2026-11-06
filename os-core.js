@@ -65,6 +65,22 @@ const OS_KAIZEN_STATES = [
   "Bonne pratique",
   "Déploiement",
 ];
+// 8.2 · Entreprise connectée et humaine (4.0 / 5.0) : dix critères de maturité,
+// notés de 1 à 5 sur la même échelle que les piliers Lean. Les critères 4.0
+// suivent les stades de l’Industrie 4.0 Maturity Index (acatech) ; les critères
+// 5.0, la définition de la Commission européenne (humain, durable, résilient).
+const OS_DIGITAL_AXES = [
+  { name: "Données terrain", group: "4.0", question: "Les faits du terrain (arrêts, rebuts, temps) sont-ils saisis une seule fois, en numérique, et fiables ?" },
+  { name: "Machines connectées", group: "4.0", question: "Arrêts, cadences et TRS des équipements clés sont-ils collectés automatiquement ?" },
+  { name: "Pilotage en temps réel", group: "4.0", question: "Un écart est-il visible au bon moment par la bonne personne (écran, alerte) ?" },
+  { name: "Systèmes reliés", group: "4.0", question: "ERP, planning, qualité et maintenance partagent-ils les mêmes données, sans ressaisie ?" },
+  { name: "Automatisation", group: "4.0", question: "Les tâches pénibles ou répétitives sont-elles automatisées ou assistées (cobot, contrôle automatique) ?" },
+  { name: "Maintenance prédictive", group: "4.0", question: "Intervient-on selon l’état mesuré des équipements plutôt qu’après la panne ?" },
+  { name: "Cybersécurité industrielle", group: "4.0", question: "Machines et réseaux de production sont-ils inventoriés, protégés et sauvegardés ?" },
+  { name: "Opérateur au centre", group: "5.0", question: "La technologie réduit-elle la pénibilité et aide-t-elle l’opérateur, conçue avec lui ?" },
+  { name: "Durabilité", group: "5.0", question: "Énergie, matière, déchets et CO₂ sont-ils mesurés, suivis et réduits ?" },
+  { name: "Résilience", group: "5.0", question: "Le site absorbe-t-il une panne, une rupture d’approvisionnement ou une variation de charge ?" },
+];
 const OS_DEPLOY_STATES = [
   "Candidate",
   "Test",
@@ -445,6 +461,30 @@ function migrateOS(source) {
     });
   }
   out.settings ||= {};
+  // 8.2 · Le Moine, septième entité : ajoutée une seule fois, sans toucher aux
+  // autres données ; si elle est archivée ensuite, elle n’est pas réimposée.
+  out.meta.sitesAdded = Array.isArray(out.meta.sitesAdded) ? out.meta.sitesAdded : [];
+  if (!out.meta.sitesAdded.includes("le-moine")) {
+    if (!out.sites.some((s) => s.id === "le-moine")) {
+      const after = out.sites.findIndex((s) => s.id === "europlacage");
+      out.sites.splice(after >= 0 ? after + 1 : out.sites.length, 0, {
+        id: "le-moine",
+        name: "Le Moine",
+        kind: "site",
+      });
+    }
+    if (!out.workshops.some((w) => w.site_id === "le-moine"))
+      out.workshops.push({
+        id: "le-moine-main",
+        site_id: "le-moine",
+        name: "Atelier principal",
+      });
+    out.meta.sitesAdded.push("le-moine");
+  }
+  out.settings.digitalPillars =
+    Array.isArray(out.settings.digitalPillars) && out.settings.digitalPillars.length
+      ? out.settings.digitalPillars
+      : OS_DIGITAL_AXES.map((a) => a.name);
   out.settings.shifts = Array.isArray(out.settings.shifts) && out.settings.shifts.length ? out.settings.shifts : ["Matin", "Après-midi", "Nuit"];
   for (const m of out.measures) {
     const k = out.kpis.find((k) => k.code === m.code || k.id === m.kpi_id);
@@ -877,6 +917,17 @@ function osObjectiveProgress(id, visited = new Set()) {
     pct: actions.length ? Math.round((closed / actions.length) * 100) : null,
     actions,
   };
+}
+// Référentiel d’un pilier : Fondations Lean (10 piliers) ou entreprise
+// connectée et humaine (10 critères 4.0 / 5.0).
+// Sans pilier connu, le référentiel affiché à l’écran Maturité fait foi.
+function osMaturitySet(pillar = null) {
+  const digital = data.settings.digitalPillars || [];
+  const isDigital = pillar ? digital.includes(pillar) : state.maturitySet === "digital";
+  const levels = data.settings.levels?.length === 5 ? data.settings.levels : ["Initial", "Défini", "Appliqué", "Maîtrisé", "Amélioré"];
+  return isDigital
+    ? { id: "digital", label: "Entreprise connectée et humaine", pillars: digital, levels }
+    : { id: "lean", label: "Fondations Lean", pillars: data.settings.pillars, levels };
 }
 function osMaturity(siteId, pillar, at = today(), workshopId = null) {
   return (

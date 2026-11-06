@@ -61,3 +61,7 @@ La branche `backup/before-8.1.0-2026-11-06` conserve le commit `06a207e`, corres
 ## Retour à 8.1.0
 
 La branche `backup/before-8.1.1-2026-11-06` conserve le commit `9aa5876`, correspondant à la version 8.1.0. La 8.1.1 ne change que le calcul de couleur du SQCDP Groupe et des courbes (même règle de seuils qu’Analyser) : aucune donnée n’est transformée.
+
+## Retour à 8.1.1
+
+La branche `backup/before-8.2.0-2026-11-06` conserve le commit `9e2a23c`, correspondant à la version 8.1.1. La 8.2.0 ajoute l’entité Le Moine (et son atelier principal) aux données enregistrées, une seule fois, et un référentiel « Entreprise connectée et humaine » dans les paramètres ; les évaluations existantes ne sont pas transformées. Revenue en 8.1.1, l’application lit ces ajouts sans erreur : Le Moine reste un site configuré et les évaluations 4.0 / 5.0 restent des fiches de maturité.

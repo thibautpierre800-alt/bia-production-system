@@ -1,5 +1,20 @@
 # Changelog
 
+## 8.2.0 — 6 novembre 2026
+
+**La trajectoire BIA : d’artisan industriel à industriel artisan.**
+
+- Le mantra d’origine revient : « D’artisan industriel à industriel artisan. » sous le logo et en tête de « Ma journée » sur téléphone.
+- Le Moine devient la septième entité, partout (Analyser, Décider, Maturité, saisies, profils). Elle est ajoutée une seule fois aux données déjà enregistrées, sans rien effacer, et n’est pas réimposée si elle est archivée ensuite. Aucun relevé fictif ne lui est attribué : ses cases restent « sans mesure » jusqu’à la première saisie.
+- Voir › Maturité devient la trajectoire BIA, en cinq marches : Artisan industriel, Industriel standardisé, Industriel maîtrisé, Industriel connecté (4.0), Industriel artisan (5.0). La 4.0 et la 5.0 sont des niveaux de maturité, pas un audit à part. Chaque site est placé par ses évaluations, selon une règle affichée : pas de 4.0 sans fondations Lean.
+- « Prochain pas » par site : les conditions manquantes pour la marche suivante et les piliers ou critères les plus faibles, ouvrables d’un geste. Fiche d’un site : moyennes Lean, connecté et humain, radars et plans d’amélioration.
+- Nouveau référentiel « Entreprise connectée et humaine » : dix critères notés de 1 à 5 sur la même échelle que les piliers Lean (données terrain, machines connectées, pilotage en temps réel, systèmes reliés, automatisation, maintenance prédictive, cybersécurité industrielle ; opérateur au centre, durabilité, résilience), chacun avec sa question.
+- Comparer les sites : une seule légende (couleurs des niveaux 1 à 5 et numéros des piliers), une matrice sites × piliers colorée du rouge au vert avec la moyenne, les plus grands écarts entre sites (« une pratique à partager ? ») et des radars à zones colorées, points à la couleur du niveau, sans liste répétée sous chaque site. Date de campagne par ‹ › et comparaison à la campagne précédente d’un geste ; plus aucun menu déroulant.
+- Propositions pour avancer, classées par marche, avec leur état (dans l’appli, à lancer, avec l’informatique) : une seule saisie, mêmes définitions, standards au poste ; TRS automatique sur le goulot, SEQUOIA source unique, alertes Teams, maintenance sur l’état, cybersécurité des machines ; savoir-faire transmis, pénibilité mesurée, énergie et CO₂, résilience.
+- La liste de 180 fiches d’évaluation laisse place aux campagnes datées ; chaque évaluation reste ouvrable depuis sa case.
+
+Aucune donnée existante n’est modifiée ; les droits restent ceux des profils (la DG consulte, sans saisir).
+
 ## 8.1.1 — 6 novembre 2026
 
 **Décider et Analyser : mêmes couleurs, mêmes seuils.**

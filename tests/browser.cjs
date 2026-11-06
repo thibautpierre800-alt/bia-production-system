@@ -298,7 +298,7 @@ async function main() {
       await page.evaluate(() => document.body.classList.contains("group-presentation")),
       true,
     );
-    assert.equal(await page.locator(".sqcdp-cell").count(), 30);
+    assert.equal(await page.locator(".sqcdp-cell").count(), 35);
     assert.ok(await page.locator(".group-display-exit").isVisible());
     assert.equal(
       await page.evaluate(
@@ -463,7 +463,7 @@ async function main() {
     assert.equal(aiCalls,1);
     await page.evaluate(()=>{closeModal();delete data.settings.assistantEndpoint;save();state.site="group";state.view="pilotage";state.osTab="tower";render()});
     await page.setViewportSize({width:1440,height:1100});
-    assert.equal(await page.locator('.in-site').count(),6);
+    assert.equal(await page.locator('.in-site').count(),7);
     assert.equal(await page.locator('#appView select').count(),0);
     await page.locator('.in-wall').screenshot({path:path.join(output,"multisite-74-desktop.png"),animations:"disabled"});
     await page.setViewportSize({width:390,height:844});

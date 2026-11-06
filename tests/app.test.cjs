@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -20,7 +20,7 @@ function app(t,stored,url='https://bia.example/bia-production-system/'){
 }
 test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   const a=app(t),{run,q}=a;
-  assert.equal(run('OPERATIONAL_SITES.map(s=>s.name).join("|")'),'Ag Déco|Europlacage|Marzin|Oraison Menuiserie|Profiline|Sodeplax');
+  assert.equal(run('OPERATIONAL_SITES.map(s=>s.name).join("|")'),'Ag Déco|Europlacage|Le Moine|Marzin|Oraison Menuiserie|Profiline|Sodeplax');
   assert.equal(run('Object.values(AUDIT_CRITERIA).flat().length'),50);
   assert.equal(run('LEAN_MODULES.length'),30);assert.equal(run('data.trainingCatalog.length'),18);
   assert.deepEqual(Array.from(run('Object.keys(ROLES)')),['dg','lean','director','teamlead','operator']);
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-1-1/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.1.1'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-2-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.2.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -103,15 +103,82 @@ test('Formation BIA Lean OS : livret, grille par profil et qualification enregis
   assert.equal(run('data.trainingRecords[0].training_id'),'FOR-018');assert.equal(run('data.trainingRecords[0].skill_levels.signal'),4);
   run('state.trainingTab="matrix";render()');assert.match(q('#appView').textContent,/APP-01/);
 });
-test('Maturité : campagnes historiques comparables et nouvelle évaluation non destructive',t=>{
+test('Maturité : campagnes comparables, une seule légende, nouvelle évaluation non destructive',t=>{
   const a=app(t),{run,q,all,fill,click,submit}=a;
-  run('data=osFreshData(true);osInit();state.role="lean";state.site="group";state.view="maturity";render()');
-  assert.equal(q('#maturityDate').options.length,3);assert.equal(q('#maturityCompareDate').options.length,3);
-  const oldest=run('osMaturityDates(OPERATIONAL_SITES.map(s=>s.id)).at(-1)');fill('#maturityCompareDate',oldest);
-  assert.equal(all('.radar-legend').length,6);assert.match(q('#appView').textContent,/Évolution/);
-  const before=run('data.maturity.length'),oldId=run('data.maturity.at(-1).id');click('.os-maturity-cell');
+  run('data=osFreshData(true);osInit();state.role="lean";state.site="group";state.view="maturity";state.maturitySet="lean";render()');
+  assert.equal(all('#appView select').length,0,'Aucun menu déroulant');
+  assert.equal(all('.mt-scale').length,1,'Échelle des niveaux affichée une seule fois');
+  assert.equal(all('.mt-scale .mt-swatch').length,6,'Cinq niveaux et « non évalué »');
+  assert.equal(all('.mt-criteria li').length,10,'Numéros des piliers expliqués une fois');
+  assert.equal(all('.mt-radar').length,6,'Un radar par site évalué');assert.equal(all('.mt-radar-empty').length,1,'Le Moine : pas encore évalué');
+  assert.equal(all('.mt-radar .mt-vertex').length,60,'Sommets numérotés sur chaque radar');
+  assert.ok(all('.mt-radar .mt-band-1').length===6&&all('.mt-radar .mt-pt.mt-l1').length>0,'Zones et points colorés : rouge quand c’est faible');
+  assert.equal(all('.mt-row:not(.mt-head)').length,7,'Sept sites comparés ligne à ligne');
+  assert.equal(all('.mt-row:not(.mt-head) .mt-cell:not(.mt-avg)').length,70);
+  assert.equal(all('.mt-campaigns li').length,3,'Trois campagnes datées');
+  const dates=Array.from(run('osMaturityDates(OPERATIONAL_SITES.map(s=>s.id))'));
+  assert.equal(q('[data-mt-compare]').disabled,false);click('[data-mt-compare]');
+  assert.equal(run('state.maturityCompareDate'),dates[1]);assert.ok(all('.mt-arrow').length>0,'Évolutions visibles');assert.ok(all('.mt-shape-old').length>0);
+  click('[data-mt-step="'+dates[2]+'"]');assert.equal(run('state.maturityDate'),dates[2]);assert.equal(q('[data-mt-compare]').disabled,true,'Pas de campagne plus ancienne');
+  click('.in-step-btn[aria-label="Campagne suivante"]');assert.equal(run('state.maturityDate'),dates[1]);
+  const before=run('data.maturity.length'),oldId=run('data.maturity.at(-1).id');
+  click('.mt-matrix [data-mt-cell*="marzin"]');assert.equal(q('#osForm [name="pillar"]').value,'Sécurité');assert.equal(q('#osForm [name="pillar"]').options.length,10);
   fill('#osForm [name="level"]','4');fill('#osForm [name="owner"]','Auditrice interne');fill('#osForm [name="evidence"]','Observation terrain et standard daté');submit('#osForm');
   assert.equal(run('data.maturity.length'),before+1);assert.ok(run(`data.maturity.some(m=>m.id==='${oldId}')`));
+});
+test('Trajectoire BIA : d’artisan industriel à industriel artisan, la 4.0 et la 5.0 comme marches de maturité',t=>{
+  const a=app(t),{run,q,all,fill,click,submit}=a;
+  run('data=osFreshData(true);osInit();state.role="lean";state.site="group";state.view="maturity";state.maturitySet="lean";render()');
+  assert.deepEqual(all('.mt-step-head b').map(b=>b.textContent.replace(/\s+/g,' ').trim()),['Artisan industriel','Industriel standardisé','Industriel maîtrisé','Industriel connecté 4.0','Industriel artisan 5.0']);
+  assert.equal(all('.mt-stairs .mt-site').length+all('.mt-unplaced .mt-site').length,7,'Toutes les entités sur la trajectoire');
+  assert.match(q('.mt-unplaced').textContent,/Le Moine/);
+  const step=id=>run(`mtPosition("${id}",state.maturityDate).step`);
+  assert.equal(step('marzin'),2);assert.equal(step('profiline'),3,'Sans évaluation connectée, pas de marche 4');assert.equal(step('le-moine'),0);
+  assert.ok(q('.mt-step-2 [data-mt-site="marzin"]'));assert.ok(q('.mt-step-3 [data-mt-site="profiline"]'));
+  assert.match(q('.mt-next').textContent,/Profiline[\s\S]*Connecté 4\.0 : à évaluer/);
+  assert.match(q('.mt-rule').textContent,/Lean ≥ 3,5 et connecté ≥ 3/);
+  click('[data-mt-lens="digital"]');
+  assert.equal(all('.mt-criteria li').length,10);assert.equal(all('.mt-criteria .mt-tag').map(x=>x.textContent).join(''),'4.04.04.04.04.04.04.05.05.05.0');
+  assert.ok(q('.mt-callout'),'Personne n’est encore évalué : on le dit');assert.equal(all('.mt-radar').length,0,'Pas de radars vides');
+  click('.mt-matrix [data-mt-cell*="profiline"]');assert.equal(q('#osForm [name="pillar"]').value,'Données terrain');
+  assert.deepEqual(Array.from(q('#osForm [name="pillar"]').options).map(o=>o.value).filter(Boolean),Array.from(run('data.settings.digitalPillars')));
+  fill('#osForm [name="level"]','3');fill('#osForm [name="owner"]','Directeur Profiline');fill('#osForm [name="evidence"]','Relevés papier ressaisis le soir');submit('#osForm');
+  assert.equal(run('mtLevel("profiline","Données terrain",today())?.level'),3);
+  run(`const at=today();for(const p of mtGroups().c40)if(p!=="Données terrain")data.maturity.push({id:uid("MAT"),site_id:"profiline",pillar:p,level:3,target:4,date:at,owner:"Test",evidence:"Test"});state.maturityDate=at;render()`);
+  assert.equal(step('profiline'),4,'Lean 4,1 et connecté 3 : marche 4');assert.ok(q('.mt-step-4 [data-mt-site="profiline"]'));
+  run(`const at=today();for(const p of data.settings.digitalPillars)data.maturity.push({id:uid("MAT"),site_id:"profiline",pillar:p,level:4,target:4,date:at,owner:"Test",evidence:"Test"});render()`);
+  assert.equal(step('profiline'),5,'Industriel artisan');
+  click('.mt-stairs [data-mt-site="marzin"]');assert.match(q('#modalContent').textContent,/Marche 2/);assert.match(q('#modalContent').textContent,/Lean 2,2 → 3/);
+  assert.ok(all('#modalContent [data-os="createFrom"]').length>0,'Plan d’amélioration depuis le prochain pas');
+  run('closeModal()');assert.equal(all('.mt-prop').length,12,'Propositions classées par marche');
+  assert.deepEqual(all('.mt-prop-step').map(h=>h.textContent.slice(0,1)),['3','4','5']);
+  run('state.role="dg";render()');assert.equal(q('#appView [data-os="new"]'),null,'DG : lecture seule');
+  run('state.maturitySet="lean";render()');click('.mt-matrix [data-mt-cell*="marzin"]');assert.equal(q('#osForm'),null);assert.ok(q('#modalContent .os-details'),'Lecture de l’évaluation existante');
+});
+test('Le Moine, septième entité : ajoutée sans perte de données et sans valeur inventée',t=>{
+  const a=app(t);
+  assert.ok(a.run('OPERATIONAL_SITES.some(s=>s.id==="le-moine"&&s.name==="Le Moine")'));
+  assert.ok(a.run('data.workshops.some(w=>w.site_id==="le-moine")'));
+  assert.equal(a.run('data.measures.filter(m=>m.site_id==="le-moine").length'),0,'Aucun relevé fictif');
+  assert.equal(a.run('data.maturity.filter(m=>m.site_id==="le-moine").length'),0);
+  const old=JSON.parse(a.stored()||a.run('JSON.stringify(data)'));old.sites=old.sites.filter(s=>s.id!=="le-moine");old.workshops=old.workshops.filter(w=>w.site_id!=="le-moine");old.meta.sitesAdded=[];old.actions.push({id:"A-KEEP",site_id:"marzin",title:"Action conservée",status:"Ouverte",owner:"Test",due_date:"2026-12-01"});
+  const b=app(t,JSON.stringify(old));
+  assert.ok(b.run('OPERATIONAL_SITES.some(s=>s.id==="le-moine")'),'Ajoutée aux données déjà enregistrées');
+  assert.deepEqual(Array.from(b.run('data.sites.map(s=>s.id)')).slice(0,4),['group','ag-deco','europlacage','le-moine']);
+  assert.ok(b.run('data.actions.some(x=>x.id==="A-KEEP")'),'Données existantes conservées');
+  const archived=JSON.parse(b.run('JSON.stringify(data)'));archived.sites.find(s=>s.id==="le-moine").archived_at="2026-11-06";
+  const c=app(t,JSON.stringify(archived));
+  assert.equal(c.run('OPERATIONAL_SITES.some(s=>s.id==="le-moine")'),false,'Archivée : jamais réimposée');
+  c.run('state.role="lean";state.site="le-moine";render()');
+  const d=app(t);d.run('state.role="director";state.site="le-moine";state.view="pilotage";state.pilotageMode="analysis";state.osTab="tower";render()');
+  assert.ok(d.all('.in-tile').length>0);assert.match(d.q('#appView').textContent,/Le Moine/);
+});
+test('Mantra du Groupe : la signature d’origine est visible',t=>{
+  const a=app(t),{run,q}=a;
+  run('state.role="lean";state.site="group";state.view="home";render()');
+  assert.equal(q('.jn-mantra').textContent,'D’artisan industriel à industriel artisan.');
+  assert.equal(q('.brand-mantra').textContent,'D’artisan industriel à industriel artisan.');
+  run('state.role="operator";state.site="marzin";render()');assert.equal(q('.jn-mantra').textContent,'D’artisan industriel à industriel artisan.');
 });
 test('Le scénario de démonstration est actualisé avec sauvegarde sans toucher un espace réel',t=>{
   const a=app(t),raw=a.run('JSON.stringify(DEMO)'),b=app(t,raw);
@@ -218,13 +285,13 @@ test('Pilotage : sites, séries disponibles, absence signalée et lien avec les 
   run('data.measures=data.measures.filter(m=>!(m.site_id==="sodeplax"&&m.code==="staffing"));data.trends=data.trends.filter(x=>!(x.site_id==="sodeplax"&&x.code==="staffing"));render()');assert.match(q('#appView').textContent,/indisponible/,'Une série absente est signalée');
   run('state.site="marzin";render()');assert.match(q('#appView').textContent,/TRS/);assert.match(q('#appView').textContent,/Rebut/);assert.match(q('#appView').textContent,/Service client/);
 });
-test('Analyser : tous les indicateurs des six sites d’un coup d’œil, sans menu déroulant',t=>{
+test('Analyser : tous les indicateurs des sept sites d’un coup d’œil, sans menu déroulant',t=>{
   const {run,q,all,click}=app(t);
   run('state.site="group";state.role="lean";state.view="pilotage";state.pilotageMode="analysis";state.osTab="tower";render()');
   assert.equal(all('#appView select').length,0,'Aucun menu déroulant');
   assert.equal(all('#appView details').length,0,'Rien de replié');
-  assert.deepEqual(all('.in-site').map(x=>x.textContent),['Ag Déco','Europlacage','Marzin','Oraison Menuiserie','Profiline','Sodeplax']);
-  assert.equal(all('.in-cell[data-os="kpiDetail"]').length,30,'Six sites × cinq indicateurs visibles ensemble');
+  assert.deepEqual(all('.in-site').map(x=>x.textContent),['Ag Déco','Europlacage','Le Moine','Marzin','Oraison Menuiserie','Profiline','Sodeplax']);
+  assert.equal(all('.in-cell[data-os="kpiDetail"]').length,35,'Sept sites × cinq indicateurs visibles ensemble');
   assert.deepEqual(all('.in-head .in-col b').slice(0,5).map(x=>x.textContent),['S','Q','C','D','P']);
   assert.match(q('[data-in-cell="ag-deco:trs"]').textContent,/82/);
   assert.match(q('[data-in-cell="marzin:scrap"]').textContent,/5,2/);
@@ -257,13 +324,13 @@ test('Relevé manuel : saisie par site, visible dans les indicateurs et sauvegar
   assert.equal(b.q('#benchmarkSite').options.length,1);
   assert.equal(b.q('#benchmarkSite').value,'ag-deco');
 });
-test('SQCDP Groupe : six sites simultanés, états qualifiés et détail actionnable',t=>{
+test('SQCDP Groupe : sept sites simultanés, états qualifiés et détail actionnable',t=>{
   const a=app(t),{run,q,all,fill,click,submit}=a;
   run('state.site="group";state.role="lean";state.view="sqcdp";render()');
   assert.match(q('#appView').textContent,/SQCDP Groupe/);
-  assert.equal(all('.sqcdp-row').length,7,'Un en-tête et six sites');
-  assert.equal(all('.sqcdp-cell').length,30);
-  assert.equal(all('.sqcdp-cell.missing').length,0);
+  assert.equal(all('.sqcdp-row').length,8,'Un en-tête et sept sites');
+  assert.equal(all('.sqcdp-cell').length,35);
+  assert.equal(all('.sqcdp-cell.missing').length,5,'Le Moine : à renseigner, aucune valeur inventée');
   assert.equal(all('.sqcdp-cell.gap').length,5);
   assert.equal(all('.sqcdp-cell.warn').length,10,'Vigilance : sous la cible mais au-dessus du seuil orange');
   assert.match(q('[data-sqcdp-site="marzin"][data-sqcdp-axis="Q"]').textContent,/5.2/);
@@ -286,7 +353,7 @@ test('SQCDP Groupe : six sites simultanés, états qualifiés et détail actionn
   const prior=run('osDateOffset(-7)');run(`data.measures=data.measures.filter(m=>!(m.site_id==='ag-deco'&&m.code==='service'&&m.period==='${prior}'))`);assert.equal(q('#sqcdpGroupPeriod'),null,'Période parcourue sans menu déroulant');run('state.benchmarkPeriod=benchmarkPeriods()[0];render()');click('[data-in-step="bench"][aria-label="Période précédente"]');assert.equal(run('state.benchmarkPeriod'),prior);
   assert.equal(q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('missing'),true);
   run('state.role="dg";state.view="pilotage";state.pilotageMode="ritual";render()');
-  assert.equal(all('.sqcdp-cell').length,30,'La direction retrouve la matrice dans Pilotage › Décider');
+  assert.equal(all('.sqcdp-cell').length,35,'La direction retrouve la matrice dans Pilotage › Décider');
   click('[data-sqcdp-site="marzin"][data-sqcdp-axis="S"]');
   assert.equal(q('#sqcdpAddMeasure'),null);
   assert.equal(q('#sqcdpAddAction'),null);
@@ -304,7 +371,7 @@ test('Décider et Analyser : mêmes couleurs, mêmes seuils, mêmes flèches',t=
   run('state.pilotageMode="ritual";state.benchmarkPeriod=benchmarkPeriods()[0];render()');
   const axes={S:'safety_signal',Q:'scrap',C:'trs',D:'service',P:'staffing'};let compared=0;
   for(const c of all('.sqcdp-cell')){const tone=['gap','warn','ok'].find(x=>c.classList.contains(x))||'none';assert.equal(tone,analyse[`${c.dataset.sqcdpSite}:${axes[c.dataset.sqcdpAxis]}`],`${c.dataset.sqcdpSite} ${c.dataset.sqcdpAxis}`);compared++;}
-  assert.equal(compared,30);
+  assert.equal(compared,35);
   const trs=q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="C"]');
   assert.equal(trs.classList.contains('warn'),true,'TRS 82 % pour une cible de 85 % : vigilance, pas écart');
   assert.match(trs.textContent,/Vigilance/);

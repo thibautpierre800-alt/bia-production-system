@@ -55,9 +55,12 @@ function jnOwners(siteId) {
 
 /* ---------- Accueil « Ma journée » ---------- */
 
+// Mantra du Groupe, repris de la signature d’origine (7.1).
+const BIA_MANTRA = "D’artisan industriel à industriel artisan.";
+
 function jnHead() {
   const where = state.site === "group" ? "BIA Holding" : `${site().name}${workshop() ? " · " + workshop().name : ""}`;
-  return `<div class="page-head jn-head"><div><h1>Ma journée</h1><p class="jn-date">${esc(jnToday())} · ${esc(where)}</p></div></div>`;
+  return `<div class="page-head jn-head"><div><p class="jn-mantra">${esc(BIA_MANTRA)}</p><h1>Ma journée</h1><p class="jn-date">${esc(jnToday())} · ${esc(where)}</p></div></div>`;
 }
 function jnGembaCard() {
   const cur = jnCurrentVisit(), sort = jnSortItems(), back = jnReturns();
