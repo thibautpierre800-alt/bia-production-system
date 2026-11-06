@@ -293,6 +293,7 @@ function csSetAnswer(cid, patch) {
 }
 function csBindNav(root) {
   root.querySelectorAll("[data-cs-step]").forEach((b) => (b.onclick = () => {
+    document.activeElement?.blur?.();
     csSyncBilan();
     csRun.step = Number(b.dataset.csStep);
     csAuditRender();
@@ -367,7 +368,7 @@ function csAuditRender() {
     <div class="form-actions cs-nav">${step > 0 ? `<button type="button" class="btn ghost" data-cs-step="${step - 1}" aria-label="Étape précédente">←</button>` : ""}${next}<button type="button" class="btn secondary" data-cs-later>Plus tard</button></div></div>`);
   const root = $("modalContent");
   // Fermer l'audit, par la croix ou « Plus tard », garde tout ce qui est saisi.
-  modalSaver = () => { csSyncBilan(); return true; };
+  modalSaver = () => { document.activeElement?.blur?.(); csSyncBilan(); return true; };
   root.querySelector(".cs-refbox")?.addEventListener("toggle", (e) => { if (csRun) csRun.refOpen = e.currentTarget.open; });
   csBindNav(root);
   root.querySelectorAll(".cs-q").forEach((li) => csBindQ(li, z));
@@ -383,7 +384,7 @@ function csAuditRender() {
     const box = li.querySelector("[data-cs-act]");
     box.onchange = () => { li.querySelector(".cs-act-fields").hidden = !box.checked; csSyncBilan(); };
   });
-  root.querySelector("[data-cs-later]").onclick = () => { csSyncBilan(); csRun = null; modalSaver = null; modalDirty = false; closeModal(); render(); toast("Audit gardé : reprenez-le depuis la zone."); };
+  root.querySelector("[data-cs-later]").onclick = () => { document.activeElement?.blur?.(); csSyncBilan(); csRun = null; modalSaver = null; modalDirty = false; closeModal(); render(); toast("Audit gardé : reprenez-le depuis la zone."); };
   root.querySelector("[data-cs-finish]")?.addEventListener("click", () => csFinish());
   modalDirty = false;
 }
@@ -400,6 +401,7 @@ function csSyncBilan() {
   commitData(() => { const row = data.audits.find((x) => x.id === a.id); row.five_s = { ...row.five_s, answers: ans }; if (owner) row.owner = owner; if (date) row.performed_at = date; row.updated_at = now(); });
 }
 function csFinish() {
+  document.activeElement?.blur?.();
   csSyncBilan();
   const a = csAuditGet(), z = a && csZone(a.zone_id);
   if (!a || !z) return;

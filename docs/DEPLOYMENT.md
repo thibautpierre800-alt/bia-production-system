@@ -101,3 +101,7 @@ La branche `backup/before-8.9.0-2026-11-06` conserve le commit `8c54d79`, corres
 ## Retour à 8.9.0
 
 La branche `backup/before-8.10.0-2026-11-06` conserve le commit `3b07fbd`, correspondant à la version 8.9.0 (avec le kit serveur). La 8.10.0 ajoute l’onglet 5S (`cinqs.js`), le champ `five_s` des zones et des audits 5S, et la collection `redTags` ; la 8.9.0 les ignore et les conserve. Revenue en 8.9.0, les audits 5S par zone apparaissent dans la liste des audits sans leur vue dédiée.
+
+## Retour à 8.10.0
+
+La branche `backup/before-8.11.0-2026-11-06` conserve le commit `a4dde7a`, correspondant à la version 8.10.0. La 8.11.0 remplace l’écran de l’audit terrain (`audit50.js`) sans changer ses données ; les champs ajoutés aux critères (`photo`, `act`, `what`, `who`, `when`) sont ignorés par la 8.10.0.

@@ -25,6 +25,7 @@ const scripts = [
   "calepin.js",
   "etonnement.js",
   "cinqs.js",
+  "audit50.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {
