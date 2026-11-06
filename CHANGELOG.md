@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.4.0 — 6 novembre 2026
+
+**Un seul plan : la Roadmap et les objectifs Hoshin lisent le plan de déploiement.**
+
+- Roadmap : même cap que le Hoshin, puis le calendrier du déploiement (Gantt) : phases, jalons, tâches de pilotage et étapes de chaque site, dans l’ordre des priorités, avec la ligne d’aujourd’hui. Fenêtre 6 mois, 12 mois ou tout le plan, sans menu déroulant. Toucher une étape la fait avancer, ici comme dans le Hoshin (mêmes données, mêmes droits).
+- Les dates des étapes viennent du Gantt du fichier : semaines colorées du planning (S45, S1…), année lue au-dessus ; une case rouge signale une tâche en retard.
+- Hoshin : « Créer les objectifs à partir du plan » construit la cascade : le cap en axe stratégique, un objectif Groupe par jalon de décision, un objectif par site rattaché au jalon qui suit la fin de son parcours (ou à sa vague). Un nouvel appel met à jour sans doublon ; les objectifs saisis à la main ne sont pas modifiés.
+- Les priorités de la roadmap (résultat, propriétaire, indicateur, échéance) restent sous le calendrier.
+
 ## 8.3.0 — 6 novembre 2026
 
 **Voir › Hoshin Kanri : le cap, les priorités des sites et le plan, sur le modèle du fichier qui a fixé les priorités.**
