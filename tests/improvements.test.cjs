@@ -140,7 +140,7 @@ test("7.4 · environnement : pas d’écrasement des sources, preuve CO2 et dén
 });
 test("7.4 · vue des sites : toutes les cases, mesures manquantes signalées et filtrage conservé", t => {
   const a = fresh(t); a.run('state.site="group";state.view="pilotage";state.osTab="tower";render()');
-  assert.equal(a.all('.in-site').length,6);
+  assert.equal(a.all('.in-site').length,7);
   assert.equal(a.all('#appView select').length,0,'Aucun menu déroulant');
   assert.ok(a.all('.in-cell.none').length>0);
   assert.match(a.q('.in-cell.none').getAttribute('aria-label'),/aucune mesure/);

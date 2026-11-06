@@ -86,7 +86,7 @@ const OS_FORMS = {
       [
         "level",
         "Niveau constaté",
-        "1:1 · Initial|2:2 · Défini|3:3 · Appliqué|4:4 · Maîtrisé|5:5 · Amélioré",
+        "maturityLevels",
         true,
       ],
       ["target", "Niveau cible", "number", true],
@@ -244,7 +244,9 @@ function osOptions(type, row = {}, key = "") {
   else if (type === "roles")
     options = Object.entries(ROLES).map(([id, r]) => [id, r.label]);
   else if (type === "pillars")
-    options = data.settings.pillars.map((p) => [p, p]);
+    options = osMaturitySet(row.pillar).pillars.map((p) => [p, p]);
+  else if (type === "maturityLevels")
+    options = osMaturitySet(row.pillar).levels.map((l, i) => [String(i + 1), `${i + 1} · ${l}`]);
   else if (type === "kaizenStates")
     options = OS_KAIZEN_STATES.map((p) => [p, p]);
   else if (type === "deployStates")
