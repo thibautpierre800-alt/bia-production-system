@@ -368,7 +368,7 @@ function csAuditRender() {
     <div class="form-actions cs-nav">${step > 0 ? `<button type="button" class="btn ghost" data-cs-step="${step - 1}" aria-label="Étape précédente">←</button>` : ""}${next}<button type="button" class="btn secondary" data-cs-later>Plus tard</button></div></div>`);
   const root = $("modalContent");
   // Fermer l'audit, par la croix ou « Plus tard », garde tout ce qui est saisi.
-  modalSaver = () => { document.activeElement?.blur?.(); csSyncBilan(); return true; };
+  modalSaver = () => { uxFlush(); csSyncBilan(); return true; };
   root.querySelector(".cs-refbox")?.addEventListener("toggle", (e) => { if (csRun) csRun.refOpen = e.currentTarget.open; });
   csBindNav(root);
   root.querySelectorAll(".cs-q").forEach((li) => csBindQ(li, z));

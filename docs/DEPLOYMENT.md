@@ -113,3 +113,7 @@ La branche `backup/before-8.12.0-2026-11-06` conserve le commit `10dd828`, corre
 ## Retour à 8.12.0
 
 La branche `backup/before-8.13.0-2026-11-06` conserve le commit `0bf5436`, correspondant à la version 8.12.0. La 8.13.0 ajoute l’onglet SMED (`smed.js`) et la collection `smed`, que la 8.12.0 ignore et conserve. Les actions issues du SMED restent dans le plan d’actions ; les standards de changement restent des standards de poste.
+
+## Retour à 8.13.0
+
+La branche `backup/before-8.14.0-2026-11-06` conserve le commit `9da7f57`, correspondant à la version 8.13.0. La 8.14.0 ajoute `causes.js` et les champs `structured_data.ik` et `structured_data.why` des documents Ishikawa et 5 pourquoi. La 8.13.0 les ignore et affiche les rubriques texte, que la 8.14.0 tient à jour.
