@@ -145,8 +145,9 @@ async function main() {
       state.view = "home";
       render();
     });
-    assert.equal(await page.locator(".home-alert-count").count(), 2);
-    assert.match(await page.locator("#appView").innerText(), /Décider et débloquer/);
+    assert.match(await page.locator("#appView").innerText(), /Ma journée/);
+    assert.equal(await page.locator(".jn-watch").count(), 1, "La DG voit ce qui est à décider");
+    assert.equal(await page.locator("[data-new-gemba], [data-jn-new-action]").count(), 0, "La DG reste en lecture seule");
     await page.screenshot({
       path: path.join(output, "home-dg-desktop.png"),
       fullPage: true,
@@ -160,8 +161,10 @@ async function main() {
       state.view = "home";
       render();
     });
-    assert.equal(await page.locator(".mobile-nav .nav-button").count(), 5);
-    assert.match(await page.locator("#appView").innerText(), /Voir, signaler, agir/);
+    assert.equal(await page.locator(".mobile-nav .nav-button").count(), 6);
+    assert.equal(await page.locator(".mobile-nav .ux-count, .mobile-nav .nav-badge, .ux-pathbar").count(), 0, "Aucune pastille dans la navigation");
+    assert.match(await page.locator("#appView").innerText(), /Un problème au poste/);
+    assert.equal(await page.locator("[data-new-gemba]").count(), 0, "L’opérateur signale, il ne conduit pas de Gemba");
     await page.screenshot({
       path: path.join(output, "home-operator-mobile.png"),
       fullPage: true,
@@ -269,13 +272,14 @@ async function main() {
         animations: "disabled",
       });
       if (width === 390) {
-        assert.equal(await page.locator(".mobile-nav .nav-button").count(), 5);
+        assert.equal(await page.locator(".mobile-nav .nav-button").count(), 6);
         await page.waitForFunction(
           () =>
             document.querySelector(".sidebar").getBoundingClientRect().right <=
             1,
         );
-        assert.ok(await page.locator("#menuButton").isVisible());
+        assert.ok(await page.locator("#contextButton").isVisible());
+        assert.equal(await page.locator("#pageLocation .ux-tabs").count() <= 1, true, "Une seule ligne d’onglets");
       }
       report.viewports.push(width);
     }
@@ -322,12 +326,10 @@ async function main() {
       render();
     });
     await page.locator("[data-new-gemba]").click();
-    await page.locator("#gembaZone").fill("Finition — réception navigateur");
-    await page
-      .locator("#gembaObjective")
-      .fill("Vérifier le flux et les stocks");
-    await page.locator("#gembaAuthor").fill("Équipe réception");
-    await page.locator("#gembaForm button:not([type])").click();
+    await page.locator("#jnZone").fill("Finition — réception navigateur");
+    await page.locator("#jnStartForm button.jn-big").click();
+    await page.locator("#jnFact").fill("Stock en attente devant le contrôle");
+    await page.locator('[data-jn-save="done"]').click();
     const gembaId = await page.evaluate(() => data.gembas[0].id);
     await page.reload();
     assert.equal(
