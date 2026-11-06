@@ -1,5 +1,23 @@
 # Changelog
 
+## 8.6.0 — 6 novembre 2026
+
+**Résoudre : A3, PDCA, 8D, DMAIC et QRQC sur leurs modèles de référence.**
+
+- Chaque dossier s’affiche sur la feuille de sa méthode, remplie, en pleine largeur dans Résoudre :
+  - A3 : la feuille en deux moitiés, à gauche comprendre (PLAN : problème, contexte, situation actuelle avec le Pareto s’il existe, objectif, analyse, cause racine), à droite agir, vérifier, pérenniser (DO · CHECK · ACT : contre-mesures, plan d’actions, résultats, efficacité, standard, enseignements) ;
+  - 8D : D0 à D8, la description en grille 5W2H, le confinement mis en avant, les causes d’apparition et de non-détection côte à côte, la clôture avec visa ;
+  - QRQC : la bande Détecter → Sécuriser → Analyser → Agir → Vérifier (étapes renseignées en couleur), le fait, la sécurisation dans l’heure, la grille 5W2H, apparition et non-détection, l’action, la vérification et l’escalade ;
+  - PDCA : la roue de Deming (Planifier, Faire, Vérifier, Agir dans le sens des aiguilles d’une montre) tenue par la cale du standard ;
+  - DMAIC : les cinq phases en chevrons (Définir, Mesurer, Analyser, Améliorer, Contrôler), chacune avec ses outils de référence.
+- Toucher une case ouvre la rubrique correspondante. Dans le formulaire, « Voir la fiche … complète » montre le modèle avec la case en cours repérée, et chaque case y est aussi accessible.
+- Les actions liées au dossier apparaissent dans la case du modèle (plan d’actions, D6, action corrective, Faire, Améliorer) : quoi, qui, quand, état, retard signalé ; la liste en double sous le dossier est retirée.
+- 5W2H : une ligne par question (« Quoi : … », « Où : … ») remplit la grille ; un bouton insère la trame.
+- Impression / PDF : la fiche seule, à la taille de la page (A3, PDCA et DMAIC en paysage, 8D et QRQC en portrait), couleurs conservées, cases agrandies pour écrire à la main ; le papier, A3 ou A4, reste au choix.
+- Nouveau problème : le choix de la méthode se fait sur cinq cartes avec la vignette du modèle et quand l’utiliser, au lieu d’un menu déroulant.
+
+Aucune donnée n’est modifiée : mêmes rubriques, mêmes champs, seule la mise en page change.
+
 ## 8.5.0 — 6 novembre 2026
 
 **La Roadmap reprend l’onglet « phases et actions » ; l’accueil ne montre que ce qui sert.**

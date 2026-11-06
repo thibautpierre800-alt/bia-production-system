@@ -77,3 +77,7 @@ La branche `backup/before-8.4.0-2026-11-06` conserve le commit `cbe18dc`, corres
 ## Retour à 8.4.0
 
 La branche `backup/before-8.5.0-2026-11-06` conserve le commit `ef2a930`, correspondant à la version 8.4.0. La 8.5.0 ajoute au plan importé des champs de lecture (`agenda`, `legend`, `order`, `segments` des étapes) et marque d’un `archived_at` les exemples fictifs retirés à l’import ; revenue en 8.4.0, l’application ignore ces champs et les éléments archivés restent archivés.
+
+## Retour à 8.5.0
+
+La branche `backup/before-8.6.0-2026-11-06` conserve le commit `0ba1aa3`, correspondant à la version 8.5.0. La 8.6.0 ne change que l’affichage des dossiers de résolution (`modeles.js`, styles dans `ux.css`) et ne crée aucun champ ; revenue en 8.5.0, les dossiers s’ouvrent comme avant.

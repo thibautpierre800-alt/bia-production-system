@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-5-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.5.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-6-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.6.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -337,6 +337,48 @@ test('A3, 8D et QRQC : étapes réelles, sauvegarde, action liée, validation pr
   run('closeModal();genericProblemForm({method:"A3"})');fill('#problemTitle','Action liée');fill('#problemOwner','Pilote');submit('#problemForm');const pid=run('data.problems[0].id');
   const i=run('DOCUMENT_SCHEMAS.A3.fields.findIndex(f=>f[0]==="action_plan")');run(`editDocument(data.documents[0].id,${i})`);fill('[data-doc-field]','Essai à réaliser');click('#modalContent [data-new-action]');
   fill('#actionTitle','Tester le contre-guide');fill('#actionOwner','Équipe');submit('#actionForm');assert.equal(run('data.actions[0].origin_id'),pid);assert.ok(run('data.problems[0].action_ids.includes(data.actions[0].id)'));
+});
+test('Résoudre : A3, PDCA, 8D, DMAIC et QRQC sur leur modèle de référence',t=>{
+  const a=app(t),{run,q,all,click,fill,submit}=a;
+  run('state.role="lean";state.site="marzin";state.view="resolution";render()');
+  const shape={A3:['.md-a3-cols .md-col',2],PDCA:['.md-wheel .md-q',4],'8D':['.md-8d .md-split .md-box',2],DMAIC:['.md-dmaic-row .md-ph',5],QRQC:['.md-steps li',5]};
+  for(const type of ['QRQC','PDCA','A3','8D','DMAIC']){
+    run('closeModal();genericProblemForm({method:"A3"})');
+    assert.equal(all('.md-pick-card').length,5,'Cinq modèles, avec leur vignette');assert.equal(q('select#problemMethod'),null,'Plus de menu déroulant pour la méthode');
+    click(`[data-md-method="${type}"]`);assert.equal(q('#problemMethod').value,type);assert.equal(q('.md-pick-card.active').dataset.mdMethod,type);
+    fill('#problemTitle',`Modèle ${type}`);fill('#problemOwner','Pilote');submit('#problemForm');
+    const pid=run('data.problems[0].id'),fields=Array.from(run(`DOCUMENT_SCHEMAS['${type}'].fields.map(f=>f[0])`));
+    assert.equal(run('data.problems[0].method'),type);
+    assert.ok(q('.wizard-overview .md-sheet'),'Vue d’ensemble = la fiche du modèle');assert.equal(q('.wizard-overview summary').textContent,`Voir la fiche ${type} complète`);
+    assert.equal(q('.wizard-overview .md-box.current').dataset.mdKey,q('[data-doc-field]').dataset.docField,'La case en cours est repérée');
+    run('closeModal();state.view="resolution";render()');
+    assert.equal(q('.md-wrap .md-sheet').dataset.mdType,type);assert.equal(all('.md-wrap [data-md-step]').length,fields.length,'Une case par rubrique, aucune oubliée');
+    assert.equal(all(`.md-wrap ${shape[type][0]}`).length,shape[type][1]);
+    const last=fields.at(-1);click(`.md-wrap [data-md-key="${last}"] [data-md-step]`);assert.equal(q('[data-doc-field]').dataset.docField,last,'Toucher une case ouvre sa rubrique');
+    run('closeModal()');
+  }
+  assert.deepEqual(all('.md-wrap .md-ph .md-head b').map(b=>b.textContent),['Définir','Mesurer','Analyser','Améliorer','Contrôler']);
+  run('state.selectedProblemId=data.problems.find(p=>p.method==="8D").id;render()');
+  assert.deepEqual(all('.md-wrap .md-num').map(n=>n.textContent).filter(x=>/^D\d$/.test(x)),['D0','D1','D2','D3','D4','D5','D6','D7','D8']);
+  assert.match(q('.md-wrap [data-md-key="d4_occurrence"]').textContent,/apparu/);assert.match(q('.md-wrap [data-md-key="d4_escape"]').textContent,/détecté/);
+  // 5W2H : une ligne par question remplit la grille ; la trame s’insère d’un geste.
+  const p5=JSON.parse(run('JSON.stringify(md5w2hParse("Rayure capot\\nQuoi : rayure\\nOù : poste 3\\n- Combien ? : 12 pièces"))'));
+  assert.deepEqual(p5.cells,{quoi:'rayure',ou:'poste 3',combien:'12 pièces'});assert.equal(p5.rest,'Rayure capot');
+  const doc8=run('data.documents.find(d=>d.type==="8D").id');run(`editDocument("${doc8}",2)`);fill('[data-doc-field]','');click('[data-md-5w2h]');
+  assert.match(q('[data-doc-field]').value,/^Quoi : \nQui : \nOù : [\s\S]*Pourquoi est-ce un problème : $/);
+  fill('[data-doc-field]','Quoi : rayure\nCombien : 12 pièces');run('requestCloseModal();render()');
+  assert.match(q('.md-wrap [data-md-key="d2"] .md-5w').textContent,/Quoi \?rayure[\s\S]*Combien \?12 pièces/);
+  // Plan d’actions : les actions liées au dossier, dans la case du modèle ; plus de doublon sous le dossier.
+  run('state.selectedProblemId=data.problems.find(p=>p.method==="A3").id;render()');const pa=run('state.selectedProblemId');
+  run(`commitData(()=>data.actions.unshift({id:"A-MD1",site_id:"marzin",title:"Remettre le support à la cote",owner:"Maintenance",status:"À faire",priority:"Haute",due_date:"2000-01-01",origin_type:"Problème",origin_id:"${pa}",created_at:now()}));render()`);
+  assert.match(q('.md-wrap [data-md-key="action_plan"] .md-table').textContent,/Remettre le support à la cote[\s\S]*Maintenance[\s\S]*en retard/);
+  assert.equal(all('.problem-layout .section-title').filter(x=>/Actions liées/.test(x.textContent)).length,0);
+  // Impression : la fiche seule, au format de page du modèle.
+  const printed=run(`(()=>{const d=data.documents.find(x=>x.type==="8D");return documentPrint(d,documentValues(d))})()`);
+  assert.match(printed,/md-sheet md-8d/);assert.match(printed,/@page\{size:portrait/);assert.doesNotMatch(printed,/data-md-step|data-doc-go/,'À l’impression, pas de bouton');
+  click('[data-md-print]');assert.ok(q('.md-preview .md-sheet.md-a3'));assert.match(q('.md-preview').innerHTML,/size:landscape/);run('closeModal()');
+  // Les autres documents gardent leur présentation.
+  assert.match(run('documentVisual("5WHY",{why1:"x"})'),/why-ladder/);
 });
 test('Audit 50 critères : brouillon incomplet, reprise, preuves et actions sans doublon',t=>{
   const a=app(t),{run,fill,submit,click,q,all}=a;run('auditForm()');fill('#auditScope','Découpe');fill('#auditOwner','Chef atelier');fill('#auditAuditor','Auditeur');
