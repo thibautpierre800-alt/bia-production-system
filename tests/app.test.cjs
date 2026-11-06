@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-0-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.0.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-1-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.1.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -71,7 +71,7 @@ test('Accueil, raccourcis terrain et écran SQCDP Groupe vertical sont explicite
   assert.equal(q('body').classList.contains('group-presentation'),false);
   run('state.view="pilotage";state.osTab="tower";render()');
   assert.equal(all('[data-pilotage-mode]').length,2);
-  assert.match(q('.control-analysis-table').textContent,/73,3 % défavorable/);
+  assert.match(q('[data-in-cell="marzin:scrap"]').getAttribute('aria-label'),/73,3 % défavorable/);
   run('state.role="dg";state.view="home";render()');assert.equal(q('.quick-action-dock'),null);
 });
 test('Alertes opérationnelles, relève, accès terrain et paquet de synchronisation restent reliés',t=>{
@@ -213,48 +213,45 @@ test('TOP 15 : sujet issu du KPI, action et escalade accessibles sans masquer le
 });
 test('Pilotage : sites, séries disponibles, absence signalée et lien avec les actions',t=>{
   const a=app(t),{run,q,click,fill}=a;run('state.site="group";state.view="pilotage";state.osTab="detail";render()');
-  assert.match(q('#appView').textContent,/Source|source/);assert.ok(q('#pilotSite'));
-  fill('#pilotSite','sodeplax');assert.equal(run('state.pilotSite'),'sodeplax');assert.match(q('#appView').textContent,/Sodeplax/);assert.match(q('#appView').textContent,/indisponible|qualifier|connecter/);
+  assert.match(q('#appView').textContent,/Source|source/);assert.equal(q('#appView select'),null,'Sites choisis par puces, sans menu déroulant');
+  click('[data-in-site="sodeplax"]');assert.equal(run('state.pilotSite'),'sodeplax');assert.equal(q('[data-in-site="sodeplax"]').getAttribute('aria-pressed'),'true');assert.match(q('#appView').textContent,/Sodeplax/);
+  run('data.measures=data.measures.filter(m=>!(m.site_id==="sodeplax"&&m.code==="staffing"));data.trends=data.trends.filter(x=>!(x.site_id==="sodeplax"&&x.code==="staffing"));render()');assert.match(q('#appView').textContent,/indisponible/,'Une série absente est signalée');
   run('state.site="marzin";render()');assert.match(q('#appView').textContent,/TRS/);assert.match(q('#appView').textContent,/Rebut/);assert.match(q('#appView').textContent,/Service client/);
 });
-test('Benchmark Groupe : six sites visibles ensemble et indicateurs commutables sans valeurs inventées',t=>{
-  const {run,q,all,fill,click}=app(t);
-  run('state.site="group";state.role="lean";state.view="pilotage";state.osTab="detail";render()');
-  assert.equal(all('.benchmark-grid > article').length,6);
-  assert.deepEqual(all('.benchmark-site-head h3').map(x=>x.textContent),['Ag Déco','Europlacage','Marzin','Oraison Menuiserie','Profiline','Sodeplax']);
-  assert.equal(q('.benchmark-table'),null,'Aucun tableau à défilement horizontal');
-  assert.match(q('.benchmark-toolbar').textContent,/6\/6 sites renseignés · TRS/);
-  assert.match(all('.benchmark-site')[0].textContent,/82%/);
-  assert.doesNotMatch(q('.benchmark-grid').textContent,/classement|moyenne/);
-  click('[data-benchmark-metric="scrap"]');
-  assert.equal(run('state.benchmarkMetric'),'scrap');assert.equal(all('.benchmark-grid > article').length,6);
-  assert.match(all('.benchmark-site')[2].textContent,/5.2/);
-  click('[data-benchmark-metric="service"]');
-  assert.match(q('.benchmark-toolbar').textContent,/6\/6 sites renseignés/);
-  assert.equal(all('.benchmark-site-empty').length,0);
-  click('[data-benchmark-metric="trs"]');
-  const previous=run('osDateOffset(-7)');fill('#benchmarkPeriod',previous);
-  assert.equal(run(`benchmarkObservation("marzin","trs","${previous}").value`),77);
-  assert.equal(run(`benchmarkObservation("ag-deco","trs","${previous}").value`),81);
-  click('[data-benchmark-site="sodeplax"]');assert.equal(run('state.pilotSite'),'sodeplax');assert.equal(run('state.site'),'group');
-  assert.equal(q('#pilotSite').value,'sodeplax');
+test('Analyser : tous les indicateurs des six sites d’un coup d’œil, sans menu déroulant',t=>{
+  const {run,q,all,click}=app(t);
+  run('state.site="group";state.role="lean";state.view="pilotage";state.pilotageMode="analysis";state.osTab="tower";render()');
+  assert.equal(all('#appView select').length,0,'Aucun menu déroulant');
+  assert.equal(all('#appView details').length,0,'Rien de replié');
+  assert.deepEqual(all('.in-site').map(x=>x.textContent),['Ag Déco','Europlacage','Marzin','Oraison Menuiserie','Profiline','Sodeplax']);
+  assert.equal(all('.in-cell[data-os="kpiDetail"]').length,30,'Six sites × cinq indicateurs visibles ensemble');
+  assert.deepEqual(all('.in-head .in-col b').slice(0,5).map(x=>x.textContent),['S','Q','C','D','P']);
+  assert.match(q('[data-in-cell="ag-deco:trs"]').textContent,/82/);
+  assert.match(q('[data-in-cell="marzin:scrap"]').textContent,/5,2/);
+  assert.equal(q('[data-in-cell="marzin:scrap"]').classList.contains('gap'),true);
+  assert.doesNotMatch(q('.in-wall').textContent,/classement/);
+  click('[data-in-cell="marzin:scrap"]');assert.match(q('#modalContent').textContent,/5,2/);run('closeModal()');
+  const previous=run('osDateOffset(-7)');
+  click('[data-in-step="os"][aria-label="Période précédente"]');assert.equal(run('state.osPeriod'),previous);
+  assert.match(q('[data-in-cell="marzin:trs"]').textContent,/77/);
+  assert.match(q('[data-in-cell="ag-deco:trs"]').textContent,/81/);
+  click('[data-in-step="os"][aria-label="Période suivante"]');assert.equal(run('state.osPeriod'),null);
+  click('[data-in-site="sodeplax"]');assert.equal(run('state.pilotSite'),'sodeplax');assert.equal(run('state.site'),'group');assert.equal(run('state.osTab'),'detail');
+  assert.equal(all('#appView select').length,0);
 });
-test('Benchmark : saisie manuelle par site, courbe datée et sauvegarde après rechargement',t=>{
+test('Relevé manuel : saisie par site, visible dans les indicateurs et sauvegardée après rechargement',t=>{
   const a=app(t),{run,q,click,fill,submit}=a;
-  run('state.site="group";state.role="lean";state.view="pilotage";state.osTab="detail";render()');
-  click('[data-benchmark-metric="service"]');
-  click('[data-new-benchmark]');fill('#benchmarkSite','ag-deco');fill('#benchmarkDate','2026-09-24');fill('#benchmarkValue','82.4');fill('#benchmarkTarget','98');fill('#benchmarkDefinition','Commandes livrées à l’heure et complètes / commandes dues');submit('#benchmarkForm');
-  assert.equal(run('state.benchmarkMetric'),'service','L’indicateur choisi reste sélectionné');
+  run('state.site="group";state.role="lean";state.view="pilotage";state.pilotageMode="analysis";state.osTab="tower";render()');
+  click('.in-wall [data-new-benchmark]');fill('#benchmarkSite','ag-deco');fill('#benchmarkKpi','service');fill('#benchmarkDate','2026-09-24');fill('#benchmarkValue','82.4');fill('#benchmarkTarget','98');fill('#benchmarkDefinition','Commandes livrées à l’heure et complètes / commandes dues');submit('#benchmarkForm');
   assert.equal(run('benchmarkObservation("ag-deco","service","2026-09-24").value'),82.4);
   assert.ok(run('indicatorSeries("ag-deco","service").labels.includes("2026-09-24")'));
-  assert.equal(q('#benchmarkPeriod').value,'2026-09-24');
-  assert.match(q('.benchmark-grid').textContent,/82.4%/);
-  assert.match(q('.benchmark-grid').textContent,/Saisie manuelle/);
-  assert.match(q('.benchmark-toolbar').textContent,/1\/6 sites renseignés/);
-  const stored=a.stored(),b=app(t,stored);b.run('state.site="group";state.view="pilotage";state.osTab="detail";render()');
+  run('state.osPeriod="2026-09-24";render()');
+  assert.match(q('[data-in-cell="ag-deco:service"]').textContent,/82,4/);
+  assert.match(q('[data-in-cell="ag-deco:service"]').getAttribute('aria-label'),/cible 98/);
+  const stored=a.stored(),b=app(t,stored);b.run('state.site="group";state.role="lean";state.view="pilotage";state.pilotageMode="analysis";state.osTab="tower";state.osPeriod="2026-09-24";render()');
   assert.equal(b.run('benchmarkObservation("ag-deco","service","2026-09-24").value'),82.4);
-  b.fill('#benchmarkPeriod','2026-09-24');
-  assert.match(b.q('.benchmark-site').textContent,/Donnée indisponible/);
+  assert.match(b.q('[data-in-cell="ag-deco:service"]').textContent,/82,4/);
+  assert.equal(b.q('[data-in-cell="ag-deco:trs"]').classList.contains('none'),true,'Une mesure absente reste visible comme absente');
   b.run('state.role="dg";render()');assert.equal(b.q('[data-new-benchmark]'),null);
   b.run('state.role="director";state.site="ag-deco";render()');b.click('[data-new-benchmark]');
   assert.equal(b.q('#benchmarkSite').options.length,1);
@@ -285,10 +282,10 @@ test('SQCDP Groupe : six sites simultanés, états qualifiés et détail actionn
   assert.equal(run('benchmarkObservation("ag-deco","service","2026-09-24").value'),96);
   run('state.view="sqcdp";render()');
   assert.equal(q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('ok'),true);
-  const prior=run('osDateOffset(-7)');run(`data.measures=data.measures.filter(m=>!(m.site_id==='ag-deco'&&m.code==='service'&&m.period==='${prior}'))`);fill('#sqcdpGroupPeriod',prior);
+  const prior=run('osDateOffset(-7)');run(`data.measures=data.measures.filter(m=>!(m.site_id==='ag-deco'&&m.code==='service'&&m.period==='${prior}'))`);assert.equal(q('#sqcdpGroupPeriod'),null,'Période parcourue sans menu déroulant');run('state.benchmarkPeriod=benchmarkPeriods()[0];render()');click('[data-in-step="bench"][aria-label="Période précédente"]');assert.equal(run('state.benchmarkPeriod'),prior);
   assert.equal(q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('missing'),true);
-  run('state.role="dg";state.view="pilotage";state.osTab="detail";render()');
-  assert.equal(all('.sqcdp-cell').length,30,'La direction retrouve la matrice dans Pilotage Groupe');
+  run('state.role="dg";state.view="pilotage";state.pilotageMode="ritual";render()');
+  assert.equal(all('.sqcdp-cell').length,30,'La direction retrouve la matrice dans Pilotage › Décider');
   click('[data-sqcdp-site="marzin"][data-sqcdp-axis="S"]');
   assert.equal(q('#sqcdpAddMeasure'),null);
   assert.equal(q('#sqcdpAddAction'),null);
@@ -296,7 +293,7 @@ test('SQCDP Groupe : six sites simultanés, états qualifiés et détail actionn
   assert.equal(run('state.view'),'pilotage');
   assert.equal(run('state.pilotSite'),'marzin');
   const b=app(t,a.stored());b.run('state.role="lean";state.site="group";state.view="sqcdp";render()');
-  b.fill('#sqcdpGroupPeriod','2026-09-24');
+  b.run('state.benchmarkPeriod="2026-09-24";render()');
   assert.equal(b.q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('ok'),true);
 });
 test('Formation, roadmap, bibliothèque et bonnes pratiques restent opérationnelles',t=>{

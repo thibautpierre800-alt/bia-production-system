@@ -53,3 +53,7 @@ La branche `backup/before-7.9.0-2026-11-06` conserve le commit `a2fb3e5`, corres
 ## Retour à 7.9.0
 
 La branche `backup/before-8.0.0-2026-11-06` conserve le commit `c519ca0`, correspondant à la version 7.9.0. La 8.0.0 ne modifie que l’interface (navigation, accueil, saisie Gemba, plan d’actions) : aucune donnée n’est transformée. Les visites et constats saisis en 8.0 restent lisibles en 7.9.
+
+## Retour à 8.0.0
+
+La branche `backup/before-8.1.0-2026-11-06` conserve le commit `06a207e`, correspondant à la version 8.0.0. La 8.1.0 ne modifie que l’écran Voir › Analyser et ses courbes (nouveau fichier `indicateurs.js`) : aucune donnée n’est transformée. Les relevés saisis en 8.1 restent lisibles en 8.0.

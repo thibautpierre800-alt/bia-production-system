@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.1.0 — 6 novembre 2026
+
+**Voir › Analyser : tous les indicateurs d’un coup d’œil, sans menu déroulant.**
+
+- Groupe : une matrice sites × indicateurs (S, Q, C, D, P), plus la maturité et les actions en retard de chaque site. Les six sites et tous les indicateurs sont visibles ensemble, sur téléphone comme sur ordinateur. Chaque case est colorée selon l’état (écart, vigilance, cible atteinte, sans mesure), avec une flèche d’évolution verte si favorable et la tendance sur ordinateur. Toucher une case ouvre la courbe, la cible et les dossiers liés ; toucher un site ouvre ses courbes.
+- Un site : une tuile par indicateur (valeur, cible, date, flèche, tendance) et la maturité.
+- Le menu « Indicateur » disparaît. La date de la situation se parcourt avec ‹ › (relevé précédent / suivant) ; « + Relevé » reste en haut de la matrice pour les profils autorisés.
+- Sous la matrice : actions en retard, problèmes ouverts et alertes critiques (un geste ouvre l’écran concerné), « À creuser » (indicateurs hors cible plusieurs relevés de suite, avec la pratique validée ailleurs), gains vérifiés. Le tableau « Écarts à analyser », redondant avec la matrice, est retiré. Énergie, déchets et CO₂ ne sont plus repliés.
+- Courbes d’un site : sites et historique (Tout, 8, 4 relevés) choisis par puces. Le benchmark à un indicateur, remplacé par la matrice, est retiré de cet écran.
+- Décider : la période commune du SQCDP Groupe se parcourt aussi avec ‹ ›.
+
+Aucune donnée ni aucun droit ne change : mêmes relevés, mêmes calculs d’état, mêmes profils.
+
 ## 8.0.0 — 6 novembre 2026
 
 **Le quotidien : une seule navigation, et ce qui sert chaque jour (Gemba, plan d’actions) en premier.**

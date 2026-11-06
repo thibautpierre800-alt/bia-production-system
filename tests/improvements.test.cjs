@@ -138,13 +138,14 @@ test("7.4 · environnement : pas d’écrasement des sources, preuve CO2 et dén
   assert.equal(a.run('commitData(()=>osPublishEnvironment("ENV-74"))'),false);
   assert.equal(a.run('JSON.stringify(data.measures)'),before);
 });
-test("7.4 · carte multisite, données manquantes et filtrage conservés", t => {
+test("7.4 · vue des sites : toutes les cases, mesures manquantes signalées et filtrage conservé", t => {
   const a = fresh(t); a.run('state.site="group";state.view="pilotage";state.osTab="tower";render()');
-  assert.equal(a.all('.os-site-summary').length,6);
-  assert.match(a.q('.os-multisite-map').textContent,/BIA Holding/);
-  assert.match(a.q('.os-site-summary').textContent,/Aucune mesure/);
-  a.fill('#osMapKpi','KPI-scrap'); assert.equal(a.run('state.mapKpi'),'KPI-scrap');
-  a.run('state.site="marzin";render()'); assert.equal(a.all('.os-site-summary').length,1);
+  assert.equal(a.all('.in-site').length,6);
+  assert.equal(a.all('#appView select').length,0,'Aucun menu déroulant');
+  assert.ok(a.all('.in-cell.none').length>0);
+  assert.match(a.q('.in-cell.none').getAttribute('aria-label'),/aucune mesure/);
+  a.run('state.site="marzin";render()'); assert.equal(a.all('.in-site').length,0);
+  assert.equal(a.all('.in-tile[data-os="kpiDetail"]').length, a.run('osActive(data.kpis).length'));
 });
 test("7.4 · réplication en dossiers candidats sans doublon ni fausse validation", t => {
   const a = fresh(t); a.run('data.practices.push({id:"BP-74",site_id:"marzin",title:"Gabarit",status:"Publiée",evidence:"Essais conformes",transfer:"Vérifier les références"})');
