@@ -73,3 +73,7 @@ La branche `backup/before-8.3.0-2026-11-06` conserve le commit `71979ba`, corres
 ## Retour à 8.3.0
 
 La branche `backup/before-8.4.0-2026-11-06` conserve le commit `cbe18dc`, correspondant à la version 8.3.0. La 8.4.0 ajoute des dates aux étapes du plan (`from`, `to`) et des objectifs marqués `plan_key` ; revenue en 8.3.0, l’application les lit comme des données ordinaires.
+
+## Retour à 8.4.0
+
+La branche `backup/before-8.5.0-2026-11-06` conserve le commit `ef2a930`, correspondant à la version 8.4.0. La 8.5.0 ajoute au plan importé des champs de lecture (`agenda`, `legend`, `order`, `segments` des étapes) et marque d’un `archived_at` les exemples fictifs retirés à l’import ; revenue en 8.4.0, l’application ignore ces champs et les éléments archivés restent archivés.

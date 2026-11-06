@@ -1,5 +1,17 @@
 # Changelog
 
+## 8.5.0 — 6 novembre 2026
+
+**La Roadmap reprend l’onglet « phases et actions » ; l’accueil ne montre que ce qui sert.**
+
+- Roadmap : la frise des phases dans le temps, en mois calendaires depuis le démarrage (nov. – déc. 2026, janv. – avr. 2027…), avec les bandes BU pilotes, vague 1 et vague 2 et les sites désignés, les jalons de décision et la ligne d’aujourd’hui. Puis le tableau de l’onglet, tel quel : Phase, Période, Actions clés, Livrable(s), Planning détaillé, phase en cours repérée ; les jalons avec leurs critères de passage et leur état, les indicateurs suivis, la gouvernance, les risques et leurs parades. Le Gantt semaine par semaine du planning n’est plus dans la Roadmap.
+- Hoshin : chaque étape de site affiche ses semaines du planning (S45–S52) ; les phases et les jalons sont désormais dans la Roadmap.
+- Import du fichier : deux cases, cochées par défaut, retirent les exemples fictifs (objectifs et priorités de démonstration archivés, pas supprimés) et créent les objectifs du plan. Le Hoshin et la Roadmap ne montrent plus les données de démonstration après import.
+- Lecture du fichier : le début du programme est la première semaine du Gantt, et non la case « Date » (qui vaut AUJOURDHUI()). Les couleurs et la légende du planning sont gardées par semaine ; le calendrier d’intégration est lu (semaines, jours, cases fusionnées sur plusieurs jours, jours grisés). Les tableaux s’arrêtent à un titre de section même sans ligne vide. Numéro de semaine ISO corrigé.
+- Accueil « Ma journée » : plus de carte Gemba (il se démarre depuis + ou Observer). Une carte n’apparaît que si elle a du contenu : Cette semaine (calendrier d’intégration, Responsable Lean), Plan de déploiement (phase en cours, prochain jalon et dans combien de jours, étapes en cours des sites, regroupées quand elles sont identiques), Actions, Indicateurs en écart (les quatre plus marqués, chacun ouvre sa courbe), À surveiller (dont les constats à trier et les retours terrain). Sinon : « Rien d’urgent aujourd’hui ».
+
+Le contenu du fichier de déploiement reste hors du code publié : il n’existe que dans les données de l’appareil qui l’a importé.
+
 ## 8.4.0 — 6 novembre 2026
 
 **Un seul plan : la Roadmap et les objectifs Hoshin lisent le plan de déploiement.**

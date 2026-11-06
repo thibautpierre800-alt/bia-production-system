@@ -596,7 +596,8 @@ test("Ma journée 8.0 · accueil par profil et Gemba express jusqu’au plan d�
   const a = app(t);
   a.run('state.site="group";state.role="lean";state.view="home";render()');
   assert.match(a.q("#appView").textContent, /Ma journée/);
-  assert.ok(a.q(".jn-gemba") && a.q(".jn-actions"));
+  assert.equal(a.q(".jn-gemba"), null);
+  assert.ok(a.q(".jn-actions"));
   a.run("jnStart()");
   a.fill("#jnZone", "Préparation commandes");
   a.submit("#jnStartForm");
