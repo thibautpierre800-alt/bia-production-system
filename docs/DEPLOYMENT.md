@@ -105,3 +105,7 @@ La branche `backup/before-8.10.0-2026-11-06` conserve le commit `3b07fbd`, corre
 ## Retour à 8.10.0
 
 La branche `backup/before-8.11.0-2026-11-06` conserve le commit `a4dde7a`, correspondant à la version 8.10.0. La 8.11.0 remplace l’écran de l’audit terrain (`audit50.js`) sans changer ses données ; les champs ajoutés aux critères (`photo`, `act`, `what`, `who`, `when`) sont ignorés par la 8.10.0.
+
+## Retour à 8.11.0
+
+La branche `backup/before-8.12.0-2026-11-06` conserve le commit `10dd828`, correspondant à la version 8.11.0. La 8.12.0 ajoute l’éditeur de standard (`standards.js`) et `structured_data.st` dans les documents STANDARD ; la 8.11.0 ignore ce champ et ouvre ces documents avec l’ancien formulaire en six rubriques.

@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.12.0 — 6 novembre 2026
+
+**Standard de poste : des étapes en photo, des points clés et leurs raisons, comme la méthode TWI.**
+
+- Chaque étape importante a sa photo (prise au poste, annotable au doigt), son intitulé, ses points clés typés sécurité ⚠, qualité ✓ ou geste ✋ (un geste pour changer le type), la raison et le temps. « Photo d’abord » crée l’étape à partir de la photo ; les étapes se déplacent et se suppriment au doigt.
+- Protections (EPI) en un geste, zone 5S du poste, réaction en cas d’écart (« Arrêter, sécuriser, prévenir le chef d’équipe » par défaut), temps de cycle calculé.
+- Validation : qui valide et la date d’entrée en vigueur ; pas de validation sans étapes nommées ni point clé. Modifier un standard validé le remet en révision ; la validation suivante crée une nouvelle version.
+- Formation : les personnes formées, par version, avec le rappel des quatre temps de la formation TWI (préparer, montrer, faire faire, suivre).
+- Fiche au poste en A4 paysage : EPI, une carte par étape avec photo, points clés et raison, réaction en cas d’écart, version et validation.
+- La zone 5S montre ses standards et en crée un ; « + » propose « Standard de poste ». Les anciens standards en texte restent lisibles, et leur séquence peut devenir les étapes en un geste.
+
+Données : `documents[]` de type STANDARD, `structured_data.st` (étapes, points clés, EPI, zone, validation, formés) ; rien n’est retiré.
+
 ## 8.11.0 — 6 novembre 2026
 
 **Audit terrain 50 critères : la même ergonomie que le 5S.**

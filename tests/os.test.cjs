@@ -765,6 +765,58 @@ test("5S 8.10 · zones, audit au téléphone, bilan et actions, étiquettes roug
   assert.equal(a.run('uxTabs(uxStages().find(s=>s.id==="observer")).some(t=>t.key==="5s")'), false, "Pas d’audit 5S pour l’opérateur");
 });
 
+test("Standard de poste 8.12 · étapes et points clés, validation versionnée, formation, fiche au poste, zone 5S", (t) => {
+  const a = app(t);
+  a.run('state.site="marzin";state.role="lean";state.view="documents";render();stNew({title:"Collage des chants · poste 3"})');
+  a.fill("#stNewOwner", "Camille Martin");
+  a.submit("#stNewForm");
+  const id = a.run('data.documents.find(d=>d.type==="STANDARD"&&d.title==="Collage des chants · poste 3").id');
+  assert.ok(a.q(".st-editor"), "Le standard s’ouvre dans son éditeur");
+  a.click("[data-st-validate]");
+  assert.equal(a.run(`stDoc("${id}").status`), "Brouillon", "Pas de validation sans étape");
+  a.click('[data-st-ppe="Gants"]');
+  a.click("[data-st-addstep]");
+  const sid = a.run(`stOf(stDoc("${id}")).steps[0].id`);
+  a.fill(`[data-st-step="${sid}"] [data-st-title]`, "Contrôler le chant et la colle");
+  a.click(`[data-st-step="${sid}"] [data-st-kpadd="securite"]`);
+  a.fill(`[data-st-step="${sid}"] [data-st-kp="0"] [data-st-kptext]`, "Colle à 180 °C : gants obligatoires");
+  a.click(`[data-st-step="${sid}"] [data-st-kpadd="geste"]`);
+  a.click(`[data-st-step="${sid}"] [data-st-kp="1"] [data-st-kind]`);
+  a.fill(`[data-st-step="${sid}"] [data-st-kp="1"] [data-st-kptext]`, "Teinte conforme à l’OF");
+  a.fill(`[data-st-step="${sid}"] [data-st-reason]`, "Éviter brûlure et reprise");
+  a.fill(`[data-st-step="${sid}"] [data-st-time]`, "30");
+  const st = JSON.parse(a.run(`JSON.stringify(stOf(stDoc("${id}")))`));
+  assert.deepEqual(st.ppe, ["Gants"]);
+  assert.deepEqual(st.steps[0].points.map((p) => p.text), ["Colle à 180 °C : gants obligatoires", "Teinte conforme à l’OF"]);
+  assert.equal(a.run(`stOf(stDoc("${id}")).steps[0].points[1].kind`), "securite", "Le type de point clé change d’un geste (geste → sécurité)");
+  assert.equal(st.steps[0].reason, "Éviter brûlure et reprise");
+  assert.equal(st.steps[0].time_s, 30);
+  a.fill("#stApprover", "Lionel Chavanac");
+  a.click("[data-st-validate]");
+  assert.deepEqual(JSON.parse(a.run(`JSON.stringify([stDoc("${id}").status,stDoc("${id}").version,stOf(stDoc("${id}")).approved_by])`)), ["Validé", 1, "Lionel Chavanac"]);
+  a.fill("#stTrName", "Kévin");
+  a.click("[data-st-train]");
+  assert.deepEqual(JSON.parse(a.run(`JSON.stringify(stOf(stDoc("${id}")).trained.map(t=>[t.name,t.version]))`)), [["Kévin", 1]]);
+  a.fill(`[data-st-step="${sid}"] [data-st-reason]`, "Éviter brûlure, reprise et rebut");
+  assert.equal(a.run(`stDoc("${id}").status`), "En révision", "Modifier un standard validé le remet en révision");
+  a.run(`stRedraw("${id}")`);
+  a.fill("#stApprover", "Lionel Chavanac");
+  a.click("[data-st-validate]");
+  assert.equal(a.run(`stDoc("${id}").version`), 2, "Nouvelle validation = nouvelle version");
+  assert.match(a.q(".st-trained h3").textContent, /version 2 · 0/, "La formation se refait sur la nouvelle version");
+  assert.equal(a.run(`documentProgress("STANDARD",stDoc("${id}").structured_data).done`), 4, "Il ne manque que la photo");
+  a.run(`stPrint("${id}")`);
+  assert.match(a.q(".st-sheet").textContent, /Contrôler le chant et la colle[\s\S]*Colle à 180 °C[\s\S]*En cas d’écart/);
+  a.run(`closeModal();editDocument("${id}")`);
+  assert.ok(a.q(".st-editor"), "Ouvrir le document mène à l’éditeur du standard");
+  a.run(`closeModal();csZoneForm()`);
+  a.fill("#csZoneName", "Îlot de collage");
+  a.submit("#csZoneForm");
+  const zid = a.run('data.zones.find(z=>z.name==="Îlot de collage").id');
+  a.run(`stSave("${id}",st=>{st.zone_id="${zid}"},{revise:false});csZoneOpen("${zid}")`);
+  assert.match(a.q(".st-zone").textContent, /Standards de la zone · 1[\s\S]*Collage des chants/);
+});
+
 test("Rapport d’étonnement 8.9 · thèmes tirés des Gemba, mots du responsable Lean, période, droits et texte pour le COMEX", (t) => {
   const a = app(t);
   a.run(`const mk=(site,day,notes)=>{const g={id:nextId("G",data.gembas),site_id:site,zone:"Zone "+site,author:"Pierre Thibaut",status:"Brouillon",observations:[],created_at:day+"T09:00:00.000Z",updated_at:day+"T09:00:00.000Z"};notes.forEach(([kind,cat,fact,urgent])=>g.observations.push({id:uid("OBS"),kind,category:cat,fact,urgent:!!urgent,decision:kind==="positif"?"Conforme":"À décider",photos:[],photo:""}));data.gembas.unshift(g);};
