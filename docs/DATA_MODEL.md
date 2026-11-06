@@ -107,3 +107,9 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.12.0 (additive)
 
 - `documents[]` de type STANDARD : `structured_data.st = { zone_id, ppe[], steps[{ id, title, points[{ kind: "securite"|"qualite"|"geste", text }], reason, photo, time_s }], reaction, approved_by, approved_at, effective_date, trained[{ name, date, by, version }] }`. Le statut du document suit Brouillon → Validé → En révision ; `version` augmente à chaque nouvelle validation. Les six rubriques texte précédentes sont conservées.
+
+## Extension 8.13.0 (additive)
+
+- `smed[]` : `{ id: "SMED-001", site_id, project_id?, title, owner, target_min, per_week, chrono: { started_at, lap_at, ended_at? }, ops[{ id, label, dur_s, type: "interne"|"externe", after?: "externe"|"reduite"|"supprimee"|"inchangee", after_s?, action?, act?, who?, when?, action_id? }], measures[{ date, min, by }], standard_id?, created_at, updated_at }`. Le chrono est enregistré pour survivre à la fermeture de l’appli.
+- `actions[]` issues du SMED : `origin_type: "SMED"`, `smed_id`, sans `origin_id`.
+- Le standard de changement est un document STANDARD ordinaire (`structured_data.st`).

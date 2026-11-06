@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.13.0 — 6 novembre 2026
+
+**SMED : chronométrer un changement au téléphone, séparer interne et externe, transformer et prouver le gain.**
+
+- Nouvel onglet Résoudre › SMED. Une étude par changement (machine, pilote, cible en minutes, changements par semaine, chantier lié).
+- Chrono au téléphone : « Démarrer au dernier bon produit », un gros bouton « Fin d’étape » par opération, « Premier bon produit · fin ». Les opérations se nomment pendant ou après, sans que le clavier gêne le chrono. Le chrono continue si l’appli se ferme et réapparaît dans « À surveiller ». Saisie à la main possible (min:s).
+- Chaque opération est interne (machine arrêtée) ou externe (machine en marche), en un geste. Puis, pour chaque opération interne : passer en externe, réduire (avec la nouvelle durée), supprimer ou garder, et comment.
+- Diagramme avant / après / machine en marche, arrêt observé et visé, gain par changement et en heures par semaine.
+- Les transformations deviennent des actions datées du plan (origine SMED). Les changements suivants se mesurent contre la cible, en barres avec la cible en pointillé.
+- « Créer le standard de changement » écrit le standard de poste : d’abord ce qui se prépare machine en marche, puis les opérations machine arrêtée. Les chantiers SMED proposent « Chronométrer en SMED ».
+
+Données : nouvelle collection `smed[]` ; les actions portent `smed_id` (pas d’`origin_id`, la collection n’étant pas indexée) ; rien n’est retiré.
+
 ## 8.12.0 — 6 novembre 2026
 
 **Standard de poste : des étapes en photo, des points clés et leurs raisons, comme la méthode TWI.**
