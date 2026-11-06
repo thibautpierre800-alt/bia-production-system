@@ -96,3 +96,10 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.9.0 (additive)
 
 - `etonnement` : objet par périmètre (`group` ou identifiant de site) → `{ message, from, to, themes: { <famille>: { analysis, stake, reco, action } }, updated_at }`. Les constats eux-mêmes restent dans les Gemba : le rapport ne recopie que les mots du responsable Lean.
+
+## Extension 8.10.0 (additive)
+
+- `zones[].five_s` : `{ frequency_days (7, 14 ou 30), target (%), ref_photos [jusqu’à 3] }`. Une zone peut être sans atelier (`workshop_id` nul).
+- `audits[]` de type « 5S » par zone : `zone_id`, `five_s: { answers: { <critère>: { v: 0|1|2|"na", note, photo, act, what, who, when } }, s_scores: [5 scores %], target }`, `score` (moyenne des S, %), `audit_data.criteria` et `audit_data.domain_scores` (sur 5) pour rester lisibles comme les autres audits. Pas de `template_id` : les quinze critères sont fixés par l’application (`CS_CRITERIA`).
+- `redTags[]` : `{ id "ER-001", site_id, zone_id, what, qty, reason, decision, owner, due_date, photo, status ("Ouverte" | "Traitée"), done_at, done_note, author, created_at }`.
+- Actions issues d’un audit 5S : `origin_type` « Audit », `origin_id` l’audit, `question_id` le critère, `zone_id`, famille « Standard » (ou « Sécurité » pour les accès dégagés).

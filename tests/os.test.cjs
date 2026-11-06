@@ -580,7 +580,7 @@ test("Interface 8.0 · une seule navigation, sans pastilles, onglets fusionnés"
   a.run('uxGoStage("observer")');
   assert.equal(a.run("state.view"), "terrain");
   assert.equal(a.run("state.terrainTab"), "gemba");
-  assert.deepEqual(a.all("#pageLocation .ux-tab").map((b) => b.textContent), ["Gemba", "Rapport d’étonnement", "Signaux", "Audits", "Statistiques"]);
+  assert.deepEqual(a.all("#pageLocation .ux-tab").map((b) => b.textContent), ["Gemba", "5S", "Rapport d’étonnement", "Signaux", "Audits", "Statistiques"]);
   assert.equal(a.q("#appView > .tabs"), null, "Sous-onglets fusionnés dans la ligne de l’étape");
   assert.ok(a.q("#contextPanel #siteSelect") && a.q("#contextPanel #roleSelect") && a.q("#contextPanel [data-interface-mode-toggle]") && a.q("#contextMore [data-nav]"));
   a.run('state.role="operator";state.site="marzin";render();uxGoStage("observer")');
@@ -698,6 +698,71 @@ test("Calepin Gemba 8.8 · nature des notes, risque immédiat, photos, compte re
   assert.equal(a.run("cpNotes().length"), 1);
   assert.match(a.run("cpNotesText(cpNotes())"), /Ça gêne · .* : Trop de clics pour ajouter une photo/);
   assert.equal(a.all(".cp-note-list li").length, 1);
+});
+
+test("5S 8.10 · zones, audit au téléphone, bilan et actions, étiquettes rouges, fiche de zone", (t) => {
+  const a = app(t);
+  a.run('state.site="marzin";state.role="lean";state.view="audits";state.auditsTab="5s";render()');
+  assert.ok(a.q(".cs-empty"), "Sans zone : on commence par en créer une");
+  assert.ok(a.run('uxTabs(uxStages().find(s=>s.id==="observer")).some(t=>t.key==="5s")'));
+  a.run("csZoneForm()");
+  a.fill("#csZoneName", "Magasin matières");
+  a.fill("#csZoneOwner", "Kévin");
+  a.click('[data-cs-freq="14"]');
+  a.submit("#csZoneForm");
+  const zid = a.run('data.zones.find(z=>z.name==="Magasin matières").id');
+  assert.deepEqual(JSON.parse(a.run(`JSON.stringify(data.zones.find(z=>z.id==="${zid}").five_s)`)), { frequency_days: 14, target: 80, ref_photos: [] });
+  assert.ok(a.q(".cs-zone"), "La zone s’ouvre");
+  a.run(`csAuditStart("${zid}")`);
+  assert.equal(a.run(`data.audits.filter(x=>x.zone_id==="${zid}"&&x.status==="Brouillon").length`), 1, "Brouillon gardé dès le début");
+  assert.equal(a.all(".cs-q").length, 3, "Trois questions par S");
+  a.click('[data-cs-cid="cs-t1"] [data-cs-v="2"]');
+  a.click('[data-cs-cid="cs-t3"] [data-cs-v="0"]');
+  assert.ok(a.q('[data-cs-cid="cs-t3"] [data-cs-note]'), "Un écart ouvre la note, sur place");
+  assert.equal(a.q('[data-cs-cid="cs-t1"] [data-cs-note]'), null, "Pas de note demandée quand c’est conforme");
+  assert.ok(a.q('.cs-step[data-cs-step="0"].on'), "La barre d’étapes reste sur 1S");
+  a.fill('[data-cs-cid="cs-t3"] [data-cs-note]', "Palette de chants sans référence");
+  a.run('document.querySelector(\'[data-cs-cid="cs-t3"] [data-cs-note]\').onblur()');
+  a.run('csSetAnswer("cs-r3",{v:0,note:"Extincteur masqué par une palette"});CS_CRITERIA.forEach(([s,cid])=>{const v=csAuditGet().five_s.answers[cid]?.v;if(v===undefined)csSetAnswer(cid,{v:2})});csRun.step=5;csAuditRender()');
+  assert.equal(a.all(".cs-gap-list li").length, 2);
+  assert.equal(a.all(".cs-gap-list [data-cs-act]:checked").length, 2, "Un Non devient une action d’office");
+  a.fill('[data-cs-gap="cs-r3"] [data-cs-what]', "Dégager l’extincteur");
+  a.click("[data-cs-finish]");
+  const audit = JSON.parse(a.run(`JSON.stringify(data.audits.find(x=>x.zone_id==="${zid}"))`));
+  assert.equal(audit.status, "Terminé");
+  assert.deepEqual(audit.five_s.s_scores, [67, 67, 100, 100, 100]);
+  assert.equal(audit.score, 87);
+  assert.equal(audit.audit_data.domain_scores["2S · Ranger"], 3.35);
+  assert.equal(audit.five_s.answers["cs-t3"].note, "Palette de chants sans référence");
+  const acts = JSON.parse(a.run(`JSON.stringify(data.actions.filter(x=>x.origin_id==="${audit.id}").map(x=>[x.title,x.owner,x.priority,x.category,x.due_date,x.zone_id]))`));
+  assert.equal(acts.length, 2);
+  assert.deepEqual(acts.find((x) => x[0] === "Dégager l’extincteur"), ["Dégager l’extincteur", "Kévin", "Haute", "Sécurité", a.run("csAddDays(today(),2)"), zid]);
+  assert.ok(a.q(".cs-done .cs-radar"), "Bilan avec radar");
+  // Audits terrain : les audits 5S ont leur onglet et ne faussent pas les audits 50 critères.
+  a.run('closeModal();state.auditsTab="audits";render()');
+  assert.ok(a.q(".cs-banner"));
+  assert.doesNotMatch(a.q("#appView").textContent, new RegExp(audit.id));
+  a.run(`auditForm(data.audits.find(x=>x.id==="${audit.id}"))`);
+  assert.ok(a.q(".cs-view"), "Consulter un audit 5S ouvre sa vue");
+  // Étiquette rouge : numérotée, imprimable, traitée.
+  a.run(`closeModal();csTagForm(null,{zoneId:"${zid}"})`);
+  a.fill("#csTagWhat", "Palette de chants sans référence");
+  a.click('[data-cs-reason="En trop"]');
+  a.submit("#csTagForm");
+  assert.deepEqual(JSON.parse(a.run("JSON.stringify([data.redTags[0].id,data.redTags[0].status,data.redTags[0].reason,data.redTags[0].zone_id,data.redTags[0].owner])")), ["ER-001", "Ouverte", "En trop", zid, "Kévin"]);
+  assert.match(a.q(".cs-tag-print").textContent, /ÉTIQUETTE ROUGE.*ER-001/);
+  a.run('csTagForm("ER-001")');
+  a.fill("#csTagDone", "Rangé au magasin");
+  a.click("[data-cs-tagdone]");
+  assert.equal(a.run("data.redTags[0].status"), "Traitée");
+  a.run(`csZonePrint("${zid}")`);
+  assert.match(a.q(".cs-sheet").textContent, /Magasin matières[\s\S]*87 %/);
+  assert.equal(a.run("validateImport(JSON.parse(JSON.stringify(data))).redTags.length"), 1, "Sauvegarde : zones, audits et étiquettes conservés");
+  // Accueil : un audit en retard remonte dans « À surveiller ».
+  a.run(`data.audits.find(x=>x.id==="${audit.id}").performed_at=csAddDays(today(),-20);closeModal();state.view="home";render()`);
+  assert.match(a.q(".jn-watch").textContent, /Audit en retard · Magasin matières/);
+  a.run('state.role="operator";render()');
+  assert.equal(a.run('uxTabs(uxStages().find(s=>s.id==="observer")).some(t=>t.key==="5s")'), false, "Pas d’audit 5S pour l’opérateur");
 });
 
 test("Rapport d’étonnement 8.9 · thèmes tirés des Gemba, mots du responsable Lean, période, droits et texte pour le COMEX", (t) => {

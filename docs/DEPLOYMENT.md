@@ -97,3 +97,7 @@ La branche `backup/before-8.8.0-2026-11-06` conserve le commit `bf09b03`, corres
 ## Retour à 8.8.0
 
 La branche `backup/before-8.9.0-2026-11-06` conserve le commit `8c54d79`, correspondant à la version 8.8.0. La 8.9.0 ajoute l’onglet Rapport d’étonnement (`etonnement.js`) et la donnée `data.etonnement`, ignorée par la 8.8.0 et conservée dans les données.
+
+## Retour à 8.9.0
+
+La branche `backup/before-8.10.0-2026-11-06` conserve le commit `3b07fbd`, correspondant à la version 8.9.0 (avec le kit serveur). La 8.10.0 ajoute l’onglet 5S (`cinqs.js`), le champ `five_s` des zones et des audits 5S, et la collection `redTags` ; la 8.9.0 les ignore et les conserve. Revenue en 8.9.0, les audits 5S par zone apparaissent dans la liste des audits sans leur vue dédiée.
