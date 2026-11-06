@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-6-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.6.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-6-1/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.6.1'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -379,6 +379,31 @@ test('Résoudre : A3, PDCA, 8D, DMAIC et QRQC sur leur modèle de référence',t
   click('[data-md-print]');assert.ok(q('.md-preview .md-sheet.md-a3'));assert.match(q('.md-preview').innerHTML,/size:landscape/);run('closeModal()');
   // Les autres documents gardent leur présentation.
   assert.match(run('documentVisual("5WHY",{why1:"x"})'),/why-ladder/);
+});
+test('Fiches : résumé graphique de ce qui est écrit et mesuré (courbe, départ → cible, Pareto, pourquoi, Ishikawa)',t=>{
+  const a=app(t),{run,q,all}=a;
+  run('state.role="lean";state.site="marzin";state.view="resolution";closeModal();genericProblemForm({method:"A3"})');
+  a.fill('#problemTitle','Rayures capot');a.fill('#problemOwner','Pilote');a.submit('#problemForm');run('closeModal()');
+  const pid=run('data.problems[0].id'),k=run('osActive(data.kpis).find(k=>osFinite(k.target)).id');
+  run(`commitData(()=>{const p=data.problems[0];p.kpi_id="${k}";p.created_at=osDateOffset(-10)+"T08:00:00Z";p.pareto=[{label:"Rayure",value:30},{label:"Bulle",value:6},{label:"Coulure",value:4}];
+    data.measures=(data.measures||[]).filter(m=>!(m.site_id==="marzin"&&m.kpi_id==="${k}"));
+    [[-30,7],[-20,6],[-12,5],[-3,4]].forEach(([d,v],i)=>data.measures.push({id:"M-MD"+i,site_id:"marzin",kpi_id:"${k}",period:osDateOffset(d),value:v,created_at:now()}));
+    data.documents.unshift({id:"DOC-W9",site_id:"marzin",type:"5WHY",title:"5P",status:"Brouillon",problem_id:p.id,structured_data:{why1:"Frottement",why2:"Support haut",root_cause:"Cale non contrôlée"},version:1,updated_at:now()});
+    data.documents.unshift({id:"DOC-I9",site_id:"marzin",type:"ISHIKAWA",title:"Ishikawa",status:"Brouillon",problem_id:p.id,structured_data:{machine:"Support usé",method:"Pas de contrôle"},version:1,updated_at:now()});});
+    state.selectedProblemId="${pid}";render()`);
+  const box=k=>q(`.md-wrap [data-md-key="${k}"]`);
+  assert.equal(box('current').querySelectorAll('.md-chart circle').length,3,'Situation de départ : mesures jusqu’à l’ouverture');
+  assert.equal(box('followup').querySelectorAll('.md-chart circle').length,4,'Résultats : toute la courbe');assert.ok(box('followup').querySelector('.md-open'),'Ouverture du dossier repérée');
+  assert.ok(box('followup').querySelector('.md-goal'),'Cible en pointillé');assert.match(box('followup').querySelector('svg').getAttribute('aria-label'),/cible/);
+  assert.match(box('target').querySelector('.md-goalbar').textContent,/Départ[\s\S]*Cible[\s\S]*Aujourd’hui/);
+  assert.deepEqual(Array.from(box('analysis').querySelectorAll('.md-par span')).map(x=>x.textContent),['Rayure','Bulle','Coulure'],'Pareto trié');
+  assert.equal(box('analysis').querySelectorAll('.md-fish-grid span.on').length,2,'Branches Ishikawa renseignées');
+  assert.deepEqual(Array.from(box('root_cause').querySelectorAll('.md-why li')).map(x=>x.textContent),['Frottement','Support haut','Cale non contrôlée']);
+  assert.ok(box('root_cause').querySelector('.md-why li.root'));
+  // Mêmes résumés en 8D, sans indicateur : pas de courbe vide.
+  run(`commitData(()=>{data.problems[0].method="8D"});render()`);
+  assert.ok(q('.md-wrap [data-md-key="d2"] .md-chart'));assert.ok(q('.md-wrap [data-md-key="d4_occurrence"] .md-why'));assert.ok(q('.md-wrap [data-md-key="d4_occurrence"] .md-fish'));
+  run(`commitData(()=>{data.problems[0].kpi_id=null});render()`);assert.equal(all('.md-wrap .md-chart, .md-wrap .md-goalbar').length,0);
 });
 test('Audit 50 critères : brouillon incomplet, reprise, preuves et actions sans doublon',t=>{
   const a=app(t),{run,fill,submit,click,q,all}=a;run('auditForm()');fill('#auditScope','Découpe');fill('#auditOwner','Chef atelier');fill('#auditAuditor','Auditeur');

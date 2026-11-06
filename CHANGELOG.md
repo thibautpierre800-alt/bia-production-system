@@ -1,5 +1,16 @@
 # Changelog
 
+## 8.6.1 — 6 novembre 2026
+
+**Les fiches deviennent un résumé graphique de ce qui est écrit et mesuré.**
+
+- Courbe de l’indicateur du dossier, points colorés selon les seuils et cible en pointillé : jusqu’à l’ouverture dans la case de départ (A3 situation actuelle, 8D D2, QRQC caractérisation, PDCA Planifier, DMAIC Mesurer), toute la courbe avec l’ouverture du dossier repérée dans la case des résultats (A3 résultats, 8D D6, QRQC vérification, PDCA Vérifier, DMAIC Contrôler).
+- Objectif : départ → cible → aujourd’hui, en couleur (A3 objectif, PDCA Planifier, DMAIC Définir).
+- Pareto compact, trié, avec le cumul ; lisible même dans une colonne étroite.
+- Causes : la chaîne des 5 pourquoi jusqu’à la cause retenue et les branches renseignées de l’Ishikawa liés au dossier (A3 : Ishikawa et Pareto dans l’analyse, pourquoi dans la cause racine ; 8D D4, QRQC apparition, DMAIC Analyser).
+- Sans indicateur ni analyse liée, rien n’est ajouté : pas de graphique vide.
+- Impression : l’A3 tient sur une page A4 paysage, graphiques compris.
+
 ## 8.6.0 — 6 novembre 2026
 
 **Résoudre : A3, PDCA, 8D, DMAIC et QRQC sur leurs modèles de référence.**

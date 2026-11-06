@@ -83,10 +83,83 @@ function mdActions(o) {
     })
     .join("")}</tbody></table>`;
 }
-function mdAnalyses(o) {
-  if (!o.pid || o.print) return "";
-  const docs = data.documents.filter((d) => d.problem_id === o.pid && ["5WHY", "ISHIKAWA"].includes(d.type) && !d.archived_at);
-  return docs.length ? `<p class="md-links">${docs.map((d) => `<button type="button" class="md-link" data-open-record="${esc(d.id)}">${d.type === "5WHY" ? "5 pourquoi" : "Ishikawa"} · ${esc(d.id)}</button>`).join("")}</p>` : "";
+
+// ——— Résumé graphique : ce qui est écrit et mesuré, mis en image dans la case du modèle.
+// Où placer la courbe de l’indicateur du dossier : avant (situation de départ) et après (résultats).
+const MD_SLOTS = {
+  A3: { before: "current", after: "followup", analysis: "analysis", cause: "root_cause", target: "target" },
+  "8D": { before: "d2", after: "d6", cause: "d4_occurrence" },
+  QRQC: { before: "facts", after: "verification", cause: "cause" },
+  PDCA: { before: "plan", after: "check", target: "plan" },
+  DMAIC: { before: "measure", after: "control", cause: "analyze", target: "define" },
+};
+function mdKpi(o) {
+  const p = o.problem, k = p?.kpi_id && typeof osKpi === "function" ? osKpi(p.kpi_id) : null;
+  if (!k) return null;
+  const rows = osKpiMeasures(p.site_id, k.id).filter((m) => osFinite(m.value));
+  return { k, rows, opened: String(p.created_at || "").slice(0, 10), unit: k.unit === "nombre" ? "" : k.unit || "" };
+}
+function mdFmt(v, unit) {
+  return `${osNum(v)}${unit ? (unit === "%" ? " %" : ` ${unit}`) : ""}`;
+}
+// Courbe de l’indicateur : points colorés selon les seuils, cible en pointillé, ouverture du dossier repérée.
+function mdKpiChart(o, mode) {
+  const x = mdKpi(o);
+  if (!x || x.rows.length < 2) return "";
+  const rows = mode === "before" ? x.rows.filter((m) => !x.opened || m.period <= x.opened) : x.rows;
+  if (rows.length < 2) return "";
+  const target = osFinite(rows.at(-1).target) ? rows.at(-1).target : x.k.target;
+  const values = rows.map((r) => r.value).concat(osFinite(target) ? [target] : []);
+  let min = Math.min(...values), max = Math.max(...values);
+  if (max === min) { max += 1; min -= 1; }
+  const pad = (max - min) * 0.15, lo = min - pad, hi = max + pad, W = 300, H = 72, L = 6, R = 6, T = 8, B = 14;
+  const px = (i) => L + (i * (W - L - R)) / (rows.length - 1), py = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo);
+  const line = rows.map((r, i) => `${px(i).toFixed(1)},${py(r.value).toFixed(1)}`).join(" ");
+  const dots = rows.map((r, i) => `<circle cx="${px(i).toFixed(1)}" cy="${py(r.value).toFixed(1)}" r="3" class="md-dot md-${osStatus(r, x.k)}"><title>${esc(shortDate(r.period))} · ${esc(mdFmt(r.value, x.unit))}</title></circle>`).join("");
+  const goal = osFinite(target) ? `<line x1="${L}" x2="${W - R}" y1="${py(target).toFixed(1)}" y2="${py(target).toFixed(1)}" class="md-goal"/><text x="${W - R}" y="${(py(target) - 3).toFixed(1)}" text-anchor="end" class="md-goal-t">cible ${esc(mdFmt(target, x.unit))}</text>` : "";
+  const openAt = x.opened && mode === "after" ? rows.findIndex((r) => r.period > x.opened) : -1;
+  const mx = openAt > 0 ? (px(openAt - 1) + px(openAt)) / 2 : 0, right = mx > W * 0.6;
+  const mark = openAt > 0 ? `<line x1="${mx.toFixed(1)}" x2="${mx.toFixed(1)}" y1="${T}" y2="${H - B}" class="md-open"/><text x="${(mx + (right ? -3 : 3)).toFixed(1)}" y="${T + 8}" text-anchor="${right ? "end" : "start"}" class="md-open-t">ouverture du dossier</text>` : "";
+  const first = rows[0], last = rows.at(-1);
+  const label = `${x.k.name} : ${mdFmt(first.value, x.unit)} le ${shortDate(first.period)}, ${mdFmt(last.value, x.unit)} le ${shortDate(last.period)}${osFinite(target) ? `, cible ${mdFmt(target, x.unit)}` : ""}`;
+  return `<figure class="md-chart"><figcaption><b>${esc(x.k.name)}</b> <span>${esc(mdFmt(last.value, x.unit))}</span> <small>${esc(mode === "before" ? "avant le dossier" : "depuis le début")}</small></figcaption><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">${goal}${mark}<polyline points="${line}" class="md-line"/>${dots}<text x="${L}" y="${H - 3}" class="md-axis">${esc(shortDate(first.period))}</text><text x="${W - R}" y="${H - 3}" text-anchor="end" class="md-axis">${esc(shortDate(last.period))}</text></svg></figure>`;
+}
+// Pareto compact : une ligne par catégorie (libellé, quantité, cumul), barre pleine largeur ; lisible même en colonne étroite.
+function mdPareto(rows) {
+  const list = (rows || []).filter((r) => osFinite(r.value)).slice().sort((a, b) => b.value - a.value);
+  const total = list.reduce((t, r) => t + r.value, 0);
+  if (!list.length || !total) return "";
+  let cum = 0;
+  return `<figure class="md-pareto"><figcaption><b>Pareto</b> <small>${esc(osNum(total, 0))} au total</small></figcaption>${list.map((r) => {
+    cum += r.value;
+    const share = (r.value / total) * 100, c = (cum / total) * 100;
+    return `<div class="md-par ${c - share < 80 ? "top" : ""}"><span>${esc(r.label)}</span><b>${esc(osNum(r.value))} · ${esc(osNum(c, 0))} %</b><i style="width:${share.toFixed(1)}%"></i></div>`;
+  }).join("")}</figure>`;
+}
+// Objectif : la valeur de départ, la flèche et la cible, d’un coup d’œil.
+function mdGoal(o) {
+  const x = mdKpi(o);
+  if (!x) return "";
+  const before = x.rows.filter((m) => !x.opened || m.period <= x.opened).at(-1) || x.rows[0], now = x.rows.at(-1);
+  const target = osFinite(now?.target) ? now.target : x.k.target;
+  if (!before || !osFinite(target)) return "";
+  const cell = (k, v, cls) => `<span class="${cls}"><small>${esc(k)}</small><b>${esc(mdFmt(v, x.unit))}</b></span>`;
+  return `<p class="md-goalbar" aria-label="${esc(x.k.name)}">${cell("Départ", before.value, `md-${osStatus(before, x.k)}`)}<i aria-hidden="true">→</i>${cell("Cible", target, "md-ok")}${now !== before ? `${cell("Aujourd’hui", now.value, `md-${osStatus(now, x.k)}`)}` : ""}</p>`;
+}
+// Causes : la chaîne des 5 pourquoi et les branches renseignées de l’Ishikawa liés au dossier.
+function mdCauses(o, types = ["5WHY", "ISHIKAWA"]) {
+  if (!o.pid) return "";
+  const docs = data.documents.filter((d) => d.problem_id === o.pid && types.includes(d.type) && !d.archived_at);
+  return docs.map((d) => {
+    const v = documentValues(d), open = o.print ? "" : `<button type="button" class="md-link" data-open-record="${esc(d.id)}">Ouvrir ${esc(d.id)}</button>`;
+    if (d.type === "5WHY") {
+      const whys = [1, 2, 3, 4, 5].map((n) => String(v[`why${n}`] || "").trim()).filter(Boolean);
+      if (!whys.length && !v.root_cause) return `<p class="md-links">5 pourquoi · ${open}</p>`;
+      return `<div class="md-why"><p class="md-mini-t">5 pourquoi ${open}</p><ol>${whys.map((w) => `<li>${esc(w)}</li>`).join("")}${v.root_cause ? `<li class="root">${esc(v.root_cause)}</li>` : ""}</ol></div>`;
+    }
+    const branches = [["method", "Méthodes"], ["machine", "Machines"], ["manpower", "Main-d’œuvre"], ["material", "Matières"], ["measurement", "Mesures"], ["environment", "Milieu"]];
+    return `<div class="md-fish"><p class="md-mini-t">Ishikawa ${open}</p><div class="md-fish-grid">${branches.map(([k, l]) => `<span class="${String(v[k] || "").trim() ? "on" : ""}" title="${esc(v[k] || "")}"><b>${esc(l)}</b>${esc(String(v[k] || "").trim().split("\n")[0].slice(0, 60))}</span>`).join("")}</div></div>`;
+  }).join("");
 }
 
 // Une case du modèle : en-tête (numéro, titre, repère) et contenu ; touchée, elle ouvre sa rubrique.
@@ -102,7 +175,11 @@ function mdBox(o, key, opts = {}) {
       ? `<button type="button" class="md-head md-go" data-md-step="${f.i}" data-md-problem="${esc(o.pid)}" title="Compléter cette case">${head}</button>`
       : `<div class="md-head">${head}</div>`;
   const content = opts.render ? opts.render(v) : v ? `<p class="md-text">${esc(v)}</p>` : `<p class="md-hint">${esc(f.hint)}</p>`;
-  return `<section class="md-box ${opts.cls || ""} ${v ? "md-filled" : "md-empty"} ${o.step === f.i ? "current" : ""}" data-md-key="${esc(key)}"${opts.attrs || ""}>${go}<div class="md-body">${opts.before || ""}${content}${opts.after || ""}</div></section>`;
+  // A3 : le Pareto et l’Ishikawa vont dans « Analyse des faits », la chaîne des pourquoi dans « Cause racine ».
+  const slot = MD_SLOTS[o.type] || {}, pareto = key === (slot.analysis || slot.before) ? mdPareto(o.problem?.pareto) : "";
+  const causes = slot.analysis ? (key === slot.analysis ? mdCauses(o, ["ISHIKAWA"]) : key === slot.cause ? mdCauses(o, ["5WHY"]) : "") : key === slot.cause ? mdCauses(o) : "";
+  const graphic = [key === slot.target ? mdGoal(o) : "", key === slot.before ? mdKpiChart(o, "before") : "", pareto, key === slot.after ? mdKpiChart(o, "after") : "", causes].join("");
+  return `<section class="md-box ${opts.cls || ""} ${v ? "md-filled" : "md-empty"} ${o.step === f.i ? "current" : ""}" data-md-key="${esc(key)}"${opts.attrs || ""}>${go}<div class="md-body">${opts.before || ""}${content}${graphic ? `<div class="md-graphic">${graphic}</div>` : ""}${opts.after || ""}</div></section>`;
 }
 
 function mdHead(o) {
@@ -127,8 +204,7 @@ function mdFoot(o) {
 // A3 (Toyota) : à gauche comprendre (PLAN), à droite agir, vérifier, pérenniser (DO · CHECK · ACT).
 function mdA3(o) {
   const t = (k, tag, extra = {}) => mdBox(o, k, { tag, ...extra });
-  const pareto = o.problem?.pareto?.length && typeof osParetoChart === "function" ? osParetoChart(o.problem.pareto) : "";
-  return `<div class="md-a3-cols"><div class="md-col"><p class="md-col-title"><b>PLAN</b> Comprendre le problème</p>${t("problem", "P", { cls: "md-strong" })}${t("background", "P")}${t("current", "P", { cls: "md-tall", after: pareto })}${t("target", "P", { cls: "md-target" })}${t("analysis", "P", { cls: "md-tall" })}${t("root_cause", "P", { cls: "md-strong", after: mdAnalyses(o) })}</div><div class="md-col"><p class="md-col-title"><b>DO · CHECK · ACT</b> Agir, vérifier, pérenniser</p>${t("countermeasures", "D")}${t("action_plan", "D", { cls: "md-tall", after: mdActions(o) })}${t("followup", "C")}${t("effectiveness", "C")}${t("standardization", "A")}${t("learning", "A")}</div></div>`;
+  return `<div class="md-a3-cols"><div class="md-col"><p class="md-col-title"><b>PLAN</b> Comprendre le problème</p>${t("problem", "P", { cls: "md-strong" })}${t("background", "P")}${t("current", "P", { cls: "md-tall" })}${t("target", "P", { cls: "md-target" })}${t("analysis", "P", { cls: "md-tall" })}${t("root_cause", "P", { cls: "md-strong" })}</div><div class="md-col"><p class="md-col-title"><b>DO · CHECK · ACT</b> Agir, vérifier, pérenniser</p>${t("countermeasures", "D")}${t("action_plan", "D", { cls: "md-tall", after: mdActions(o) })}${t("followup", "C")}${t("effectiveness", "C")}${t("standardization", "A")}${t("learning", "A")}</div></div>`;
 }
 
 // 8D (Global 8D) : D0 à D8, causes d’apparition et de non-détection côte à côte.
