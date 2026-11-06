@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.16.0 — 6 novembre 2026
+
+**Polyvalence : la matrice I-L-U-O par équipe et par poste.**
+
+- Nouvel onglet Pérenniser › Polyvalence. Une matrice par équipe : les postes (repris des standards de poste en un geste, avec une cible d’autonomes par poste) et les personnes.
+- Chaque case : pas formé, I (en formation), L (accompagné), U (autonome, qualité et cadence) ou O (formateur), en un geste, avec la date et l’évaluateur. L’historique est gardé.
+- À partir de L, la formation peut être enregistrée sur la version en vigueur du standard du poste. La matrice le signale d’un point bleu.
+- Lecture immédiate : postes fragiles (une seule personne autonome ou aucune), postes sous la cible, postes tenus par personne, et « À former en priorité » (les personnes les plus proches de U sur les postes en manque).
+- Matrice à afficher en A4 paysage. Les postes fragiles remontent dans « À surveiller » pour le chef d’équipe, le directeur de site et le responsable Lean.
+- Correction : à l’arrivée sur Audits ou Chantiers, l’onglet du haut est bien surligné (il ne l’était qu’après un passage par 5S ou SMED).
+
+Données : nouvelle collection `skillsMatrix` ; les standards reçoivent les personnes formées dans `structured_data.st.trained` ; rien n’est retiré.
+
 ## 8.15.0 — 6 novembre 2026
 
 **TPM et maintenance autonome : les machines tenues par leurs équipes.**

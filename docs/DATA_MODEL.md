@@ -126,3 +126,8 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `tpmTags[]` : `{ id: "ET-001", site_id, machine_id, kind, color: "bleue"|"rouge", what, photo, status: "ouverte"|"traitee", due_date, cil_point?, created_by, fix?, fix_photo?, fixed_at?, fixed_by?, created_at, updated_at }`.
 - `cilRuns[]` : `{ id: "CIL-001", site_id, machine_id, date, started_at, ended_at, by, results{ pointId: "ok"|"ano" }, tag_ids[] }`.
 - `breakdowns[]` : `{ id: "PA-001", site_id, machine_id, start, end|null, cause, fix, by, created_at, updated_at }`. MTTR = durée moyenne des pannes closes ; MTBF calendaire = temps moyen entre deux débuts de panne, sur 90 jours.
+
+## Extension 8.16.0 (additive)
+
+- `skillsMatrix[]` : `{ id: "PV-001", site_id, name, zone_id?, stations[{ id, name, standard_id?, target }], people[{ id, name, person_id? }], levels{ "personne|poste": { lvl: 0..4, date, by, hist[{ lvl, date, by }] } }, created_at, updated_at }`. Niveaux : 0 pas formé, 1 I, 2 L, 3 U, 4 O. Un poste est fragile quand une seule personne, ou aucune, y est en U ou O.
+- À partir de L, une entrée `{ name, date, by, version }` peut être ajoutée à `structured_data.st.trained` du standard relié.
