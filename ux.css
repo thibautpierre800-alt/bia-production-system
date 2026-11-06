@@ -389,3 +389,18 @@ button.in-counter:hover{border-color:var(--ink)}
   .in-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
   .in-chip{flex:0 0 auto}
 }
+
+/* 8.1.1 · Décider et Analyser : mêmes couleurs, mêmes seuils */
+.sqcdp-cell.gap{background:var(--red-soft);color:var(--red);border-color:#e7b4b1}
+.sqcdp-cell.warn{background:var(--amber-soft);color:var(--amber);border-color:#ebcf96}
+.sqcdp-cell.ok{background:var(--green-soft);color:var(--green);border-color:#b5dbc3}
+.sqcdp-cell.missing,.sqcdp-cell.qualify{background:#f1f0ec;color:#6f6f69;border-color:#dddcd5}
+.sqcdp-cell.qualify{border-style:dashed}
+.sqcdp-cell i{font-weight:900;color:#9a9a93}
+.sqcdp-cell i.up{color:var(--green)}.sqcdp-cell i.down{color:var(--red)}
+.sqcdp-summary span{display:inline-flex;align-items:center;gap:6px}
+.sqcdp-summary span.gap::before,.sqcdp-summary span.warn::before,.sqcdp-summary span.ok::before{content:"";width:10px;height:10px;border-radius:3px}
+.sqcdp-summary span.gap::before{background:var(--red)}.sqcdp-summary span.warn::before{background:#e09a2b}.sqcdp-summary span.ok::before{background:var(--green)}
+.group-presentation .sqcdp-summary{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.group-presentation .sqcdp-summary span{display:grid;justify-items:center}
+.group-presentation .sqcdp-summary span::before{display:none}

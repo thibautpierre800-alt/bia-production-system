@@ -57,3 +57,7 @@ La branche `backup/before-8.0.0-2026-11-06` conserve le commit `c519ca0`, corres
 ## Retour à 8.0.0
 
 La branche `backup/before-8.1.0-2026-11-06` conserve le commit `06a207e`, correspondant à la version 8.0.0. La 8.1.0 ne modifie que l’écran Voir › Analyser et ses courbes (nouveau fichier `indicateurs.js`) : aucune donnée n’est transformée. Les relevés saisis en 8.1 restent lisibles en 8.0.
+
+## Retour à 8.1.0
+
+La branche `backup/before-8.1.1-2026-11-06` conserve le commit `9aa5876`, correspondant à la version 8.1.0. La 8.1.1 ne change que le calcul de couleur du SQCDP Groupe et des courbes (même règle de seuils qu’Analyser) : aucune donnée n’est transformée.

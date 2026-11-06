@@ -69,8 +69,11 @@ function indicatorSeries(siteId,code) {
 }
 function pilotageChart(series,{title,code,unit="%",direction="high",contextLabel=site().name}) {
   const has=series?.values?.some(Number.isFinite);if(!has)return `<article class="panel indicator-chart unavailable"><div class="section-title"><h2>${esc(title)}</h2>${pill("Donnée indisponible")}</div><p>Source et définition à qualifier. Source SEQUOIA à vérifier.</p></article>`;
-  const last=series.values.at(-1),prev=series.values.at(-2),delta=Number.isFinite(last)&&Number.isFinite(prev)?+(last-prev).toFixed(1):null,target=series.target,gap=Number.isFinite(last)&&Number.isFinite(target)?+(last-target).toFixed(1):null,good=gap===null?null:direction==="low"?gap<=0:gap>=0,siteId=state.site==="group"?state.pilotSite:state.site,linked=data.actions.filter(a=>a.site_id===siteId&&(a.kpi_id===osKpi(code)?.id||a.origin_type==="KPI"&&[code,osKpi(code)?.id].includes(a.origin_id))).length;
-  return `<article class="panel indicator-chart"><div class="section-title"><div><h2>${esc(title)}</h2><div class="metric-value">${Number.isFinite(last)?last:"—"} <small>${esc(unit)}</small></div></div>${pill(good===null?"À qualifier":good?"Conforme":"Écart",good===null?"neutral":good?"done":"open")}</div><p class="hint">Cible ${Number.isFinite(target)?target:"—"} ${esc(unit)} · Écart ${gap===null?"—":`${gap>0?"+":""}${gap}`} ${unit==="%"?"pt":esc(unit)} · Tendance ${delta===null?"—":`${delta>0?"+":""}${delta}`}</p>${lineChart(series,`${title} · ${contextLabel}`,unit)}<p class="source-label">${esc(series.source||"Source à qualifier")} · dernière période ${esc(series.labels?.at(-1)||"inconnue")}</p><div class="row-actions">${!role().readonly?`<button class="btn secondary small" data-kpi-action="${code}" data-kpi-label="${esc(title)}">Créer une action sur cet écart</button>`:""}<button class="btn ghost small" data-kpi-records="${code}">${linked} action(s) liée(s)</button></div></article>`;
+  const siteId=state.site==="group"?state.pilotSite:state.site,k=osKpi(code),latest=k?osLatest(siteId,k.id):null;
+  const last=series.values.at(-1),prev=series.values.at(-2),delta=Number.isFinite(last)&&Number.isFinite(prev)?+(last-prev).toFixed(1):null,target=Number.isFinite(series.target)?series.target:k?.target,gap=Number.isFinite(last)&&Number.isFinite(target)?+(last-target).toFixed(1):null,good=gap===null?null:direction==="low"?gap<=0:gap>=0;
+  // Même statut que la case de Voir › Analyser : seuils du référentiel, définition requise.
+  const status=k&&Number.isFinite(last)?osStatus({value:last,target:series.target,definition:latest?.definition??series.definition??""},k):good===null?"qualify":good?"ok":"gap",thresholds=osThresholdText(k,series.target),linked=data.actions.filter(a=>a.site_id===siteId&&(a.kpi_id===osKpi(code)?.id||a.origin_type==="KPI"&&[code,osKpi(code)?.id].includes(a.origin_id))).length;
+  return `<article class="panel indicator-chart"><div class="section-title"><div><h2>${esc(title)}</h2><div class="metric-value">${Number.isFinite(last)?last:"—"} <small>${esc(unit)}</small></div></div>${pill(osStatusText(status),osStatusTone(status))}</div><p class="hint">Cible ${Number.isFinite(target)?target:"—"} ${esc(unit)}${thresholds?` (${esc(thresholds.toLowerCase())})`:""} · Écart ${gap===null?"—":`${gap>0?"+":""}${gap}`} ${unit==="%"?"pt":esc(unit)} · Tendance ${delta===null?"—":`${delta>0?"+":""}${delta}`}</p>${lineChart(series,`${title} · ${contextLabel}`,unit)}<p class="source-label">${esc(series.source||"Source à qualifier")} · dernière période ${esc(series.labels?.at(-1)||"inconnue")}</p><div class="row-actions">${!role().readonly?`<button class="btn secondary small" data-kpi-action="${code}" data-kpi-label="${esc(title)}">Créer une action sur cet écart</button>`:""}<button class="btn ghost small" data-kpi-records="${code}">${linked} action(s) liée(s)</button></div></article>`;
 }
 const BENCHMARK_KPIS=[
   {code:"trs",label:"TRS",unit:"%"},
@@ -88,6 +91,9 @@ const GROUP_SQCDP=[
 ];
 function sqcdpGroupStatus(item,kpi){
   if(!item)return "missing";
+  // Même règle que Voir › Analyser : seuils vert / orange des Paramètres, définition requise.
+  const k=osKpi(kpi.code);
+  if(k)return osStatus({value:item.value,target:item.target,definition:item.definition},k);
   if(!Number.isFinite(item.target))return "qualify";
   const gap=kpi.direction==="low"?item.value>item.target:item.value<item.target;
   // Une définition absente ne permet pas de déclarer un site conforme.
@@ -103,6 +109,13 @@ function sqcdpPrevious(siteId,code,period){
   }
   return null;
 }
+// Évolution jugée selon le sens du progrès, comme dans Voir › Analyser.
+function sqcdpArrow(kpi,delta){
+  if(delta===null||!Number.isFinite(delta))return "";
+  if(delta===0)return '<i aria-label="Évolution : stable">→</i>';
+  const better=kpi.direction==="high"?delta>0:delta<0;
+  return `<i class="${better?"up":"down"}" aria-label="Évolution : ${delta>0?"hausse":"baisse"} de ${osNum(Math.abs(delta),2)}, ${better?"favorable":"défavorable"}">${delta>0?"↗":"↘"}</i>`;
+}
 function sqcdpRelated(siteId,kpi){
   const topics=data.topics.filter(t=>t.site_id===siteId&&t.axis===kpi.axis&&t.status!=="Clos");
   const topicIds=new Set(topics.map(t=>t.id));
@@ -114,7 +127,7 @@ function sqcdpRelated(siteId,kpi){
 function renderGroupSqcdp(embedded=false){
   const periods=benchmarkPeriods(),period=periods.includes(state.benchmarkPeriod)?state.benchmarkPeriod:periods[0]||"";
   const cells=OPERATIONAL_SITES.flatMap(site=>GROUP_SQCDP.map(kpi=>sqcdpGroupStatus(benchmarkObservation(site.id,kpi.code,period),kpi)));
-  const gaps=cells.filter(status=>status==="gap").length,missing=cells.filter(status=>status==="missing").length;
+  const count=status=>cells.filter(s=>s===status).length,gaps=count("gap"),warns=count("warn"),oks=count("ok"),missing=count("missing"),qualify=count("qualify");
   const openEscalations=[
     ...data.decisions.filter(d=>d.status!=="Clos").map(d=>({id:d.id,site_id:d.site_id,title:d.title,kind:"Décision attendue"})),
     ...data.signals.filter(s=>s.severity==="Critique"&&isOpenSignal(s)).map(s=>({id:s.id,site_id:s.site_id,title:s.description,kind:"Signal critique"}))
@@ -126,20 +139,19 @@ function renderGroupSqcdp(embedded=false){
       <header class="group-display-head"><div><p class="eyebrow">BIA Holding · revue Groupe</p><h2 id="groupSqcdpTitle">SQCDP Groupe · ${OPERATIONAL_SITES.length} sites</h2><p>Réagir aux écarts, attribuer une suite et escalader au bon niveau.</p></div><div class="group-display-meta"><b>${shortDate(period)}</b><span>Dernière période disponible : ${latestPeriod?shortDate(latestPeriod):"—"}</span><button class="btn secondary group-display-exit" data-display-mode>Quitter le plein écran</button></div></header>
       <div class="section-title group-sqcdp-controls"><p class="hint">Revue Groupe hebdomadaire · cliquez sur une case pour accéder aux écarts et aux actions.</p><label class="sqcdp-period">Période commune<select id="sqcdpGroupPeriod">${periods.map(p=>`<option value="${esc(p)}" ${p===period?"selected":""}>${esc(p)}${/^S\d+$/.test(p)?" · année à qualifier":""}</option>`).join("")||'<option value="">Aucune mesure</option>'}</select></label></div>
       ${data.meta.demo?'<p class="alert">Données de démonstration fictives. Les valeurs affichées ne décrivent pas la situation réelle du Groupe.</p>':""}
-      <div class="sqcdp-summary" role="status"><span><b>${gaps}</b> écart(s) mesuré(s)</span><span><b>${missing}</b> mesure(s) absente(s)</span><span><b>${openEscalations.length}</b> alerte(s) / décision(s) à voir</span></div>
+      <div class="sqcdp-summary" role="status"><span class="gap"><b>${gaps}</b> écart${gaps>1?"s":""}</span><span class="warn"><b>${warns}</b> vigilance${warns>1?"s":""}</span><span class="ok"><b>${oks}</b> cible${oks>1?"s":""} atteinte${oks>1?"s":""}</span>${missing?`<span><b>${missing}</b> sans mesure</span>`:""}${qualify?`<span><b>${qualify}</b> à qualifier</span>`:""}<span><b>${openEscalations.length}</b> alerte(s) / décision(s) à voir</span></div>
       <div class="sqcdp-matrix" role="table" aria-label="SQCDP des ${OPERATIONAL_SITES.length} sites, période ${esc(period||"inconnue")}">
         <div class="sqcdp-row sqcdp-heading" role="row"><span role="columnheader">Site</span>${GROUP_SQCDP.map(k=>`<span role="columnheader" title="${esc(k.label)}">${k.axis}<small>${esc(k.label.split(" · ")[0])}</small></span>`).join("")}</div>
         ${OPERATIONAL_SITES.map(site=>`<div class="sqcdp-row" role="row"><strong role="rowheader">${esc(site.name)}</strong>${GROUP_SQCDP.map(k=>{
           const item=benchmarkObservation(site.id,k.code,period),status=sqcdpGroupStatus(item,k),previous=item?sqcdpPrevious(site.id,k.code,period):null;
-          const delta=previous?+(item.value-previous.value).toFixed(1):null;
-          const trend=delta===null?"":delta===0?"→":delta>0?"↑":"↓";
-          const label=status==="missing"?"À renseigner":status==="qualify"?"À qualifier":status==="gap"?"Écart":"Conforme";
+          const delta=previous?+(item.value-previous.value).toFixed(2):null;
+          const label=osStatusText(status);
           return `<button role="cell" class="sqcdp-cell ${status}" data-sqcdp-site="${site.id}" data-sqcdp-axis="${k.axis}" aria-label="${esc(site.name)} · ${esc(k.label)} : ${item?`${item.value} ${k.unit}`:"aucune donnée"}, ${label}">
-            <b>${item?`${item.value}<small>${esc(k.unit)}</small>`:"—"}</b><span>${esc(label)}</span>${trend?`<i aria-label="Évolution ${delta>0?"hausse":"baisse"} de ${Math.abs(delta)}">${trend}</i>`:""}
+            <b>${item?`${item.value}<small>${esc(k.unit)}</small>`:"—"}</b><span>${esc(label)}</span>${sqcdpArrow(k,delta)}
           </button>`;
         }).join("")}</div>`).join("")}
       </div>
-      <p class="hint sqcdp-legend">S Sécurité · Q Qualité · C Coûts / TRS · D Délais · P Personnel. Gris : absent · ambre : cible ou définition à qualifier · rouge : écart · vert : cible atteinte avec définition renseignée. La flèche indique l'évolution de la valeur, sans jugement sur son sens.</p>
+      <p class="hint sqcdp-legend">S Sécurité · Q Qualité · C Coûts / TRS · D Délais · P Personnel. Rouge : écart · orange : vigilance · vert : cible atteinte, selon les seuils de chaque indicateur (Paramètres) · gris : sans mesure ou définition à qualifier. ↗ ↘ évolution depuis le relevé précédent, verte si favorable. Mêmes couleurs que Voir › Analyser.</p>
       <p class="hint">Chaque valeur reste locale et datée. Aucun score ni moyenne Groupe ne masque les écarts des sites. Les périodes « S… » n'indiquent pas l'année et doivent être qualifiées avant comparaison.</p>
     </section>
     <section class="section panel"><div class="section-title"><div><h2>Décisions et alertes à traiter</h2><p class="hint">Dossiers ouverts, toutes périodes confondues. L'affichage est limité à cinq entrées.</p></div></div>
@@ -151,10 +163,10 @@ function openGroupSqcdpCell(siteId,axis){
   if(!kpi||!site)return;
   const periods=benchmarkPeriods(),period=periods.includes(state.benchmarkPeriod)?state.benchmarkPeriod:periods[0]||"";
   const item=benchmarkObservation(siteId,kpi.code,period),previous=item?sqcdpPrevious(siteId,kpi.code,period):null,related=sqcdpRelated(siteId,kpi);
-  const status=sqcdpGroupStatus(item,kpi),statusLabel={missing:"Mesure absente",qualify:"À qualifier",gap:"Écart à traiter",ok:"Cible atteinte"}[status];
+  const status=sqcdpGroupStatus(item,kpi),statusLabel={missing:"Mesure absente",qualify:"À qualifier",gap:"Écart à traiter",warn:"Vigilance",ok:"Cible atteinte"}[status],thresholds=osThresholdText(osKpi(kpi.code),item?.target);
   modal(`${site.name} · ${kpi.label}`,`<div class="sqcdp-detail">
-    <p>${pill(statusLabel,status==="gap"?"open":status==="ok"?"done":"neutral")} · période ${esc(period||"non renseignée")}</p>
-    <div class="grid cols-2"><div class="card"><span class="metric-label">Valeur</span><div class="metric-value">${item?`${item.value} ${esc(kpi.unit)}`:"—"}</div></div><div class="card"><span class="metric-label">Cible locale</span><div class="metric-value">${Number.isFinite(item?.target)?`${item.target} ${esc(kpi.unit)}`:"—"}</div></div></div>
+    <p>${pill(statusLabel,osStatusTone(status))} · période ${esc(period||"non renseignée")}</p>
+    <div class="grid cols-2"><div class="card"><span class="metric-label">Valeur</span><div class="metric-value">${item?`${item.value} ${esc(kpi.unit)}`:"—"}</div></div><div class="card"><span class="metric-label">${Number.isFinite(item?.target)?"Cible locale":"Cible du référentiel"}</span><div class="metric-value">${Number.isFinite(item?.target)?`${item.target} ${esc(kpi.unit)}`:Number.isFinite(osKpi(kpi.code)?.target)?`${osKpi(kpi.code).target} ${esc(kpi.unit)}`:"—"}</div>${thresholds?`<p class="hint">${esc(thresholds)}</p>`:""}</div></div>
     <p>Mesure précédente comparable : ${previous?`${previous.value} ${esc(kpi.unit)}`:"indisponible"} · Source : ${esc(item?.source||"non renseignée")} · Définition : ${esc(item?.definition||"à qualifier")} · Saisie : ${item?.updated_at?shortDate(item.updated_at):"date inconnue"}</p>
     <h3>Sujets SQCDP (${related.topics.length})</h3>${related.topics.map(t=>`<div class="row"><span>${esc(t.title)} · ${esc(t.owner||"sans responsable")}</span>${recordLink(t.id)}</div>`).join("")||empty("Aucun sujet lié à cet axe.")}
     <h3>Signaux terrain (${related.signals.length})</h3>${related.signals.map(s=>`<div class="row"><span>${esc(s.description)}</span>${recordLink(s.id)}</div>`).join("")||empty("Aucun signal ouvert sur cet axe.")}
