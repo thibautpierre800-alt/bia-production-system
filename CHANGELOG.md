@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.11.0 — 6 novembre 2026
+
+**Audit terrain 50 critères : la même ergonomie que le 5S.**
+
+- Un domaine par étape, cinq critères, six gros boutons de 0 à 5 avec le niveau en clair (absent, ponctuel, partiel, appliqué, maîtrisé, durable) ; l’échelle complète est à un geste.
+- Une preuve par critère : un fait observé, un document ou une photo. La note se colore sur place, l’écran ne saute pas, le brouillon est gardé à chaque geste ; « Plus tard » ou la croix ne perdent rien.
+- Bilan : score /100, radar des 10 domaines et barres par domaine, comparés à l’audit précédent du même périmètre ; les domaines incomplets mènent à leur étape.
+- Les critères notés sous 3 deviennent des actions datées du plan, une par critère (0 et 1 cochés d’office ; un 0 ou un 1 en sécurité est prioritaire, sous 7 jours). Fini les actions par domaine sans date.
+- Rapport imprimable : score et évolution, radar, synthèse, actions, critères avec leur preuve et leur photo ; « Refaire un audit de ce périmètre ».
+- Les audits personnalisés gagnent les mêmes boutons de note à la place de la liste déroulante.
+
+Données inchangées (`audit_data.criteria`, `domain_scores`, score sur 250) ; chaque critère peut porter une photo et les éléments de son action.
+
 ## 8.10.0 — 6 novembre 2026
 
 **5S : un vrai outil, zone par zone, pensé pour le téléphone.**

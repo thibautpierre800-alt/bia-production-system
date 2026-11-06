@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-10-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.10.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-11-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.11.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -440,15 +440,23 @@ test('Fiches : résumé graphique de ce qui est écrit et mesuré (courbe, dépa
   assert.ok(q('.md-wrap [data-md-key="d2"] .md-chart'));assert.ok(q('.md-wrap [data-md-key="d4_occurrence"] .md-why'));assert.ok(q('.md-wrap [data-md-key="d4_occurrence"] .md-fish'));
   run(`commitData(()=>{data.problems[0].kpi_id=null});render()`);assert.equal(all('.md-wrap .md-chart, .md-wrap .md-goalbar').length,0);
 });
-test('Audit 50 critères : brouillon incomplet, reprise, preuves et actions sans doublon',t=>{
-  const a=app(t),{run,fill,submit,click,q,all}=a;run('auditForm()');fill('#auditScope','Découpe');fill('#auditOwner','Chef atelier');fill('#auditAuditor','Auditeur');
-  fill('[data-audit-score]','0');fill('[data-audit-proof]','Absence observée');click('#saveAuditDraft');const id=run('data.audits[0].id');
-  assert.equal(run('data.audits[0].score'),null);assert.equal(run('data.audits[0].audit_data.criteria[1].score'),null);
-  const b=app(t,a.stored());b.run(`auditForm(data.audits.find(x=>x.id==='${id}'))`);assert.equal(b.q('[data-audit-score]').value,'0');assert.equal(b.q('[data-audit-proof]').value,'Absence observée');
-  run(`auditForm(data.audits.find(x=>x.id==='${id}'),9)`);submit('#auditForm');assert.equal(run('data.audits[0].status'),'Brouillon');
-  for(let i=0;i<10;i++){run(`auditForm(data.audits.find(x=>x.id==='${id}'),${i})`);all('[data-audit-score]').forEach((n,j)=>fill(`[data-audit-score][data-criterion="${n.dataset.criterion}"]`,i===0?'2':'4'));all('[data-audit-proof]').forEach(n=>{n.value='Constat et preuve terrain';});if(i<9)click(`[data-audit-domain='${i+1}']`);else submit('#auditForm');}
-  assert.equal(run('data.audits[0].status'),'Terminé');assert.equal(run('data.audits[0].score'),76);assert.equal(run(`data.actions.filter(a=>a.origin_id==='${id}').length`),1);
-  run(`auditForm(data.audits.find(x=>x.id==='${id}'))`);assert.equal(q('#auditForm'),null);assert.equal(run(`data.actions.filter(a=>a.origin_id==='${id}').length`),1);
+test('Audit 50 critères 8.11 : note au pouce, brouillon repris, preuve obligatoire, actions datées sans doublon',t=>{
+  const a=app(t),{run,fill,submit,click,q,all}=a;
+  run('auditForm()');fill('#auScope','Découpe');fill('#auOwner','Chef atelier');fill('#auAuditor','Auditeur');submit('#auStartForm');
+  const id=run('data.audits[0].id');assert.match(id,/^AUD-\d{3}$/);assert.equal(all('.au-q').length,5);assert.equal(all('[data-au-ci="0"] .au-v').length,6,'Six boutons de 0 à 5');
+  click('[data-au-ci="0"] [data-au-v="0"]');assert.ok(q('[data-au-ci="0"].lv0'),'La note se voit sur place');assert.match(q('[data-au-ci="0"] .au-lvl').textContent,/Absent/);
+  fill('[data-au-ci="0"] [data-au-proof]','Absence observée');run('document.querySelector(\'[data-au-ci="0"] [data-au-proof]\').onblur()');
+  click('[data-au-later]');assert.equal(run('data.audits[0].status'),'Brouillon');assert.equal(run('data.audits[0].score'),null);
+  const b=app(t,a.stored());b.run(`auditForm(data.audits.find(x=>x.id==='${id}'))`);assert.ok(b.q('[data-au-ci="0"] [data-au-v="0"].on'),'Brouillon repris');assert.equal(b.q('[data-au-ci="0"] [data-au-proof]').value,'Absence observée');
+  run(`auditForm(data.audits.find(x=>x.id==='${id}'),10)`);click('[data-au-finish]');assert.equal(run('data.audits[0].status'),'Brouillon','Pas de validation sans les 50 notes et preuves');
+  run(`Object.entries(AUDIT_CRITERIA).forEach(([d,l],i)=>l.forEach((c,j)=>{if(i===0&&j===0)return;auSet(d,c,{score:i===0?2:4,proof:'Constat et preuve terrain'})}));auRender()`);
+  assert.equal(all('[data-au-gap]').length,5,'Les notes sous 3 sont proposées en actions');assert.equal(all('[data-au-act]:checked').length,1,'Seul le 0 est coché d’office');
+  fill('[data-au-gap="Sécurité|Risques critiques sécurisés"] [data-au-what]','Poser le garde-corps de la passerelle');
+  click('[data-au-finish]');
+  assert.equal(run('data.audits[0].status'),'Terminé');assert.equal(run('data.audits[0].score'),75);assert.equal(run('data.audits[0].audit_data.domain_scores["Sécurité"]'),1.6);
+  assert.deepEqual(JSON.parse(run(`JSON.stringify(data.actions.filter(x=>x.origin_id==='${id}').map(x=>[x.title,x.owner,x.priority,x.category,!!x.due_date]))`)),[['Poser le garde-corps de la passerelle','Chef atelier','Haute','Sécurité',true]]);
+  assert.ok(q('.au-report .au-radar'),'Rapport avec radar des 10 domaines');
+  run(`auditForm(data.audits.find(x=>x.id==='${id}'))`);assert.ok(q('.au-report'));assert.equal(run(`data.actions.filter(x=>x.origin_id==='${id}').length`),1);
 });
 test('Audit historique identifié et ouverture sans brouillon vide',t=>{
   const {run,q}=app(t),before=run('data.audits.length');run('state.view="audits";render()');assert.match(q('#appView').textContent,/Ancien format · détail indisponible/);assert.match(q('#appView').textContent,/Audits 50 critères terminés/);
