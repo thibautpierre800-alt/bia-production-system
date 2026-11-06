@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.1.1 — 6 novembre 2026
+
+**Décider et Analyser : mêmes couleurs, mêmes seuils.**
+
+- SQCDP Groupe (Pilotage › Décider) : l’état de chaque case suit désormais la même règle que Voir › Analyser, c’est-à-dire les seuils vert et orange de chaque indicateur fixés dans Paramètres, décalés sur la cible locale. Une valeur sous la cible mais au-dessus du seuil orange passe en « Vigilance » (orange) au lieu de « Écart » (rouge). Exemple de démonstration : Ag Déco TRS 82 % pour une cible de 85 % (orange dès 75 %).
+- Gris pour « sans mesure » et « à qualifier » (bordure pointillée) ; l’orange est réservé à la vigilance.
+- Flèches d’évolution ↗ ↘ jugées selon le sens du progrès, vertes si favorables, comme dans Analyser.
+- Bandeau : écarts, vigilances, cibles atteintes (et, s’il y en a, sans mesure / à qualifier), puis alertes et décisions.
+- Les seuils appliqués sont écrits dans le détail d’une case (Décider), dans le détail d’un indicateur (Analyser) et sur chaque courbe. Les courbes portent le même statut que la case.
+- Correction : l’unité « nombre » ne s’affiche plus à côté des signaux sécurité dans le SQCDP Groupe.
+
+Aucune donnée ni aucun droit ne change. Les seuils restent modifiables dans Paramètres › Indicateurs.
+
 ## 8.1.0 — 6 novembre 2026
 
 **Voir › Analyser : tous les indicateurs d’un coup d’œil, sans menu déroulant.**

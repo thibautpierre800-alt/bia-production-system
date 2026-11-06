@@ -155,13 +155,13 @@ renderOSTower = function () {
     kpis = inKpis(),
     period = state.osPeriod || today();
   if (!kpis.length || !sites.length) return empty("Aucun indicateur actif. Définissez les KPI dans Paramètres.");
-  const statuses = sites.flatMap((s) => kpis.map((k) => inTone(osStatus(osLatest(s.id, k.id, period, group ? null : state.workshop || null), k))));
-  const count = (tone) => statuses.filter((x) => x === tone).length;
-  const keys = [["gap", "écart", "écarts"], ["warn", "vigilance", "vigilances"], ["ok", "cible atteinte", "cibles atteintes"], ["none", "sans mesure", "sans mesure"]]
-    .filter(([tone]) => tone !== "none" || count(tone))
-    .map(([tone, one, many]) => `<span class="in-key ${tone}"><i aria-hidden="true"></i><b>${count(tone)}</b> ${count(tone) > 1 ? many : one}</span>`).join("");
+  const statuses = sites.flatMap((s) => kpis.map((k) => osStatus(osLatest(s.id, k.id, period, group ? null : state.workshop || null), k)));
+  const count = (status) => statuses.filter((x) => x === status).length;
+  const keys = [["gap", "écart", "écarts"], ["warn", "vigilance", "vigilances"], ["ok", "cible atteinte", "cibles atteintes"], ["missing", "sans mesure", "sans mesure"], ["qualify", "à qualifier", "à qualifier"]]
+    .filter(([status]) => !["missing", "qualify"].includes(status) || count(status))
+    .map(([status, one, many]) => `<span class="in-key ${inTone(status)}"><i aria-hidden="true"></i><b>${count(status)}</b> ${count(status) > 1 ? many : one}</span>`).join("");
   const add = !role().readonly && osManager() ? '<button type="button" class="btn secondary small" data-new-benchmark>+ Relevé</button>' : "";
-  return `<section class="panel in-wall" aria-label="Tous les indicateurs"><div class="in-wall-head"><div class="in-keys" role="status">${keys}</div><div class="in-wall-tools">${inDateStepper(sites)}${add}</div></div>${group ? inMatrix(sites, kpis, period) : inTiles(sites[0], kpis, period)}<p class="in-foot">Touchez une case : courbe, cible et dossiers liés.${group ? " Touchez un site : ses courbes." : ""} ↗ ↘ évolution depuis le relevé précédent, verte si favorable. Aucune moyenne entre sites.${data.meta.demo ? " Données de démonstration fictives." : ""}</p></section>${inCounters()}${inDrifts()}${inGains()}${inEnvironment()}`;
+  return `<section class="panel in-wall" aria-label="Tous les indicateurs"><div class="in-wall-head"><div class="in-keys" role="status">${keys}</div><div class="in-wall-tools">${inDateStepper(sites)}${add}</div></div>${group ? inMatrix(sites, kpis, period) : inTiles(sites[0], kpis, period)}<p class="in-foot">Touchez une case : courbe, cible et dossiers liés.${group ? " Touchez un site : ses courbes." : ""} Couleurs selon les seuils de chaque indicateur (Paramètres). ↗ ↘ évolution depuis le relevé précédent, verte si favorable. Aucune moyenne entre sites.${data.meta.demo ? " Données de démonstration fictives." : ""}</p></section>${inCounters()}${inDrifts()}${inGains()}${inEnvironment()}`;
 };
 
 // Courbes d’un site : puces de site et d’historique à la place des menus.

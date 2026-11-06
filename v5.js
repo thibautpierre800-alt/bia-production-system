@@ -428,7 +428,7 @@ function renderRoadmap(){
     <section class="panel section"><h2>Revue mensuelle attendue</h2><div class="grid cols-4"><div class="card"><b>Résultat</b><p class="hint">Qu’est-ce qui a réellement changé ?</p></div><div class="card"><b>Écart</b><p class="hint">Pourquoi le jalon n’est-il pas atteint ?</p></div><div class="card"><b>Décision</b><p class="hint">Quel arbitrage est nécessaire ?</p></div><div class="card"><b>Apprentissage</b><p class="hint">Que faut-il adapter ou standardiser ?</p></div></div></section>`;
 }
 
-function measureStatus(m){const status=osStatus(m);return {text:osStatusText(status),tone:{ok:"done",warn:"progress",gap:"open",missing:"neutral",qualify:"neutral"}[status]};}
+function measureStatus(m){const status=osStatus(m);return {text:osStatusText(status),tone:osStatusTone(status)};}
 
 function renderActions(){
   const all=scoped(data.actions);let actions=all.slice();

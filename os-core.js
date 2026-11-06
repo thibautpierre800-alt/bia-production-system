@@ -260,6 +260,29 @@ function osStatusText(value) {
     }[value] || value
   );
 }
+// Couleur d’un statut, identique partout (cases, pastilles, légendes).
+function osStatusTone(value) {
+  return { ok: "done", warn: "progress", gap: "open" }[value] || "neutral";
+}
+// Seuils réellement appliqués par osStatus, décalés sur la cible locale.
+function osThresholdText(kpi, localTarget = null) {
+  if (!kpi) return "";
+  const target = osFinite(localTarget) ? localTarget : kpi.target;
+  if (!osFinite(target) || !osFinite(kpi.green) || !osFinite(kpi.orange))
+    return "";
+  const shift = target - kpi.target,
+    unit = kpi.unit && kpi.unit !== "nombre" ? " " + kpi.unit : "",
+    green = osNum(kpi.green + shift, 2) + unit,
+    orange = osNum(kpi.orange + shift, 2) + unit,
+    same = Math.abs(kpi.green - kpi.orange) < 1e-9;
+  return kpi.direction === "high"
+    ? same
+      ? `Vert dès ${green} · rouge en dessous`
+      : `Vert dès ${green} · orange dès ${orange} · rouge en dessous`
+    : same
+      ? `Vert jusqu’à ${green} · rouge au-delà`
+      : `Vert jusqu’à ${green} · orange jusqu’à ${orange} · rouge au-delà`;
+}
 function osNormalizedGap(row, kpi = osKpi(row?.kpi_id || row?.code)) {
   if (!row || !kpi || ["missing", "qualify"].includes(osStatus(row, kpi)))
     return null;
@@ -1005,7 +1028,7 @@ function osInit() {
         Object.assign(old, {
           code: k.code,
           direction: k.direction,
-          unit: k.unit,
+          unit: k.unit === "nombre" ? "" : k.unit,
         });
     }
   }

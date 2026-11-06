@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-1-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.1.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-1-1/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.1.1'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -264,7 +264,8 @@ test('SQCDP Groupe : six sites simultanés, états qualifiés et détail actionn
   assert.equal(all('.sqcdp-row').length,7,'Un en-tête et six sites');
   assert.equal(all('.sqcdp-cell').length,30);
   assert.equal(all('.sqcdp-cell.missing').length,0);
-  assert.equal(all('.sqcdp-cell.gap').length,15);
+  assert.equal(all('.sqcdp-cell.gap').length,5);
+  assert.equal(all('.sqcdp-cell.warn').length,10,'Vigilance : sous la cible mais au-dessus du seuil orange');
   assert.match(q('[data-sqcdp-site="marzin"][data-sqcdp-axis="Q"]').textContent,/5.2/);
   click('[data-sqcdp-site="marzin"][data-sqcdp-axis="Q"]');
   assert.match(q('#modalContent').textContent,/défauts de surface/i);
@@ -295,6 +296,31 @@ test('SQCDP Groupe : six sites simultanés, états qualifiés et détail actionn
   const b=app(t,a.stored());b.run('state.role="lean";state.site="group";state.view="sqcdp";render()');
   b.run('state.benchmarkPeriod="2026-09-24";render()');
   assert.equal(b.q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="D"]').classList.contains('ok'),true);
+});
+test('Décider et Analyser : mêmes couleurs, mêmes seuils, mêmes flèches',t=>{
+  const a=app(t),{run,q,all,click}=a;
+  run('state.site="group";state.role="lean";state.view="pilotage";state.pilotageMode="analysis";state.osTab="tower";render()');
+  const analyse={};for(const c of all('[data-in-cell]'))analyse[c.dataset.inCell]=['gap','warn','ok'].find(x=>c.classList.contains(x))||'none';
+  run('state.pilotageMode="ritual";state.benchmarkPeriod=benchmarkPeriods()[0];render()');
+  const axes={S:'safety_signal',Q:'scrap',C:'trs',D:'service',P:'staffing'};let compared=0;
+  for(const c of all('.sqcdp-cell')){const tone=['gap','warn','ok'].find(x=>c.classList.contains(x))||'none';assert.equal(tone,analyse[`${c.dataset.sqcdpSite}:${axes[c.dataset.sqcdpAxis]}`],`${c.dataset.sqcdpSite} ${c.dataset.sqcdpAxis}`);compared++;}
+  assert.equal(compared,30);
+  const trs=q('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="C"]');
+  assert.equal(trs.classList.contains('warn'),true,'TRS 82 % pour une cible de 85 % : vigilance, pas écart');
+  assert.match(trs.textContent,/Vigilance/);
+  assert.match(q('.sqcdp-summary').textContent,/5\s*écarts.*10\s*vigilances.*15\s*cibles atteintes/);
+  assert.match(q('.sqcdp-legend').textContent,/orange : vigilance/);
+  assert.equal(all('.sqcdp-cell i.up, .sqcdp-cell i.down').length>0,true,'Flèches jugées selon le sens du progrès');
+  for(const i of all('.sqcdp-cell i'))assert.match(i.textContent,/[↗↘→]/);
+  click('[data-sqcdp-site="ag-deco"][data-sqcdp-axis="C"]');
+  assert.match(q('#modalContent').textContent,/Vigilance/);
+  assert.match(q('#modalContent').textContent,/Vert dès 85\s%\s·\sorange dès 75\s%\s·\srouge en dessous/);
+  run('closeModal();state.pilotageMode="analysis";state.pilotSite="ag-deco";state.osTab="detail";render()');
+  const chart=all('.indicator-chart').find(c=>/TRS/.test(c.querySelector('h2').textContent));
+  assert.match(chart.querySelector('.pill').textContent,/Vigilance/,'La courbe porte le même statut que la case');
+  assert.equal(chart.querySelector('.pill').classList.contains('progress'),true);
+  run('state.osTab="tower";render()');click('[data-in-cell="ag-deco:trs"]');
+  assert.match(q('#modalContent').textContent,/orange dès 75/);
 });
 test('Formation, roadmap, bibliothèque et bonnes pratiques restent opérationnelles',t=>{
   const a=app(t),{run,q,fill,submit,click}=a;
