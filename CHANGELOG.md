@@ -1,5 +1,26 @@
 # Changelog
 
+## 8.31.0 — 7 novembre 2026
+
+**Paramètres : ce que l’appli doit connaître, et ce qui manque encore.**
+
+- En tête, « État du paramétrage » : neuf points, un score et une barre.
+  - Chaque site a un responsable, un atelier et au moins une personne déclarée.
+  - Chaque indicateur a un propriétaire, sa définition, sa formule et sa source.
+  - Les seuils vert et orange sont cohérents avec la cible et le sens.
+  - Les relevés sont à jour selon la fréquence de chaque indicateur.
+  - Les décideurs d’escalade et les équipes de relève sont définis.
+- Chaque point manquant nomme les sites ou indicateurs concernés et mène à l’onglet qui le corrige. Sur un onglet, seuls ses points restent affichés.
+- Les onglets deviennent lisibles :
+  - Sites : responsable, ateliers, zones, personnes, dernier relevé. « Site inconnu » disparaît.
+  - Ateliers et zones, regroupés par site. « + Atelier » et « + Zone » arrivent pré-remplis avec le site et l’atelier.
+  - Personnes, regroupées par site, avec leur profil.
+  - Indicateurs : axe, fréquence, cible et sens, seuils en barre colorée, définition, formule, source, propriétaire, sites mesurés.
+  - Questionnaires et Règles.
+- Les formulaires d’ajout et de modification restent ceux du référentiel. « Données et sauvegardes » est inchangé.
+
+Données : aucune nouvelle.
+
 ## 8.30.0 — 7 novembre 2026
 
 **Journal d’activité : qui a fait quoi, quand, en phrases lisibles.**
