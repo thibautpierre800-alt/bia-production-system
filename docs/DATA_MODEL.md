@@ -266,3 +266,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.40.1 (additive)
 
 Aucun changement de données en 8.40.1.
+
+## Extension 8.41.0 (additive)
+
+Aucune nouvelle donnée en 8.41 : la tour lit les collections existantes.

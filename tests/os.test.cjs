@@ -2352,3 +2352,40 @@ test("Échantillothèque 8.40 · règles groupe, site, client ; contrôle d’un
   assert.ok(a.q('.jn-watch [data-eh-go="ECH-M"]'), "Référence à revalider");
   assert.deepEqual(JSON.parse(a.run('state.echOn=true;switchView("documents");state.echOn=true;render();JSON.stringify([...document.querySelectorAll("#appView button")].filter(b=>!b.onclick&&!b.disabled).map(b=>b.outerHTML.slice(0,60)))')), []);
 });
+
+test("Tour de contrôle 8.41 · tous les sites et indicateurs, alertes classées, site en grand, mode télévision", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('state.role="lean";state.site="group";render()');
+  const tabs = JSON.parse(a.run('JSON.stringify(uxTabs(uxStages().find(s=>s.id==="voir")).map(x=>x.label))'));
+  assert.deepEqual(tabs.slice(0, 2), ["Pilotage", "Tour de contrôle"]);
+  a.run('state.pilotTab="tour";switchView("pilotage");state.pilotTab="tour";render()');
+  assert.match(a.q(".tr-head h1").textContent, /sept sites/);
+  assert.equal(a.run('document.querySelectorAll(".tr-matrix tbody tr").length'), a.run("trSites().length"));
+  assert.match(a.q(".tr-band").textContent, /indicateurs en écart[\s\S]*actions en retard[\s\S]*réclamations client/);
+  // Une réponse client en retard passe en tête des alertes
+  a.run(`data.ncs=[{id:"NC-T",site_id:"sodeplax",date:auAddDays(-30),claim_date:auAddDays(-30),origin:"Client",client:"Client Z",defect:"Dimension",status:"Ouverte",qty:3,severity:"Majeure",text:"x"}];render()`);
+  const al = JSON.parse(a.run("JSON.stringify(trAlerts(trSites()).map(x=>[x.lvl,x.what,x.site.id]))"));
+  assert.ok(al.some(([l, w, s]) => l === 3 && w === "Réponse client en retard" && s === "sodeplax"));
+  assert.ok(al.every((x, i, arr) => i === 0 || arr[i - 1][0] >= x[0]), "Alertes classées par gravité");
+  // Site en grand, puis retour
+  a.click('[data-tr-site="marzin"]');
+  assert.match(a.q(".tr-head h1").textContent, /Marzin/);
+  assert.equal(a.run('document.querySelectorAll(".tr-matrix tbody tr").length'), 1);
+  a.click('.tr-head [data-tr-site=""]');
+  // Mode télévision
+  a.click("[data-tr-tv]");
+  assert.equal(a.run("trTv"), true);
+  a.click("[data-tr-tv]");
+  assert.equal(a.run("trTv"), false);
+  // Une alerte mène à son écran
+  a.click('[data-tr-go]');
+  assert.notEqual(a.run("state.pilotTab"), "tour");
+  // Le directeur ne voit que son site
+  a.run('state.role="director";state.site="marzin";render();state.pilotTab="tour";switchView("pilotage");state.pilotTab="tour";render()');
+  assert.equal(a.run('document.querySelectorAll(".tr-matrix tbody tr").length'), 1);
+  assert.deepEqual(JSON.parse(a.run('JSON.stringify([...document.querySelectorAll("#appView button")].filter(b=>!b.onclick&&!b.disabled).map(b=>b.outerHTML.slice(0,60)))')), []);
+  // Le chef d'équipe n'a pas la tour (pas de pilotage)
+  a.run('state.role="teamlead";render()');
+  assert.equal(a.run("trCan()"), false);
+});

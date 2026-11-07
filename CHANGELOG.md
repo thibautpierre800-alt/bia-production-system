@@ -1,5 +1,33 @@
 # Changelog
 
+## 8.41.0 — 7 novembre 2026
+
+**Tour de contrôle : tous les indicateurs, tous les sites, sur un écran, pour la salle de pilotage.**
+
+- Nouvel onglet Voir › Tour de contrôle, juste après Pilotage. Adresse directe pour l’écran de la salle : `…/#tour`.
+- **Le bandeau du groupe** donne :
+  - les signaux sécurité ouverts ;
+  - les indicateurs en écart, sur le total ;
+  - les actions en retard ;
+  - les réclamations client sur 30 jours et les réponses en retard ;
+  - le TRS des feuilles de poste ;
+  - les indicateurs environnement hors objectif ;
+  - les boucles de la cascade ouvertes depuis plus de 7 jours ;
+  - les gains validés face à l’objectif.
+- **Chaque site a sa ligne** : S, Q, C, D, P (valeur, couleur selon la cible, tendance), TRS des lignes, non-conformités sur 30 jours, actions en retard, environnement, gains et maturité. Un clic sur un site l’ouvre en grand.
+- **« Ce qui demande une décision »** classe les alertes par gravité :
+  - sécurité ;
+  - réponse client en retard ;
+  - indicateur hors cible plusieurs relevés de suite ;
+  - obligation environnement en retard ;
+  - actions en retard ;
+  - ligne au-dessus de son objectif de micro-arrêts ;
+  - mois environnement non saisi.
+
+  Un clic sur une alerte ouvre son écran.
+- **Mode télévision** : plein écran sans menus, horloge, données rafraîchies chaque minute et défilement toutes les 20 secondes (le groupe, puis chaque site).
+- Le directeur de site voit sa tour, limitée à son site.
+
 ## 8.40.1 — 7 novembre 2026
 
 **La nouvelle version se signale.**
