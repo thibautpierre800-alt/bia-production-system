@@ -51,6 +51,8 @@ const scripts = [
   "cascade.js",
   "microarrets.js",
   "trs.js",
+  "gains.js",
+  "environnement.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {

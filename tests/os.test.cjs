@@ -2059,3 +2059,153 @@ test("TRS 8.36 · feuille de poste, calcul NF E60-182, pannes TPM et micro-arrê
   assert.ok(!a.run(`data.measures.some(m=>m.site_id==="marzin"&&m.code==="trs"&&m.period==="${y}")`));
   assert.deepEqual(JSON.parse(a.run('JSON.stringify([...document.querySelectorAll("#appView button")].filter(b=>!b.onclick&&!b.disabled).map(b=>b.outerHTML.slice(0,60)))')), []);
 });
+
+test("Gains 8.37 · types, avant/objectif/après, annualisation, valorisation, validation, objectif, double comptage, tenue", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('state.role="director";state.site="marzin";render();switchView("pilotage")');
+  const tabs = JSON.parse(a.run('JSON.stringify(uxTabs(uxStages().find(s=>s.id==="voir")).map(x=>x.label))'));
+  assert.deepEqual(tabs.slice(0, 3), ["Pilotage", "Gains", "Environnement"]);
+  a.run('state.pilotTab="gains";render()');
+  assert.match(a.q(".page-head h1").textContent, /Gains/);
+  // Calcul : 40 → 18 min, objectif 20, 250 fois par an, 0,75 € la minute, 3 000 € de mise en œuvre
+  const g = { before: 40, target: 20, after: 18, direction: "low", unit: "min", per_year: 250, recurring: true, euro_rate: 0.75, cost: 3000, status: "Validé" };
+  const v = JSON.parse(a.run(`JSON.stringify(gnValue(${JSON.stringify(g)}))`));
+  assert.equal(v.year, 22 * 250);
+  assert.equal(v.euros, 22 * 250 * 0.75);
+  assert.ok(Math.abs(a.run(`gnProgress(${JSON.stringify(g)})`) - 1.1) < 1e-9, "110 % de l’objectif");
+  assert.ok(Math.abs(a.run(`gnPayback(${JSON.stringify(g)})`) - 3000 / (4125 / 12)) < 1e-9);
+  assert.equal(JSON.parse(a.run(`JSON.stringify(gnValue(${JSON.stringify({ ...g, status: "Estimé", after: null })}))`)).euros, 20 * 250 * 0.75, "Une prévision se calcule sur l’objectif");
+  assert.equal(JSON.parse(a.run(`JSON.stringify(gnValue(${JSON.stringify({ ...g, recurring: false })}))`)).year, 22, "Un gain ponctuel compte une fois");
+  // Déclaration par le formulaire
+  a.click("[data-gn-new]");
+  a.fill("#gnTitle", "Changement de série plaqueuse");
+  a.click('[data-gn-ff="prod"]');
+  a.fill("#gnUnit", "min");
+  a.fill("#gnBefore", "40");
+  a.fill("#gnTargetV", "20");
+  a.fill("#gnPerYear", "250");
+  a.fill("#gnRate", "0.75");
+  a.click('[data-gn-save=""]');
+  const s1 = JSON.parse(a.run("JSON.stringify(data.gains[0])"));
+  assert.equal(s1.status, "Estimé");
+  assert.equal(s1.family, "prod");
+  assert.equal(s1.period, "par an");
+  // Mesure de l'après et validation par le directeur
+  a.click(`[data-gn-open="${s1.id}"]`);
+  a.fill("#gnAfter", "18");
+  a.click('[data-gn-save="Validé"]');
+  assert.equal(a.run("data.gains[0].status"), "Estimé", "Pas de validation sans preuve");
+  a.fill("#gnEvidence", "Chrono sur 10 changements");
+  a.click('[data-gn-save="Validé"]');
+  const s2 = JSON.parse(a.run("JSON.stringify(data.gains[0])"));
+  assert.equal(s2.status, "Validé");
+  assert.ok(s2.validated_by && s2.validated_at && s2.start_date);
+  assert.ok(a.run(`osValidatedGains([data.gains[0]])["min · par an"]`) === 5500, "Compatible avec l’ancien registre");
+  // Objectif annuel, sommes
+  a.click("[data-gn-target]");
+  a.fill("#gnTg", "150000");
+  a.submit("#gnTgForm");
+  assert.equal(a.run("gnTarget()"), 150000);
+  const tt = JSON.parse(a.run("JSON.stringify(gnTotals(gnRows()))"));
+  assert.ok(tt.valid >= 4125);
+  assert.match(a.q(".gn-goal").textContent, /objectif annuel du site/);
+  // Double comptage refusé
+  a.run(`data.projects.unshift({id:"PRJ-T1",site_id:"marzin",title:"Chantier test",status:"Clos",kpi:{label:"Rebut",base:5,target:3,unit:"%"},measures:[{date:today(),value:2.8}],created_at:now(),updated_at:now()});render()`);
+  assert.ok(a.q('[data-gn-from="PRJ-T1"]'), "Résultat sans gain déclaré proposé");
+  a.click('[data-gn-from="PRJ-T1"]');
+  assert.equal(a.q("#gnBefore").value, "5");
+  assert.equal(a.q("#gnAfter").value, "2.8");
+  a.click('[data-gn-ff="qual"]');
+  a.click('[data-gn-save=""]');
+  assert.equal(a.run('data.gains.filter(g=>g.source_id==="PRJ-T1").length'), 1);
+  a.click("[data-gn-new]");
+  a.fill("#gnTitle", "Doublon");
+  a.run('document.querySelector("#gnSource").value="PRJ-T1"');
+  a.click('[data-gn-ff="qual"]');
+  a.fill("#gnUnit", "%");
+  a.fill("#gnBefore", "5");
+  a.fill("#gnTargetV", "3");
+  a.click('[data-gn-save=""]');
+  assert.equal(a.run('data.gains.filter(g=>g.source_id==="PRJ-T1").length'), 1, "Pas de double comptage");
+  a.run("closeModal()");
+  // Tenue à 3 mois
+  a.run(`const g=data.gains.find(x=>x.id==="${s2.id}");g.start_date=auAddDays(-100);render()`);
+  assert.deepEqual(JSON.parse(a.run(`JSON.stringify(gnChecksDue(data.gains.find(x=>x.id==="${s2.id}")))`)), [3]);
+  a.click(`[data-gn-open="${s2.id}"]`);
+  a.fill("#gnCheckV", "19");
+  a.click("[data-gn-check]");
+  assert.equal(a.run(`data.gains.find(x=>x.id==="${s2.id}").checks[0].held`), true);
+  // Revue mensuelle : bloc gains en euros, bloc environnement
+  assert.ok(a.run('RE_TYPES.mensuelle.agenda.some(([k])=>k==="env")'));
+  assert.match(a.run('reBlock("gains",{type:"mensuelle",site_id:"group",sites:["marzin"]}).html'), /par an validés/);
+  assert.deepEqual(JSON.parse(a.run('JSON.stringify([...document.querySelectorAll("#appView button")].filter(b=>!b.onclick&&!b.disabled).map(b=>b.outerHTML.slice(0,60)))')), []);
+});
+
+test("Environnement 8.37 · saisie mensuelle, ratios par unité, référence et objectif, CO₂, incidents avec action, obligations, vue groupe", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('state.role="director";state.site="marzin";render();state.pilotTab="env";switchView("pilotage");state.pilotTab="env";render()');
+  assert.match(a.q(".page-head h1").textContent, /Environnement/);
+  assert.ok(a.q(".cs-empty [data-ev-month]"));
+  // Trois mois de l'an dernier : référence automatique
+  const y = a.run('String(Number(today().slice(0,4))-1)');
+  a.run(`data.envMonths=[1,2,3].map(i=>({id:"EM"+i,site_id:"marzin",month:"${y}-0"+i,prod_qty:1000,elec_kwh:200000,gas_kwh:100000,water_m3:500,waste_t:50,waste_valo_t:40,haz_t:1}));render()`);
+  const elec = a.run('JSON.stringify(evRef(EV_IND[0],"marzin"))');
+  assert.equal(JSON.parse(elec).v, 200);
+  // Saisie du mois précédent
+  a.click("[data-ev-month]");
+  a.fill("#evProd", "2000");
+  a.fill("#evElec", "360000");
+  a.fill("#evGas", "180000");
+  a.fill("#evWater", "900");
+  a.fill("#evWaste", "90");
+  a.fill("#evValo", "81");
+  a.fill("#evHaz", "1.5");
+  a.submit("#evMForm");
+  const m = JSON.parse(a.run("JSON.stringify(data.envMonths.find(x=>x.month===evPrevMonth()))"));
+  assert.equal(m.prod_qty, 2000);
+  assert.equal(a.run('evLast(EV_IND[0],"marzin").v'), 180, "kWh par m³");
+  assert.equal(a.run('evLast(EV_IND[2],"marzin").v'), 450, "Litres d’eau par m³");
+  assert.equal(a.run('evLast(EV_IND[3],"marzin").v'), (91.5 * 1000) / 2000, "kg de déchets par m³, dangereux compris");
+  assert.equal(a.run('evLast(EV_IND[4],"marzin").v'), 90, "Taux de valorisation");
+  // Réglages : facteurs, objectifs par baisse visée
+  a.click("[data-ev-settings]");
+  a.fill("#evSFe", "0.05");
+  a.fill("#evSFg", "0.2");
+  a.fill("#evSCut", "10");
+  a.submit("#evSForm");
+  assert.equal(a.run('evTarget(EV_IND[0],"marzin")'), 180, "Référence 200 − 10 %");
+  assert.equal(a.run('evTarget(EV_IND[4],"marzin")'), 90, "Valorisation : référence 80 % + 10 points");
+  assert.equal(a.run('evLast(EV_IND[6],"marzin").v'), (360000 * 0.05 + 180000 * 0.2) / 2000, "CO₂ de l’énergie par m³");
+  assert.equal(a.q('[data-ev-sel="elec"]').classList.contains("ok"), true);
+  // Détail
+  a.click('[data-ev-sel="elec"]');
+  assert.match(a.q(".ev-detail").textContent, /Électricité[\s\S]*24 mois/);
+  // Incident avec action corrective
+  a.click("[data-ev-event]");
+  a.fill("#evET", "Fût de colle renversé quai 2");
+  a.fill("#evEA", "Poser une rétention au quai 2");
+  a.fill("#evEW", "HSE Marzin");
+  a.submit("#evEForm");
+  const e = JSON.parse(a.run("JSON.stringify(data.envEvents[0])"));
+  assert.ok(e.action_id);
+  assert.equal(a.run(`data.actions.find(x=>x.id==="${e.action_id}").category`), "Environnement");
+  // Obligation en retard → À surveiller, puis « Fait »
+  a.click("[data-ev-ex]");
+  a.fill("#evDL", a.run("auAddDays(-60)"));
+  a.submit("#evDForm");
+  assert.equal(a.run("evDutyState(data.envDuties[0]).k"), "late");
+  a.run('switchView("home")');
+  assert.ok(a.q(".jn-watch [data-ev-go]"));
+  a.run('state.pilotTab="env";switchView("pilotage");state.pilotTab="env";render()');
+  a.click("[data-ev-done]");
+  assert.equal(a.run("data.envDuties[0].last_date"), a.run("today()"));
+  assert.notEqual(a.run("evDutyState(data.envDuties[0]).k"), "late");
+  assert.deepEqual(JSON.parse(a.run('JSON.stringify([...document.querySelectorAll("#appView button")].filter(b=>!b.onclick&&!b.disabled).map(b=>b.outerHTML.slice(0,60)))')), []);
+  // Vue groupe
+  a.run('state.role="lean";state.site="group";render()');
+  assert.match(a.q(".ev-grid").textContent, /Marzin/);
+  assert.ok(a.q(".ev-grid td.ok"), "Objectif tenu en vert");
+  assert.match(a.run('reBlock("env",{type:"mensuelle",site_id:"group",sites:["marzin"]}).html'), /Marzin/);
+});

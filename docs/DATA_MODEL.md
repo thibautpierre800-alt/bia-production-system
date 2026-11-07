@@ -238,3 +238,12 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `trsShifts[]` : `{ id (FP-…), line_id, site_id, workshop_id, date, team, shift_min, planned_min, stops[{ kind, min, note, ref? }], micro_n, micro_min, good, scrap, rate_ph, by }`. Une feuille par ligne, jour et équipe.
 - `mlLines[]` : `rate_ph` (cadence théorique, pièces par heure) et `shift_min` (durée d’un poste).
 - `measures[]` : un relevé TRS par site et par jour, de source « Feuilles de poste », recalculé à chaque feuille. Un relevé d’une autre source n’est jamais remplacé.
+
+## Extension 8.37.0 (additive)
+
+- `gains[]` : `family` (fin, prod, qual, delai, secu, env, humain), `nature` (reel, evite, capacite), `before`, `target`, `after`, `direction`, `unit`, `recurring`, `per_year`, `euro_rate`, `cost`, `start_date`, `status` (Estimé, À valider, Validé, Refusé), `evidence`, `validated_by`, `validated_at`, `checks[{ months, at, after, held }]`. `quantity` et `period` restent tenus pour l’ancien registre.
+- `gainTargets[]` : `{ scope (site ou group), euros }`.
+- `envMonths[]` : `{ site_id, month, prod_qty, elec_kwh, gas_kwh, water_m3, waste_t, waste_valo_t, haz_t, note }`.
+- `envEvents[]` : `{ site_id, date, kind, severity, text, immediate, action_id }`.
+- `envDuties[]` : `{ site_id, name, every_months, last_date, owner }`.
+- `envSites[]` : `{ site_id, prod_unit, f_elec, f_gas, ref{}, target{}, cut_pct }`.
