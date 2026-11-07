@@ -1870,7 +1870,62 @@ test("Réunions 8.33 · quatre instances, dossier préparé par les données, re
   a.run(`state.meetOpen="${id}";render()`);
   assert.equal(a.all("[data-re-close]").length, 0, "Lecture seule : dossier sans saisie");
   a.run('state.role="director";state.site="sodeplax";state.meetOpen=null;render()');
-  assert.deepEqual(a.all(".re-week-main b").map((x) => x.textContent), ["Sodeplax"], "Le directeur ne voit que la revue de son site");
-  assert.doesNotMatch(a.q("#appView").textContent, /COMEX/);
+  assert.deepEqual(a.all(".re-week-main:not(.cg-t15) b").map((x) => x.textContent), ["Sodeplax"], "Le directeur ne voit que la revue de son site");
+  assert.ok(!a.all(".re-card h3").some((h) => /COMEX/.test(h.textContent)), "Pas d’instance COMEX pour un directeur de site");
+  assert.equal(a.run("osIntegrity(data).length"), 0);
+});
+test("Cascade 8.34 · TOP 5 → TOP 15 → revue hebdo → mensuelle → COPIL, et la réponse redescend jusqu’au TOP 5", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('state.view="daily";state.meetOn=true;state.meetOpen=null;render()');
+  a.click("[data-re-setup]");
+  assert.equal(a.run('reRows().filter(r=>r.type==="top15").length'), a.run("OPERATIONAL_SITES.length"), "Un TOP 15 par site");
+  assert.match(a.q(".cg-ladder").textContent, /La cascade[\s\S]*TOP 5[\s\S]*TOP 15[\s\S]*Revue hebdo[\s\S]*Revue mensuelle[\s\S]*COPIL · COMEX/);
+  // TOP 5 : deux écarts du jour deviennent des sujets remontés
+  a.run('state.role="teamlead";state.site="marzin";state.meetOn=false;switchView("sqcdp")');
+  assert.match(a.q(".sj-panel h2").textContent, /TOP 5/);
+  a.run('sjSet(today(),"S","ko","Chariot sans frein au poste 3");sjSet(today(),"Q","ko","Bulles de colle sur 12 pièces")');
+  const [q1, s1] = JSON.parse(a.run('JSON.stringify(data.topics.slice(0,2).map(t=>t.id))'));
+  // TOP 15 : une réponse, une montée
+  a.run('state.role="lean";state.site="group";state.view="daily";state.meetOn=true;state.meetOpen=reRows().find(r=>r.type==="top15"&&r.site_id==="marzin").id;render()');
+  assert.match(a.q(".re-dossier").textContent, /Lettres SQCDP des ateliers et TOP 5[\s\S]*Remonté du niveau du dessous[\s\S]*Chariot sans frein/);
+  a.fill(`[data-re-ans="${s1}"]`, "Frein remplacé par la maintenance");
+  a.run(`document.querySelector('[data-re-up="${q1}"]').checked=true`);
+  a.click("[data-re-close]");
+  const esc = a.run(`data.topics.find(t=>t.id==="${q1}").carried_by`);
+  assert.ok(esc, "Le sujet monte à la revue hebdomadaire");
+  assert.equal(a.run(`data.escalations.find(e=>e.id==="${esc}").level`), 3);
+  assert.equal(a.run(`data.escalations.find(e=>e.id==="${esc}").origin_level`), 1);
+  // Revue hebdo : la réponse
+  a.run('closeModal();state.meetOpen=reRows().find(r=>r.type==="hebdo"&&r.site_id==="marzin").id;render()');
+  a.fill(`[data-re-ans="${esc}"]`, "Changement de lot de colle validé");
+  a.click("[data-re-close]");
+  assert.equal(a.run(`data.topics.find(t=>t.id==="${q1}").decision`), "Changement de lot de colle validé", "La réponse rejoint le sujet d’origine");
+  // TOP 5 : réponses à dire, puis boucle fermée
+  a.run('closeModal();state.role="teamlead";state.site="marzin";state.meetOn=false;switchView("sqcdp")');
+  assert.match(a.q(".cg-back").textContent, /Réponses à dire à l’équipe · 2/);
+  assert.match(a.q(".cg-back").textContent, /Frein remplacé/);
+  assert.match(a.q(".cg-back").textContent, /Changement de lot de colle/);
+  a.click(`[data-cg-ret="${q1}"]`);
+  a.click(`[data-cg-ret="${s1}"]`);
+  assert.equal(a.run(`data.topics.find(t=>t.id==="${q1}").status`), "Clos");
+  assert.equal(a.run(`data.escalations.find(e=>e.id==="${esc}").status`), "Clos", "L’escalade se ferme avec le sujet");
+  assert.ok(!a.q(".cg-back"));
+  assert.ok(a.run("cgStats().closed") >= 2);
+  // Revue mensuelle → COPIL → réponse redite à la revue hebdomadaire d’origine
+  a.run('state.role="lean";state.site="group";commitData(()=>data.escalations.unshift({id:"ESC-777",site_id:"sodeplax",source_id:"S-041",title:"Budget éclairage zone contrôle",level:4,origin_level:3,owner:"Directeur opérationnel",status:"Ouverte",detail:"Devis fictif",result:"",due_date:today(),created_at:now(),updated_at:now()}));state.view="daily";state.meetOn=true;state.meetOpen=reRows().find(r=>r.type==="mensuelle").id;render()');
+  a.run('const s=document.querySelector(\'[data-re-up="ESC-777"]\');s.value="copil"');
+  a.click("[data-re-close]");
+  assert.equal(a.run('data.escalations.find(e=>e.id==="ESC-777").forum'), "copil");
+  a.run('closeModal();state.meetOpen=reRows().find(r=>r.type==="copil").id;render()');
+  a.fill('[data-re-ans="ESC-777"]', "Accordé");
+  a.click("[data-re-close]");
+  a.run('closeModal();state.meetOpen=reRows().find(r=>r.type==="hebdo"&&r.site_id==="sodeplax").id;render()');
+  assert.ok(a.q('[data-re-ret="ESC-777"]').checked, "La réponse du COPIL revient à la revue hebdo qui avait remonté");
+  a.click("[data-re-close]");
+  assert.equal(a.run('data.escalations.find(e=>e.id==="ESC-777").status'), "Clos");
+  // Niveaux renommés
+  a.run('closeModal();state.meetOn=false;state.meetOpen=null;switchView("daily")');
+  assert.match(a.all('[data-os="level"]').map((b) => b.textContent).join(","), /N1 · TOP 5,N2 · TOP 15,N3 · Revue hebdo du site,N4 · Groupe/);
   assert.equal(a.run("osIntegrity(data).length"), 0);
 });

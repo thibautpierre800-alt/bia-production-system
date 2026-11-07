@@ -1,5 +1,34 @@
 # Changelog
 
+## 8.34.0 — 7 novembre 2026
+
+**La cascade : TOP 5 → TOP 15 → revue hebdomadaire → revue mensuelle → COPIL, COMEX, et la réponse qui redescend.**
+
+- Les niveaux gardent leurs noms de terrain : N1 · TOP 5 (atelier), N2 · TOP 15 (site), N3 · revue hebdomadaire du site, N4 · Groupe. Cela vaut dans Aujourd’hui, les escalades et les routines.
+- TOP 5 : le point SQCDP du jour, lettre par lettre (« TOP 5 · Le point du jour », « Démarrer le TOP 5 »).
+  - Un écart devient un sujet remonté au TOP 15.
+  - « Réponses à dire à l’équipe » affiche les réponses venues du dessus. « Dit à l’équipe » ferme la boucle.
+- TOP 15, un par site, chaque jour ouvré, 15 min. Son dossier comprend :
+  - la sécurité des dernières 24 h ;
+  - les lettres SQCDP de chaque atelier et les TOP 5 tenus ;
+  - ce que les TOP 5 ont remonté : répondre, ou cocher « Monter à la revue hebdomadaire du site » ;
+  - les réponses à redescendre ;
+  - les actions.
+- Revue hebdomadaire et revue mensuelle : « Remonté du niveau du dessous » et « Réponses à redescendre ».
+  - La revue mensuelle peut porter un sujet au COPIL ou au COMEX, où il rejoint les décisions à prendre.
+- La réponse redescend jusqu’au niveau qui a remonté, même quand elle vient du COPIL ou du COMEX. La boucle n’est fermée qu’une fois la réponse redite à ce niveau.
+- « La cascade » en tête des réunions montre, pour chaque niveau :
+  - ce qui y attend une réponse ;
+  - ce qui doit y être redit ;
+  - les TOP 5 et TOP 15 tenus aujourd’hui.
+  - Elle donne aussi les boucles fermées sur 30 jours, le délai moyen et les boucles ouvertes depuis plus de 7 jours.
+- La page des réunions suit l’ordre de la cascade, du TOP 15 au COMEX. « Compléter la cascade » ajoute les TOP 15 aux instances déjà en place.
+
+Données :
+- `topics[]` porte en plus `answered_at`, `answered_by`, `returned_at`, `returned_by` et `carried_by`.
+- `escalations[]` porte en plus `origin_level`, `forum`, `path[]`, `answered_at`, `answered_by`, `returned_at` et `returned_by`.
+- La cadence « Chaque jour ouvré » est ajoutée.
+
 ## 8.33.0 — 7 novembre 2026
 
 **Réunions de pilotage : COMEX, COPIL, revue mensuelle des sites, revue hebdomadaire de chaque site.**

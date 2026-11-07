@@ -220,3 +220,9 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `instances[]` (non indexée) : `{ id: "INS-001", type: "comex"|"copil"|"mensuelle"|"hebdo", site_id, title, cadence, time, duration, chair, participants, next_date, last_date }`.
 - `instanceSessions[]` (non indexée) : `{ id: "RE-001", instance_id, type, site_id, date, by, present[], notes{ point: texte }, decisions[{ text, decision_id }], action_ids[], counts{}, next_date, created_at }`.
 - Une action créée en réunion porte `origin_type: "Réunion"`, `meeting_id` (la séance) et `meeting_series` (l’instance). Une décision attendue tranchée en réunion passe à `status: "Clos"` avec `result`.
+
+## Extension 8.34.0 (additive)
+
+- `topics[]` : `answered_at`, `answered_by` (réponse donnée), `returned_at`, `returned_by` (réponse redite au TOP 5), `carried_by` (escalade qui porte le sujet plus haut).
+- `escalations[]` : `origin_level` (niveau qui a remonté), `forum` (« copil » ou « comex » au niveau 4), `path[{ from, to, at, by }]`, `answered_at`, `answered_by`, `answer_level`, `returned_at`, `returned_by`. Une réponse met l’escalade « En cours » ; elle est « Clos » quand la réponse a été redite au niveau d’origine.
+- `instances[]` : type `top15` (un par site), cadence « Chaque jour ouvré ».
