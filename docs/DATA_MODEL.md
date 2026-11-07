@@ -168,3 +168,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.23.0 (additive)
 
 - `signals[]` : `ack_due_at` (heure limite de prise en charge : création + 15 min pour Critique, 60 min pour Haute, 240 min sinon), `taken_by`, `stopped` (ça bloque). `taken_at`, `resolution` et `resolved_at` existaient déjà. Le circuit `SIGNAL_STATES` est inchangé.
+
+## Extension 8.24.0 (additive)
+
+- `handovers[]` : `checks` (`securite`, `qualite`, `machines`, `production`, `matiere`, `effectif` → `{ s: "ok"|"watch"|"ko", note }`), `priority_list[]` (trois au plus), `extra`, `ack_note` (question de l’équipe entrante). `situation`, `safety`, `quality`, `production`, `staffing`, `priorities` et `linked_ids` restent remplis pour les écrans existants.

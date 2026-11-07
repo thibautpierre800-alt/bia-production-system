@@ -153,3 +153,7 @@ La branche `backup/before-8.22.0-2026-11-07` conserve le commit `0ab9fa6`, qui c
 ## Retour à 8.22.0
 
 La branche `backup/before-8.23.0-2026-11-07` conserve le commit `7569d1e`, qui correspond à la version 8.22.0. La 8.23.0 ajoute `signaux.js` et trois champs aux signaux. La 8.22.0 ignore ces champs et rouvre les signaux dans le formulaire complet.
+
+## Retour à 8.23.0
+
+La branche `backup/before-8.24.0-2026-11-07` conserve le commit `49a836c`, qui correspond à la version 8.23.0. La 8.24.0 ajoute `releve.js` et quelques champs aux relèves. La 8.23.0 affiche les mêmes relèves à partir de leurs champs d’origine, qui restent remplis.
