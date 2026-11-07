@@ -184,3 +184,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
   - `verified` : `{ by, at, text }`.
   - `closed_at`.
 - `status` est dérivé de l’étape en cours (« Bloqué » si le dernier point le dit, « Clos » à la clôture). `progress` vaut la part des six étapes faites.
+
+## Extension 8.26.0 (additive)
+
+- `trainingRecords[]` : `session_id` (fiches créées ensemble lors d’une session). Échéance : `expires_at` = date de validation + `validity_months` de la formation. La dernière fiche par personne et par formation fait foi.
