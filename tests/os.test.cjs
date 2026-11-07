@@ -1650,3 +1650,28 @@ test("Roadmap 8.27 · revue mensuelle : chaque jalon et priorité passés en rev
   assert.doesNotMatch(a.run("jnWatchCard()"), /Revue de la roadmap à faire/, "Revue faite : plus de rappel avant la prochaine");
   assert.equal(a.run("osIntegrity(data).length"), 0);
 });
+test("Avant / après 8.28 · photos côte à côte, reprise d’une idée, fiche d’une page, partage aux sites", (t) => {
+  const a = app(t);
+  a.run('state.role="lean";state.site="marzin";data.kaizens.unshift({id:"KAI-T1",site_id:"marzin",title:"Bac de vis au poste",problem:"Vis cherchées au magasin",solution:"Un bac par référence",result:"3 déplacements par heure en moins",before_photo:"data:image/png;base64,AAAA",after_photo:"data:image/png;base64,BBBB",status:"Gain validé",owner:"Opérateur test",created_at:now(),updated_at:now()})');
+  a.run('osCreateFrom("KAI-T1","beforeafter")');
+  assert.equal(a.q("#baTitle").value, "Bac de vis au poste", "Reprend le titre de l’idée");
+  assert.equal(a.q("#baProblem").value, "Vis cherchées au magasin");
+  assert.equal(a.q("#baGain").value, "3 déplacements par heure en moins");
+  assert.equal(a.all("#baSlots img").length, 2, "Reprend les deux photos de l’idée");
+  a.submit("#beforeAfterForm");
+  const doc = JSON.parse(a.run('JSON.stringify(data.documents.find(d=>d.type==="BEFORE_AFTER"&&d.kaizen_id==="KAI-T1"))'));
+  assert.equal(doc.structured_data.description, "Un bac par référence");
+  assert.match(a.q("#modalTitle").textContent, /Fiche avant \/ après/);
+  assert.match(a.q(".ba-sheet").textContent, /Le problème[\s\S]*L’amélioration[\s\S]*Le gain constaté/);
+  a.click("[data-ba-share]");
+  assert.equal(a.q("#bpTitle").value, "Bac de vis au poste", "Partager aux sites : bonne pratique pré-remplie");
+  a.fill("#bpSummary", "Un bac par référence");
+  a.submit("#bpNewForm");
+  assert.equal(a.run('data.practices[0].source_id'), doc.id);
+  assert.equal(a.run('data.practices[0].after_photo'), "data:image/png;base64,BBBB");
+  a.run('closeModal();beforeAfterForm()');
+  a.fill("#baTitle", "Sans photo");
+  a.submit("#beforeAfterForm");
+  assert.match(a.q("#toast").textContent, /deux photos/, "Les deux photos sont nécessaires");
+  assert.equal(a.run("osIntegrity(data).length"), 0);
+});

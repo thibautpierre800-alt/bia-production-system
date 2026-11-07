@@ -1,5 +1,18 @@
 # Changelog
 
+## 8.28.0 — 7 novembre 2026
+
+**Fiche avant / après : deux photos côte à côte, trois lignes, une fiche à afficher, et la suite.**
+
+- La saisie se fait au téléphone : les deux photos côte à côte, prises avec l’appareil, puis le titre, le problème, l’amélioration et le gain constaté.
+  - Le bouton de fichier brut et les grands aperçus empilés disparaissent.
+- Créée depuis une idée ou un Kaizen, la fiche reprend le titre, les deux photos, le problème, l’idée et le résultat.
+- Une fois enregistrée, la fiche s’affiche sur une page à imprimer, sans code interne visible.
+- Depuis la fiche, « Partager aux sites » ouvre une bonne pratique pré-remplie avec les deux photos.
+- Les deux photos restent obligatoires. Elles sont rangées comme les autres photos de l’appli.
+
+Données : `documents[]` de type `BEFORE_AFTER`, inchangé.
+
 ## 8.27.0 — 7 novembre 2026
 
 **Roadmap : la revue mensuelle devient un rituel tenu et tracé.**
