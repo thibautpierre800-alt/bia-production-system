@@ -164,3 +164,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.22.0 (additive)
 
 - Aucune collection nouvelle. `lean-library.js` compte 33 fiches (`opl`, `polyvalence`, `kaizen` ajoutées) et 18 situations « J’ai un problème », chacune reliée à une fiche existante par son titre. Les démarches (`toolRuns[]`) sont inchangées.
+
+## Extension 8.23.0 (additive)
+
+- `signals[]` : `ack_due_at` (heure limite de prise en charge : création + 15 min pour Critique, 60 min pour Haute, 240 min sinon), `taken_by`, `stopped` (ça bloque). `taken_at`, `resolution` et `resolved_at` existaient déjà. Le circuit `SIGNAL_STATES` est inchangé.

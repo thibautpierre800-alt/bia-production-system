@@ -1,5 +1,27 @@
 # Changelog
 
+## 8.23.0 — 7 novembre 2026
+
+**Signal terrain : signaler en 20 secondes, prise en charge à l’heure près, réponse visible par l’auteur.**
+
+- Signaler se fait en un écran.
+  - Photo d’abord, puis une phrase.
+  - « C’est… » : un danger, ça bloque, ou à traiter.
+  - Ensuite le thème, l’endroit (proposé parmi les zones, machines et ateliers du site) et son nom.
+- En cas de danger, l’écran rappelle les consignes de mise en sécurité et demande ce qui a été fait tout de suite : machine arrêtée, zone balisée, chef prévenu.
+- La prise en charge est attendue à l’heure près : 15 minutes pour un danger, 1 heure si ça bloque, 4 heures sinon.
+  - Le délai s’affiche sur chaque signal.
+  - Un signal en retard remonte sur l’accueil des responsables.
+- Côté responsable :
+  - « À prendre en charge » en tête de la page des signaux, les dangers d’abord ;
+  - « Je m’en occupe » en un geste ;
+  - « Réglé » avec ce qui a été fait.
+- « Ça revient » : trois signaux du même thème au même endroit en 30 jours proposent d’ouvrir un QRQC avec l’historique.
+- Côté auteur : « Mes signaux » sur l’accueil et sur la page montre où en est chaque signal et ce qui a été fait.
+- Le formulaire complet et le circuit vérifié (résolu, vérifié, clos) ne changent pas.
+
+Données : `signals[]` existant. Champs ajoutés : `ack_due_at`, `taken_by`, `stopped`. Le champ `author` reçoit le nom saisi. Rien n’est retiré.
+
 ## 8.22.0 — 7 novembre 2026
 
 **Bibliothèque : chaque fiche guide mène à son outil.**

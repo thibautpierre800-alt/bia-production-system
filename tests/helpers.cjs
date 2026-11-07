@@ -37,6 +37,7 @@ const scripts = [
   "vsm-flux.js",
   "pratiques.js",
   "bibliotheque.js",
+  "signaux.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {

@@ -149,3 +149,7 @@ La branche `backup/before-8.21.0-2026-11-07` conserve le commit `817ae3e`, qui c
 ## Retour à 8.21.0
 
 La branche `backup/before-8.22.0-2026-11-07` conserve le commit `0ab9fa6`, qui correspond à la version 8.21.0. La 8.22.0 ajoute `bibliotheque.js` et trois fiches dans `lean-library.js`, sans changer les données : les démarches enregistrées (`toolRuns`) restent lisibles par la 8.21.0.
+
+## Retour à 8.22.0
+
+La branche `backup/before-8.23.0-2026-11-07` conserve le commit `7569d1e`, qui correspond à la version 8.22.0. La 8.23.0 ajoute `signaux.js` et trois champs aux signaux. La 8.22.0 ignore ces champs et rouvre les signaux dans le formulaire complet.
