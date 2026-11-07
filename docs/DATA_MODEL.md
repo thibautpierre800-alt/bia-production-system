@@ -274,3 +274,7 @@ Aucune nouvelle donnée en 8.41 : la tour lit les collections existantes.
 ## Extension 8.42.0 (additive)
 
 Aucune nouvelle donnée. La clé locale `bia-news-seen` retient la dernière nouveauté vue sur l’appareil.
+
+## Extension 8.43.0 (additive)
+
+Nouvelle collection `infos[]` : `{ id, site_id ("group" | site), workshop_id, title, why, text, from, start, end, relayed[{ site_id, workshop_id, at, by }], created_at, archived_at }`. `meetings[]` reçoit `kind: "top5"`, `letters`, `notes { S, Q, C, D, P, free }`, `raised[]`, `infos[]` et `answers[]`. Le brouillon du point est gardé sur l’appareil (`bia-t5-<site>-<atelier>-<date>`).

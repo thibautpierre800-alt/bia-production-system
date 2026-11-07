@@ -2394,8 +2394,8 @@ test("Ergonomie 8.42 · nouveautés à l’accueil, onglets « Plus » sur tél�
   const a = app(t);
   demo(a);
   a.run('try{localStorage.removeItem("bia-news-seen")}catch{};state.role="lean";state.site="group";state.view="home";render()');
-  assert.match(a.q(".er-news").textContent, /Tour de contrôle[\s\S]*Échantillothèque[\s\S]*Non-conformités/);
-  a.click('[data-er-news="0"]');
+  assert.match(a.q(".er-news").textContent, /TOP 5 à l’écran[\s\S]*Tour de contrôle[\s\S]*Échantillothèque[\s\S]*Non-conformités/);
+  a.click('[data-er-news="1"]');
   assert.equal(a.run("state.pilotTab"), "tour");
   a.run('state.view="home";render()');
   a.click("[data-er-seen]");
@@ -2410,4 +2410,55 @@ test("Ergonomie 8.42 · nouveautés à l’accueil, onglets « Plus » sur tél�
   assert.equal((row.match(/data-ux-tab=/g) || []).length, 4);
   a.run('window.innerWidth=1366');
   assert.doesNotMatch(a.run('uxTabRow()'), /Plus ·/);
+});
+
+test("TOP 5 8.43 · écran atelier, lettres, ce qui s’est dit, informations descendantes, TOP 15", (t) => {
+  const a = app(t);
+  demo(a);
+  // Une information du site, avec son contexte, pour tout le site
+  a.run('state.role="director";state.site="marzin";state.workshop=null;state.t5Tab=true;switchView("sqcdp")');
+  assert.match(a.q("#appView").textContent, /TOP 5 · /);
+  a.click("[data-t5-newinfo]");
+  a.run('document.getElementById("t5Title").value="Audit client jeudi 14 h";document.getElementById("t5Why").value="Ligne rangée mercredi soir"');
+  a.run('document.getElementById("t5InfoForm").requestSubmit()');
+  assert.equal(a.run("data.infos.length"), 1);
+  assert.match(a.q("#appView").textContent, /Dite dans 0\//);
+  // Le chef d'équipe ouvre l'écran de son atelier
+  a.run('state.role="teamlead";state.t5Tab=false;switchView("sqcdp")');
+  const ws = a.run('(osActive(data.workshops).find(w=>w.site_id==="marzin")||{}).id||""');
+  a.run(`state.workshop=${JSON.stringify(ws)}||null;render()`);
+  assert.ok(a.q("[data-t5-open]"), "bouton Écran TOP 5 dans SQCDP");
+  a.click("[data-t5-open]");
+  assert.ok(a.q("#t5Screen .t5-L"), "page S");
+  a.click('#t5Screen [data-t5-set="ok"]');
+  assert.equal(a.run('sjGet(today(),"S").status'), "ok");
+  a.click('#t5Screen [data-t5-go="1"]');
+  a.click('#t5Screen [data-t5-set="ko"]');
+  a.run('const i=document.querySelector("#t5Screen [data-t5-kotext]");i.value="Rebut peinture lot 42";i.form.requestSubmit()');
+  assert.ok(a.run('sjGet(today(),"Q").topic_id'), "l’écart monte au TOP 15");
+  a.run('const n=document.querySelector("#t5Screen [data-t5-note]");n.value="Le fournisseur passe demain";n.dispatchEvent(new Event("input"))');
+  a.click('#t5Screen [data-t5-go="6"]');
+  assert.match(a.q("#t5Screen").textContent, /Ce que ça change pour vous[\s\S]*Ligne rangée/);
+  a.click("#t5Screen [data-t5-tell]");
+  assert.equal(a.run("data.infos[0].relayed.length"), 1);
+  a.click('#t5Screen [data-t5-go="7"]');
+  a.run('const f=document.querySelector("#t5Screen [data-t5-addp]");f.querySelector("input").value="Karim";f.requestSubmit()');
+  a.click("#t5Screen [data-t5-held]");
+  const m = JSON.parse(a.run('JSON.stringify(data.meetings.find(m=>m.kind==="top5"))'));
+  assert.equal(m.letters.S, "ok"); assert.equal(m.letters.Q, "ko");
+  assert.equal(m.notes.Q, "Le fournisseur passe demain");
+  assert.deepEqual(m.present, ["Karim"]); assert.equal(m.infos.length, 1);
+  a.click("#t5Screen [data-t5-x]");
+  assert.equal(a.q("#t5Screen"), null);
+  // En haut : ce qui s'est dit, et la diffusion
+  a.run('state.role="director";state.t5Tab=true;switchView("sqcdp")');
+  assert.match(a.q("#appView").textContent, /Le fournisseur passe demain/);
+  assert.match(a.q("#appView").textContent, /Dite dans 1\//);
+  // Le TOP 15 reçoit ce qui s'est dit
+  assert.ok(a.run('RE_TYPES.top15.agenda.some(([k])=>k==="top5dit")'));
+  assert.equal(a.run('RE_TYPES.top15.agenda.reduce((n,x)=>n+x[1],0)'), 15);
+  assert.match(a.run('reBlock("top5dit",{site_id:"marzin",type:"top15"}).html'), /Rebut peinture lot 42/);
+  // Le Responsable Lean le trouve dans Voir
+  a.run('state.role="lean";state.site="group";switchView("pilotage")');
+  assert.ok(JSON.parse(a.run('JSON.stringify(uxTabs(uxStages().find(s=>s.id==="voir")).map(t=>t.key))')).includes("top5"));
 });
