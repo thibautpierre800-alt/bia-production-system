@@ -226,3 +226,9 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `topics[]` : `answered_at`, `answered_by` (réponse donnée), `returned_at`, `returned_by` (réponse redite au TOP 5), `carried_by` (escalade qui porte le sujet plus haut).
 - `escalations[]` : `origin_level` (niveau qui a remonté), `forum` (« copil » ou « comex » au niveau 4), `path[{ from, to, at, by }]`, `answered_at`, `answered_by`, `answer_level`, `returned_at`, `returned_by`. Une réponse met l’escalade « En cours » ; elle est « Clos » quand la réponse a été redite au niveau d’origine.
 - `instances[]` : type `top15` (un par site), cadence « Chaque jour ouvré ».
+
+## Extension 8.35.0 (additive)
+
+- `mlLines[]` : `{ id (LG-…), site_id, workshop_id, name, machine_id, threshold_min, typical_min, opening_min, target_min, causes[], archived_at }`.
+- `microStops[]` : `{ id, line_id, site_id, at, cause, dur_s (null si compté), timed, by }`. Les comptages de plus de 120 jours sont retirés à l’écriture.
+- Points de TRS perdus = minutes perdues par jour suivi ÷ temps d’ouverture × 100. Un arrêt compté vaut la durée type de la ligne.
