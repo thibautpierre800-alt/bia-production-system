@@ -41,6 +41,7 @@ const scripts = [
   "releve.js",
   "chantiers.js",
   "formation.js",
+  "roadmap-revue.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {
