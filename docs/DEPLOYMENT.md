@@ -125,3 +125,7 @@ La branche `backup/before-8.15.0-2026-11-06` conserve le commit `feee7a6`, corre
 ## Retour à 8.15.0
 
 La branche `backup/before-8.16.0-2026-11-06` conserve le commit `d1399f0`, correspondant à la version 8.15.0. La 8.16.0 ajoute l’onglet Polyvalence (`polyvalence.js`) et la collection `skillsMatrix`, que la 8.15.0 ignore et conserve. Les formations enregistrées sur les standards restent visibles dans l’éditeur de standard.
+
+## Retour à 8.16.0
+
+La branche `backup/before-8.17.0-2026-11-07` conserve le commit `7c2aff1`, correspondant à la version 8.16.0. La 8.17.0 ajoute `idees.js` et des champs aux fiches Kaizen existantes, que la 8.16.0 ignore et conserve ; les idées y restent visibles dans le registre.

@@ -131,3 +131,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 
 - `skillsMatrix[]` : `{ id: "PV-001", site_id, name, zone_id?, stations[{ id, name, standard_id?, target }], people[{ id, name, person_id? }], levels{ "personne|poste": { lvl: 0..4, date, by, hist[{ lvl, date, by }] } }, created_at, updated_at }`. Niveaux : 0 pas formé, 1 I, 2 L, 3 U, 4 O. Un poste est fragile quand une seule personne, ou aucune, y est en U ou O.
 - À partir de L, une entrée `{ name, date, by, version }` peut être ajoutée à `structured_data.st.trained` du standard relié.
+
+## Extension 8.17.0 (additive)
+
+- `kaizens[]` : `proposer`, `self` (l’auteur peut le faire), `zone_id`, `before_photo`, `after_photo`, `decision { verdict: "go"|"no", reason, by, at }`, `done_at`, `result`, `validated_by`, `kudos[{ by, at }]`. Statuts utilisés : Idée → Mise en œuvre (« On le fait ») → Mesure (« C’est fait ») → Gain validé. Une idée refusée garde le statut Idée avec `decision.verdict = "no"`.
