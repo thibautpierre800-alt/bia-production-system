@@ -1,5 +1,36 @@
 # Changelog
 
+## 8.36.0 — 7 novembre 2026
+
+**Le TRS du poste : la feuille de poste saisie, le TRS calculé selon la NF E60-182 et envoyé au pilotage.**
+
+- L’onglet Observer › Micro-arrêts devient Observer › TRS (« TRS et arrêts de ligne »). Une ligne porte en plus sa cadence théorique (pièces par heure) et la durée d’un poste.
+- La feuille de poste est saisie par ligne, par jour et par équipe (matin, après-midi, nuit, journée). Elle comprend :
+  - la durée du poste et les arrêts planifiés ;
+  - les arrêts au-delà du seuil (nature, minutes, détail) ;
+  - les micro-arrêts, en nombre de bâtons ou en minutes ;
+  - les pièces bonnes, les rebuts et la cadence théorique.
+- La saisie reprend ce qui est déjà connu :
+  - « Reprendre les pannes TPM du jour » ajoute les pannes terminées de la machine reliée ;
+  - « Reprendre » ajoute les micro-arrêts comptés au poste ce jour-là.
+- Le résultat se calcule pendant la saisie : disponibilité × performance × qualité = TRS, avec le temps requis, les arrêts, les micro-arrêts, l’écart de cadence et la non-qualité. Des alertes signalent une cadence manquante, des pièces au-delà de la cadence ou des arrêts plus longs que le temps requis. Une seule feuille par ligne, jour et équipe.
+- Le calcul suit la NF E60-182 :
+  - temps requis = durée du poste − arrêts planifiés ;
+  - temps de fonctionnement = temps requis − arrêts ;
+  - temps net = pièces produites × temps de cycle théorique ;
+  - temps utile = pièces bonnes × temps de cycle théorique ;
+  - TRS = temps utile / temps requis.
+- Le TRS du site, jour par jour (somme des temps utiles ÷ somme des temps requis de ses lignes), devient le relevé TRS du pilotage, source « Feuilles de poste ». Il est recalculé à chaque enregistrement ou suppression. Un relevé du même jour venu d’une autre source (SEQUOIA, import) est conservé.
+- La page de la ligne affiche :
+  - le TRS et sa décomposition sur 7 ou 30 jours ;
+  - « Où part le temps requis » : temps utile, arrêts, micro-arrêts, écart de cadence, non-qualité ;
+  - les feuilles de poste.
+- Le C du TOP 5 affiche le TRS du dernier jour saisi (D, P, Q).
+- La feuille de poste à imprimer (A4) reprend les mêmes cases : temps, arrêts, bâtonnage des micro-arrêts par heure, pièces, visa.
+- « Feuille de poste » est ajoutée au menu de création.
+
+Données : `trsShifts[]` (non indexée). `mlLines[]` porte `rate_ph` et `shift_min`.
+
 ## 8.35.0 — 7 novembre 2026
 
 **Micro-arrêts de ligne, et l’application reprise pour le terrain : doigts gantés, téléphone, tablette du tableau.**

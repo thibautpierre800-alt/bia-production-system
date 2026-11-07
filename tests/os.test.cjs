@@ -588,7 +588,7 @@ test("Interface 8.0 · une seule navigation, sans pastilles, onglets fusionnés"
   a.run('uxGoStage("observer")');
   assert.equal(a.run("state.view"), "terrain");
   assert.equal(a.run("state.terrainTab"), "gemba");
-  assert.deepEqual(a.all("#pageLocation .ux-tab").map((b) => b.textContent), ["Gemba", "5S", "TPM", "Micro-arrêts", "Rapport d’étonnement", "Signaux", "Audits", "Statistiques"]);
+  assert.deepEqual(a.all("#pageLocation .ux-tab").map((b) => b.textContent), ["Gemba", "5S", "TPM", "TRS", "Rapport d’étonnement", "Signaux", "Audits", "Statistiques"]);
   assert.equal(a.q("#appView > .tabs"), null, "Sous-onglets fusionnés dans la ligne de l’étape");
   assert.ok(a.q("#contextPanel #siteSelect") && a.q("#contextPanel #roleSelect") && a.q("#contextPanel [data-interface-mode-toggle]") && a.q("#contextMore [data-nav]"));
   a.run('state.role="operator";state.site="marzin";render();uxGoStage("observer")');
@@ -1996,4 +1996,66 @@ test("Micro-arrêts 8.35 · ligne, comptage d’un geste, chronomètre, seuil de
   assert.ok(a.q('[data-ml-cause]:not([disabled])'), "L’opérateur compte");
   a.run('state.role="director";state.site="sodeplax";mlGo()');
   assert.ok(a.q(".cs-empty"), "Les lignes d’un autre site ne se mélangent pas");
+});
+
+test("TRS 8.36 · feuille de poste, calcul NF E60-182, pannes TPM et micro-arrêts repris, TRS du site au pilotage sans écraser une autre source", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('state.role="teamlead";state.site="marzin";state.workshop="";mlGo()');
+  assert.match(a.q(".page-head h1").textContent, /TRS et arrêts de ligne/);
+  a.click("[data-ml-newline]");
+  a.fill("#mlName", "Plaqueuse 2");
+  a.fill("#mlRate", "240");
+  a.submit("#mlLineForm");
+  assert.equal(a.run("data.mlLines[0].rate_ph"), 240);
+  assert.equal(a.run("data.mlLines[0].shift_min"), 480);
+  // Calcul : 480 min, 40 planifiées, 32 d'arrêt, 1 350 bonnes + 25 rebuts à 240 pièces/h
+  const c = JSON.parse(a.run('JSON.stringify(tsCalc({shift_min:480,planned_min:40,stops:[{min:32}],micro_min:18,good:1350,scrap:25,rate_ph:240}))'));
+  assert.equal(c.tr, 440);
+  assert.equal(c.tf, 408);
+  assert.ok(Math.abs(c.trs - 337.5 / 440) < 1e-9, "TRS = temps utile / temps requis");
+  assert.ok(Math.abs(c.d * c.p * c.q - c.trs) < 1e-9, "TRS = D × P × Q");
+  assert.ok(Math.abs(c.speed - (408 - 343.75 - 18)) < 1e-9, "Écart de cadence = perte de performance − micro-arrêts");
+  assert.deepEqual(c.warn, []);
+  assert.match(a.run('tsCalc({shift_min:480,planned_min:0,stops:[],good:3000,scrap:0,rate_ph:240}).warn.join(" ")'), /Plus de pièces que la cadence/);
+  // Feuille de poste d'hier : panne TPM et micro-arrêts comptés repris
+  const y = a.run("auAddDays(-1)");
+  a.run(`data.machines=[{id:"MA-T1",site_id:"marzin",name:"Plaqueuse",created_at:now(),updated_at:now()}];data.mlLines[0].machine_id="MA-T1";const s=new Date("${y}T09:00:00");data.breakdowns=[{id:"PA-T1",site_id:"marzin",machine_id:"MA-T1",start:s.toISOString(),end:new Date(s.getTime()+25*6e4).toISOString(),cause:"Capteur"}];data.microStops=[0,1,2].map(i=>({id:"MA-"+i,line_id:data.mlLines[0].id,site_id:"marzin",at:new Date(s.getTime()+i*36e5).toISOString(),cause:"Manque matière",dur_s:null,timed:false}));data.measures=data.measures.filter(m=>!(m.site_id==="marzin"&&m.code==="trs"&&m.period==="${y}"));render()`);
+  a.click("[data-ts-new]");
+  a.fill("#tsDate", y);
+  a.run('document.querySelector("#tsDate").dispatchEvent(new Event("input",{bubbles:true}))');
+  a.click("[data-ts-tpm]");
+  assert.equal(a.run('document.querySelector(".ts-stop [data-ts-min]").value'), "25");
+  a.click("[data-ts-usecount]");
+  assert.equal(a.q("#tsMicroN").value, "3");
+  a.fill("#tsPlanned", "40");
+  a.fill("#tsGood", "1400");
+  a.fill("#tsScrap", "10");
+  a.submit("#tsForm");
+  const sh = JSON.parse(a.run("JSON.stringify(data.trsShifts[0])"));
+  assert.equal(sh.stops[0].min, 25);
+  assert.equal(sh.micro_n, 3);
+  const m = JSON.parse(a.run(`JSON.stringify(data.measures.find(m=>m.site_id==="marzin"&&m.code==="trs"&&m.period==="${y}"))`));
+  assert.equal(m.source, "Feuilles de poste");
+  assert.equal(m.value, Math.round(((1400 * 0.25) / 440) * 1000) / 10);
+  assert.match(m.definition, /NF E60-182[\s\S]*Plaqueuse 2/);
+  // Même jour, même équipe : refusée
+  a.click("[data-ts-new]");
+  a.fill("#tsDate", y);
+  a.run(`document.querySelector('[data-ts-team="${sh.team}"]').click()`);
+  a.fill("#tsGood", "100");
+  a.submit("#tsForm");
+  assert.equal(a.run("data.trsShifts.length"), 1, "Une feuille par ligne, jour et équipe");
+  a.run("closeModal()");
+  // Un relevé d'une autre source n'est pas écrasé
+  assert.equal(a.run('tsPushSite("marzin", today())'), "kept");
+  // TOP 5 : lettre C
+  a.run('switchView("sqcdp")');
+  assert.match(a.q('[data-sj-tile="C"] .ml-sj').textContent, /TRS hier : [\d,]+ %/);
+  // Suppression : le relevé du pilotage suit
+  a.run('mlGo()');
+  a.click(`[data-ts-open="${sh.id}"]`);
+  a.click("[data-ts-remove]");
+  assert.ok(!a.run(`data.measures.some(m=>m.site_id==="marzin"&&m.code==="trs"&&m.period==="${y}")`));
+  assert.deepEqual(JSON.parse(a.run('JSON.stringify([...document.querySelectorAll("#appView button")].filter(b=>!b.onclick&&!b.disabled).map(b=>b.outerHTML.slice(0,60)))')), []);
 });
