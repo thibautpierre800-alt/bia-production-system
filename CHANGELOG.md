@@ -1,5 +1,23 @@
 # Changelog
 
+## 8.24.0 — 7 novembre 2026
+
+**Relève d’équipe : préparée au poste en une minute, reprise confirmée par l’équipe entrante.**
+
+- Préparer la relève :
+  - Les deux équipes sont devinées à l’heure.
+  - Six points se renseignent en un geste : sécurité, qualité, machines, production, matière et flux, effectif. Pour chacun : RAS, à surveiller ou problème, avec un mot si ce n’est pas RAS.
+  - Une machine en panne déclarée en TPM est proposée d’elle-même en problème.
+- Ce qui est en cours est proposé tout seul : signaux ouverts, actions en retard ou du jour. Les plus urgents sont déjà cochés.
+- L’équipe sortante donne trois priorités au plus à l’équipe entrante. La relève peut être gardée en brouillon.
+- La carte de relève se lit d’un coup d’œil :
+  - les problèmes d’abord, puis ce qui est à surveiller, puis les points RAS ;
+  - l’âge de la relève.
+- « Lire et reprendre » : l’équipe entrante pose sa question si besoin, puis confirme « J’ai repris ». L’équipe sortante voit qui l’a reprise et la question posée.
+- Le formulaire complet reste accessible. Les anciennes relèves s’y ouvrent telles quelles.
+
+Données : `handovers[]` existant. Champs ajoutés : `checks`, `priority_list`, `extra`, `ack_note`. Les champs `situation`, `safety`, `quality`, `production`, `staffing` et `priorities` sont remplis à partir des six points. Rien n’est retiré.
+
 ## 8.23.0 — 7 novembre 2026
 
 **Signal terrain : signaler en 20 secondes, prise en charge à l’heure près, réponse visible par l’auteur.**
