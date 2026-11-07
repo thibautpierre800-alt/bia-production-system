@@ -63,11 +63,11 @@ function mlAdd(l, cause, durS = null, startMs = null) {
 
 function mlPage() {
   const ls = mlLines(), l = mlCur(), manager = state.site === "group" ? OPERATIONAL_SITES.some((s) => mlManager(s.id)) : mlManager(state.site);
-  const head = pageHead("Observer", "Micro-arrêts", "Les petits arrêts que personne ne déclare : comptés au poste en un geste, ils montrent ce que la ligne perd vraiment chaque jour.",
+  const head = pageHead("Observer", "TRS et arrêts de ligne", "La feuille de poste saisie en quelques gestes : le TRS se calcule seul, part au pilotage, et montre où part le temps — arrêts, micro-arrêts, cadence, qualité.",
     ls.length ? `<div class="cs-head-tools">${manager ? '<button type="button" class="btn secondary" data-ml-newline>Ajouter une ligne</button>' : ""}<button type="button" class="btn ghost" data-ml-print>Feuille à imprimer</button></div>` : "");
-  if (!l) return `${head}<section class="cs-empty"><h2>Commencez par une ligne qui « hoquette »</h2><p>Celle où l’on relance sans arrêt : bourrages, manques, réglages. On fixe le seuil au-delà duquel c’est une panne, les causes, puis l’équipe compte chaque micro-arrêt d’un geste pendant deux semaines.</p>${manager ? '<button type="button" class="btn" data-ml-newline>Ajouter une ligne</button>' : '<p class="hint">Le responsable d’équipe, de site ou Lean ajoute les lignes.</p>'}</section>${mlHow()}`;
+  if (!l) return `${head}<section class="cs-empty"><h2>Commencez par une ligne</h2><p>Son nom, sa cadence théorique en pièces par heure, la durée d’un poste et le seuil au-delà duquel un arrêt est une panne. Ensuite, chaque feuille de poste saisie donne le TRS ; les micro-arrêts se reportent depuis la feuille papier ou se comptent au poste d’un geste.</p>${manager ? '<button type="button" class="btn" data-ml-newline>Ajouter une ligne</button>' : '<p class="hint">Le responsable d’équipe, de site ou Lean ajoute les lignes.</p>'}</section>${mlHow()}`;
   const chips = ls.length > 1 ? `<div class="filters ml-lines" role="group" aria-label="Ligne">${ls.map((x) => { const s = mlSum(x); return `<button type="button" class="chip ${x.id === l.id ? "active" : ""} ${s.over ? "ml-over" : ""}" data-ml-line="${esc(x.id)}" aria-pressed="${x.id === l.id}">${esc(x.name)}${state.site === "group" ? ` · ${esc(getSiteName(x.site_id))}` : ""}</button>`; }).join("")}</div>` : "";
-  return `${head}${chips}${mlCounter(l)}${mlReading(l)}${manager ? mlLineList(ls) : ""}${mlHow()}`;
+  return `${head}${chips}${typeof tsSection === "function" ? tsSection(l) : ""}${mlCounter(l)}${mlReading(l)}${manager ? mlLineList(ls) : ""}${mlHow()}`;
 }
 
 function mlCounter(l) {
@@ -75,7 +75,7 @@ function mlCounter(l) {
   const pct = target ? Math.min(100, (s.min / target) * 100) : 0;
   const cause = (c) => { const n = s.rows.filter((r) => r.cause === c).length; return `<button type="button" class="ml-cause" data-ml-cause="${esc(c)}" ${w ? "" : "disabled"}><span>${esc(c)}</span><b>${n || ""}</b></button>`; };
   return `<section class="ml-counter section ${run ? "running" : ""}" data-ml-id="${esc(l.id)}" aria-label="Compter les micro-arrêts">
-    <div class="ml-today"><div><h2>${esc(l.name)}</h2><p class="hint">${esc(getSiteName(l.site_id))} · aujourd’hui · au-delà de ${smNum(Number(l.threshold_min) || 5)} min, c’est une panne</p></div>
+    <div class="ml-today"><div><h2>Micro-arrêts au poste · ${esc(l.name)}</h2><p class="hint">${esc(getSiteName(l.site_id))} · aujourd’hui · au-delà de ${smNum(Number(l.threshold_min) || 5)} min, c’est une panne</p></div>
       <div class="ml-figs"><span><b>${s.n}</b><small>arrêt${s.n > 1 ? "s" : ""}</small></span><span class="${s.over ? "bad" : ""}"><b>${mlFmt(s.min)}</b><small>perdues${target ? ` · objectif ${smNum(target)} min` : ""}</small></span><span><b>${smNum(s.pts)}</b><small>pt de TRS</small></span></div></div>
     ${target ? `<div class="ml-bar ${s.over ? "over" : ""}" role="img" aria-label="${esc(`${mlFmt(s.min)} perdues sur un objectif de ${smNum(target)} min`)}"><span style="width:${pct.toFixed(1)}%"></span></div>` : ""}
     ${w ? (run ? `<div class="ml-run"><span class="ml-elapsed" data-ml-start="${run}" data-ml-limit="${(Number(l.threshold_min) || 5) * 60}">${mlClock((Date.now() - run) / 1000)}</span><p>Ligne arrêtée · <b>touchez la cause quand elle repart</b></p><button type="button" class="btn ghost small" data-ml-cancelrun>Fausse alerte</button></div>`
@@ -87,7 +87,7 @@ function mlCounter(l) {
 function mlReading(l) {
   const s = mlSum(l, mlPeriod), target = Number(l.target_min) || 0;
   const per = `<div class="filters ml-period" role="group" aria-label="Période">${[7, 30].map((d) => `<button type="button" class="chip ${mlPeriod === d ? "active" : ""}" data-ml-days="${d}" aria-pressed="${mlPeriod === d}">${d} jours</button>`).join("")}</div>`;
-  if (!s.n) return `<section class="section ml-read"><div class="section-title"><h2>Ce que la ligne perd</h2>${per}</div><p class="hint">Aucun micro-arrêt compté sur ${mlPeriod} jours. Comptez pendant deux semaines pour voir les causes qui reviennent.</p></section>`;
+  if (!s.n) return `<section class="section ml-read"><div class="section-title"><h2>Micro-arrêts : causes et heures</h2>${per}</div><p class="hint">Aucun micro-arrêt compté sur ${mlPeriod} jours. Comptez pendant deux semaines pour voir les causes qui reviennent.</p></section>`;
   const strip = `<div class="cs-summary"><div><b>${smNum(s.nPerDay)}</b><span>arrêts par jour suivi</span></div><div class="${s.over ? "bad" : ""}"><b>${mlFmt(s.perDay)}</b><span>perdues par jour${target ? ` · objectif ${smNum(target)}` : ""}</span></div><div><b>${smNum(s.pts)}</b><span>pt de TRS perdus</span></div><div class="ml-topc"><b>${esc(s.top.c)}</b><span>cause n°1 · ${Math.round((s.top.min / s.min) * 100)} % du temps</span></div></div>`;
   const max = s.byCause[0].min || 1;
   let cum = 0;
@@ -99,7 +99,7 @@ function mlReading(l) {
   const dayFig = `<figure class="ml-days" role="img" aria-label="${esc(days.map((d, i) => `${shortDate(d).slice(0, 5)} ${mlFmt(dm[i])}`).join(", "))}"><div class="ml-dbars">${target ? `<span class="ml-target" style="bottom:${((target / dmax) * 100).toFixed(1)}%"><small>objectif</small></span>` : ""}${dm.map((m, i) => `<span class="ml-dcol"><i style="height:${((m / dmax) * 100).toFixed(1)}%" class="${target && m > target ? "over" : ""}"></i><small>${shortDate(days[i]).slice(0, 2)}</small></span>`).join("")}</div><figcaption>Minutes perdues par jour sur 14 jours${target ? ", contre l’objectif" : ""}.</figcaption></figure>`;
   const w = mlWritable(l.site_id);
   const next = w ? `<div class="ml-next"><p><b>Suite :</b> ${esc(s.top.c)} fait ${Math.round((s.top.min / s.min) * 100)} % des minutes perdues sur ${mlPeriod} jours.</p><div class="row-actions"><button type="button" class="btn" data-ml-top15>Mettre au TOP 15</button><button type="button" class="btn secondary" data-ml-action>Créer une action</button></div></div>` : "";
-  return `<section class="section ml-read"><div class="section-title"><h2>Ce que la ligne perd</h2>${per}</div>${strip}${next}<div class="ml-figs2"><div><h3>Les causes</h3>${pareto}</div><div><h3>Quand</h3>${hourFig}${dayFig}</div></div></section>`;
+  return `<section class="section ml-read"><div class="section-title"><h2>Micro-arrêts : causes et heures</h2>${per}</div>${strip}${next}<div class="ml-figs2"><div><h3>Les causes</h3>${pareto}</div><div><h3>Quand</h3>${hourFig}${dayFig}</div></div></section>`;
 }
 
 function mlLineList(ls) {
@@ -119,6 +119,7 @@ function mlLineForm(id = null) {
   modal(old ? `${old.name} · Ligne` : "Ajouter une ligne", `<form id="mlLineForm" class="jn-form">
     <label class="field">Ligne ou poste<input id="mlName" required maxlength="80" value="${esc(old?.name || "")}" placeholder="Ex. Plaqueuse 2" autocomplete="off"></label>
     ${machines.length ? `<label class="field">Machine en TPM (pour déclarer les pannes)<select id="mlMachine"><option value="">Aucune</option>${machines.map((m) => `<option value="${esc(m.id)}" ${m.id === old?.machine_id ? "selected" : ""}>${esc(m.name)}</option>`).join("")}</select></label>` : ""}
+    <div class="bp-two"><label class="field">Cadence théorique (pièces/h)<input id="mlRate" type="number" inputmode="decimal" min="0" max="100000" step="0.1" value="${esc(old?.rate_ph ?? "")}" placeholder="Ex. 240"></label><label class="field">Durée d’un poste (min)<input id="mlShift" type="number" min="30" max="1440" step="5" value="${esc(old?.shift_min ?? 480)}"></label></div>
     <div class="bp-two"><label class="field">Seuil de panne (min)<input id="mlThr" type="number" min="1" max="60" step="0.5" value="${esc(old?.threshold_min ?? 5)}"></label><label class="field">Durée type d’un arrêt compté (min)<input id="mlTyp" type="number" min="0.1" max="30" step="0.1" value="${esc(old?.typical_min ?? 1)}"></label></div>
     <div class="bp-two"><label class="field">Temps d’ouverture par jour (min)<input id="mlOpen" type="number" min="30" max="1440" step="5" value="${esc(old?.opening_min ?? 420)}"></label><label class="field">Objectif : minutes perdues par jour au plus<input id="mlTarget" type="number" min="0" max="600" step="1" value="${esc(old?.target_min ?? 15)}"></label></div>
     <label class="field">Causes (une par ligne)<textarea id="mlCauses" rows="7">${esc(mlCauses(old).join("\n"))}</textarea></label>
@@ -131,7 +132,7 @@ function mlLineForm(id = null) {
     const causes = [...new Set($("mlCauses").value.split("\n").map((c) => c.trim()).filter(Boolean))].slice(0, 12);
     if (!name) return toast("Le nom de la ligne.");
     if (!causes.length) return toast("Au moins une cause.");
-    const patch = { name, machine_id: $("mlMachine")?.value || null, threshold_min: num("mlThr", 5) || 5, typical_min: num("mlTyp", 1) || 1, opening_min: num("mlOpen", 420) || 420, target_min: num("mlTarget", 15), causes, updated_at: now() };
+    const patch = { name, machine_id: $("mlMachine")?.value || null, threshold_min: num("mlThr", 5) || 5, typical_min: num("mlTyp", 1) || 1, opening_min: num("mlOpen", 420) || 420, target_min: num("mlTarget", 15), causes, rate_ph: num("mlRate", 0) || null, shift_min: num("mlShift", 480) || 480, updated_at: now() };
     let nid = old?.id;
     if (!commitData(() => {
       data.mlLines ||= [];
@@ -190,11 +191,16 @@ function mlAction(l) {
 
 function mlPrint() {
   const l = mlCur(); if (!l) return;
-  const cols = 8;
-  modal("Feuille de bâtonnage", `<article class="pv-sheet ml-sheet"><header><div><small>Micro-arrêts · ${esc(getSiteName(l.site_id))}</small><h3>${esc(l.name)}</h3></div><p>Date : ……………… Équipe : ……………… · Un bâton par arrêt de moins de ${smNum(Number(l.threshold_min) || 5)} min. Au-delà : panne.</p></header>
-    <table class="ml-tally"><thead><tr><th>Cause</th>${Array.from({ length: cols }, (_, i) => `<th>Heure ${i + 1}<br><small>……h</small></th>`).join("")}<th>Total</th></tr></thead><tbody>${mlCauses(l).map((c) => `<tr><th>${esc(c)}</th>${"<td></td>".repeat(cols)}<td></td></tr>`).join("")}</tbody></table>
-    <footer>À reporter dans l’application en fin de poste (un geste par bâton) ou à remettre au chef d’équipe.</footer></article>
-    <style media="print">@page{size:A4 landscape;margin:8mm}</style><div class="form-actions"><button type="button" class="btn" data-print>Imprimer</button><button type="button" class="btn ghost" data-close-modal>Fermer</button></div>`);
+  const cols = 8, blank = (n) => "<td></td>".repeat(n);
+  modal("Feuille de poste à imprimer", `<article class="pv-sheet ml-sheet"><header><div><small>Feuille de poste · ${esc(getSiteName(l.site_id))}</small><h3>${esc(l.name)}</h3></div><p>Date : ……………… Équipe : ……………… Chef d’équipe : ………………</p></header>
+    <table class="ml-tally ts-sheet-top"><tbody><tr><th>Durée du poste</th><td>${l.shift_min ? `${smNum(+l.shift_min)} min` : "……… min"}</td><th>Arrêts planifiés (pauses, TOP 5, nettoyage prévu)</th><td>……… min</td><th>Cadence théorique</th><td>${+l.rate_ph ? `${smNum(+l.rate_ph)} pièces/h` : "……… pièces/h"}</td></tr></tbody></table>
+    <h4>Arrêts de plus de ${smNum(Number(l.threshold_min) || 5)} min</h4>
+    <table class="ml-tally"><thead><tr><th>Début</th><th>Fin</th><th>Minutes</th><th>Nature (panne, changement, réglage, manque…)</th><th>Détail</th></tr></thead><tbody>${`<tr>${blank(5)}</tr>`.repeat(5)}</tbody></table>
+    <h4>Micro-arrêts · un bâton par arrêt de moins de ${smNum(Number(l.threshold_min) || 5)} min</h4>
+    <table class="ml-tally"><thead><tr><th>Cause</th>${Array.from({ length: cols }, (_, i) => `<th>Heure ${i + 1}<br><small>……h</small></th>`).join("")}<th>Total</th></tr></thead><tbody>${mlCauses(l).map((c) => `<tr><th>${esc(c)}</th>${blank(cols + 1)}</tr>`).join("")}</tbody></table>
+    <table class="ml-tally ts-sheet-top"><tbody><tr><th>Pièces bonnes</th><td></td><th>Rebuts, retouches</th><td></td><th>Visa</th><td></td></tr></tbody></table>
+    <footer>À saisir dans l’application en fin de poste (Observer › TRS › Saisir une feuille de poste) : le TRS se calcule et part au pilotage.</footer></article>
+    <style media="print">@page{size:A4 portrait;margin:8mm}</style><div class="form-actions"><button type="button" class="btn" data-print>Imprimer</button><button type="button" class="btn ghost" data-close-modal>Fermer</button></div>`);
 }
 
 /* ---------- Branchements ---------- */
@@ -211,7 +217,7 @@ uxTabs = function (stage) {
   const out = mlTabsBase(stage);
   if (stage?.id !== "observer" || !mlCan() || out.some((t) => t.key === "micro") || !out.some((t) => t.view === "terrain")) return out;
   const after = ["tpm", "5s", "gemba"].map((k) => out.findIndex((t) => t.key === k)).find((i) => i >= 0);
-  out.splice(after >= 0 ? after + 1 : out.length, 0, { key: "micro", label: "Micro-arrêts", view: "terrain", set: { terrainTab: "micro" } });
+  out.splice(after >= 0 ? after + 1 : out.length, 0, { key: "micro", label: "TRS", view: "terrain", set: { terrainTab: "micro" } });
   return out;
 };
 const mlWatchBase = jnWatchCard;
@@ -234,7 +240,11 @@ sjPanel = function () {
   const tot = ls.reduce((a, l) => { const s = mlSum(l); return { n: a.n + s.n, min: a.min + s.min, over: a.over || s.over }; }, { n: 0, min: 0, over: false });
   const i = out.indexOf('data-sj-tile="C"'), j = i >= 0 ? out.indexOf("</div>", i) : -1;
   if (j < 0) return out;
-  const line = `<button type="button" class="ml-sj ${tot.over ? "over" : ""}" data-ml-go="${esc(ls[0].id)}">Micro-arrêts aujourd’hui : <b>${tot.n}</b> · ${mlFmt(tot.min)}${tot.over ? " · au-dessus de l’objectif" : ""}</button>`;
+  const days = [today(), auAddDays(-1), auAddDays(-2), auAddDays(-3)], k = typeof osKpi === "function" ? osKpi("trs") : null;
+  const ids = new Set(ls.map((l) => l.id)), lastDay = typeof tsAgg === "function" ? days.find((d) => (data.trsShifts || []).some((s) => ids.has(s.line_id) && s.date === d)) : null;
+  const t = lastDay ? tsAgg((data.trsShifts || []).filter((s) => ids.has(s.line_id) && s.date === lastDay)) : null, low = t && k?.target != null && t.trs * 100 < k.target;
+  const line = `${t ? `<button type="button" class="ml-sj ${low ? "over" : ""}" data-ml-go="${esc(ls[0].id)}">TRS ${lastDay === today() ? "aujourd’hui" : lastDay === auAddDays(-1) ? "hier" : `du ${shortDate(lastDay)}`} : <b>${tsPct(t.trs)}</b> · D ${tsPct(t.d)} · P ${tsPct(t.p)} · Q ${tsPct(t.q)}</button>` : ""}${tot.n ? `<button type="button" class="ml-sj ${tot.over ? "over" : ""}" data-ml-go="${esc(ls[0].id)}">Micro-arrêts aujourd’hui : <b>${tot.n}</b> · ${mlFmt(tot.min)}${tot.over ? " · au-dessus de l’objectif" : ""}</button>` : ""}`;
+  if (!line) return out;
   return out.slice(0, j + 6) + line + out.slice(j + 6);
 };
 const mlCreateMenuBase = openCreateMenu;
@@ -243,10 +253,11 @@ openCreateMenu = function () {
   if (!mlCan() || role().readonly || !mlLines().some((l) => mlWritable(l.site_id))) return;
   const menu = $("modalContent")?.querySelector(".create-menu");
   if (!menu) return;
-  const html = '<button class="create-choice ml-choice" type="button" data-ml-go><span aria-hidden="true"><b>MA</b></span><b>Micro-arrêt</b><small>Compter un petit arrêt de ligne, d’un geste</small></button>';
+  const html = '<button class="create-choice ml-choice" type="button" data-ts-new><span aria-hidden="true"><b>FP</b></span><b>Feuille de poste</b><small>Arrêts, micro-arrêts, pièces : le TRS du poste</small></button><button class="create-choice ml-choice" type="button" data-ml-go><span aria-hidden="true"><b>MA</b></span><b>Micro-arrêt</b><small>Compter un petit arrêt de ligne, d’un geste</small></button>';
   const note = menu.querySelector(".cp-note-choice");
   if (note) note.insertAdjacentHTML("beforebegin", html); else menu.insertAdjacentHTML("beforeend", html);
   mlBind(menu);
+  menu.querySelectorAll("[data-ts-new]").forEach((x) => (x.onclick = () => { const l = mlCur(); closeModal(); if (l && typeof tsForm === "function") tsForm(l.id); }));
 };
 
 function mlBind(root = document) {

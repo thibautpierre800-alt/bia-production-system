@@ -232,3 +232,9 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `mlLines[]` : `{ id (LG-…), site_id, workshop_id, name, machine_id, threshold_min, typical_min, opening_min, target_min, causes[], archived_at }`.
 - `microStops[]` : `{ id, line_id, site_id, at, cause, dur_s (null si compté), timed, by }`. Les comptages de plus de 120 jours sont retirés à l’écriture.
 - Points de TRS perdus = minutes perdues par jour suivi ÷ temps d’ouverture × 100. Un arrêt compté vaut la durée type de la ligne.
+
+## Extension 8.36.0 (additive)
+
+- `trsShifts[]` : `{ id (FP-…), line_id, site_id, workshop_id, date, team, shift_min, planned_min, stops[{ kind, min, note, ref? }], micro_n, micro_min, good, scrap, rate_ph, by }`. Une feuille par ligne, jour et équipe.
+- `mlLines[]` : `rate_ph` (cadence théorique, pièces par heure) et `shift_min` (durée d’un poste).
+- `measures[]` : un relevé TRS par site et par jour, de source « Feuilles de poste », recalculé à chaque feuille. Un relevé d’une autre source n’est jamais remplacé.

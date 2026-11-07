@@ -2747,3 +2747,28 @@ button.bp-cell:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
 .presentation .sqcdp-value small{font-size:26px}
 .presentation .sqcdp-card .pill{display:inline-flex;align-items:center;min-height:30px;padding:4px 12px;font-size:16px}
 .presentation .sj-esc li b{font-size:20px}.presentation .sj-esc .hint{font-size:16px}
+
+/* ---------- 8.36 · Le TRS du poste ---------- */
+.ts-box{border:1px solid var(--line);border-radius:14px;background:#fff;padding:16px;margin-bottom:14px}
+.ts-box .section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ts-head{display:flex;flex-wrap:wrap;align-items:center;gap:14px 28px;margin:6px 0 12px}
+.ts-trs{display:flex;flex-direction:column}.ts-trs b{font-size:44px;line-height:1;font-variant-numeric:tabular-nums}.ts-trs span{font-size:14px;color:var(--muted)}
+.ts-trs.bad b{color:var(--red)}.ts-trs.ok b{color:var(--green)}
+.ts-dpq{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}.ts-dpq span{display:flex;flex-direction:column}.ts-dpq small{font-size:13px;color:var(--muted)}.ts-dpq b{font-size:22px;font-variant-numeric:tabular-nums}.ts-dpq .ts-x{font-size:20px;color:var(--muted);padding-bottom:2px}.ts-dpq .ts-res b{color:var(--orange)}
+.ts-where{margin:0 0 14px}.ts-where figcaption{font-size:14px;margin-bottom:6px}
+.ts-bar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:#eceae4}.ts-bar span{display:block;height:100%}
+.ts-u{background:var(--green)}.ts-s{background:var(--red)}.ts-m{background:var(--orange)}.ts-c{background:#c9a227}.ts-q{background:#8a6bbf}
+.ts-legend{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}.ts-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}.ts-legend small{color:var(--muted)}
+.ts-new{width:100%;min-height:56px;font-size:17px;margin:4px 0 10px}
+.ts-row{display:flex;justify-content:space-between;align-items:center;gap:10px}.ts-rowv{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--green)}.ts-rowv.bad{color:var(--red)}
+.ts-warn{margin:6px 0;padding:8px 10px;border-radius:8px;background:var(--amber-soft);color:#7a4a00;font-size:14px}
+.ts-form .ts-fs{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 10px}.ts-form legend{font-weight:900;padding:0 4px}
+.ts-form .field small{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:3px}
+.ts-teams{flex-wrap:wrap}
+.ts-stop{display:grid;grid-template-columns:minmax(0,1.3fr) 80px minmax(0,1.4fr) auto;gap:6px;margin-bottom:6px;align-items:center}
+.ts-three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ts-live{position:sticky;bottom:52px;z-index:2;margin:4px 0 8px;padding:10px 12px;border-radius:10px;background:#f6f5f0;border:1px solid var(--line)}
+.ts-live .hint{margin:4px 0 0}
+.ml-sheet h4{margin:10px 0 2px;font-size:13px}.ts-sheet-top td{min-width:70px}
+@media(max-width:700px){.ts-three{grid-template-columns:1fr 1fr}.ts-stop{grid-template-columns:minmax(0,1fr) 72px auto}.ts-stop [data-ts-note]{grid-column:1/-1;grid-row:2}.ts-trs b{font-size:38px}.ts-dpq b{font-size:19px}}
+.ts-rowv{white-space:nowrap}.ts-more{margin:6px 0}.ts-more summary{cursor:pointer;font-weight:800;padding:10px 0;min-height:44px}
