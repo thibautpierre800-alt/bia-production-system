@@ -209,3 +209,8 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.31.0 (additive)
 
 - Aucun champ nouveau. L’état du paramétrage est calculé à partir de `sites`, `workshops`, `users`, `kpis`, `measures` et `settings`.
+
+## Extension 8.32.0 (additive)
+
+- `connectors[].status` : `À spécifier`, `Contrat reçu`, `Test local`, `Import régulier`, `Automatique`.
+- `syncLog[]` : `ignored` = nombre de lignes sans valeur ignorées à l’import.
