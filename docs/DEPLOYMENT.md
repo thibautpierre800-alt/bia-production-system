@@ -133,3 +133,7 @@ La branche `backup/before-8.17.0-2026-11-07` conserve le commit `7c2aff1`, corre
 ## Retour à 8.17.0
 
 La branche `backup/before-8.18.0-2026-11-07` conserve le commit `d51b4fa`, correspondant à la version 8.17.0. La 8.18.0 ajoute l’onglet Équilibrage (`equilibrage.js`) et la collection `balances`, que la 8.17.0 ignore et conserve.
+
+## Retour à 8.18.0
+
+La branche `backup/before-8.19.0-2026-11-07` conserve le commit `ff33adf`, correspondant à la version 8.18.0. La 8.19.0 ajoute `sqcdp-jour.js` et les collections `sqcdpDays` et `meetings`, que la 8.18.0 ignore et conserve ; les sujets du TOP 15 créés depuis les lettres restent des sujets ordinaires.

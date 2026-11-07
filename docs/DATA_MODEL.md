@@ -141,3 +141,9 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `balances[]` : `{ id: "EQ-001", site_id, project_id?, title, owner, demand_per_day, available_min, stations[{ id, name, operators }], elements[{ id, station_id, label, sec, kind: "va"|"nva"|"muda", act?, who?, when?, action_id? }], chrono?: { station_id, started_at, lap_at, ended_at? }, baseline?: { at, stations, elements }, created_at, updated_at }`.
 - Takt = `available_min × 60 / demand_per_day`. Cycle d’un poste = somme des éléments / opérateurs. Efficacité d’équilibrage = contenu total / (opérateurs × cycle du goulot).
 - Actions issues d’un gaspillage : `origin_type: "Équilibrage"`, `balance_id`, sans `origin_id`.
+
+## Extension 8.19.0 (additive)
+
+- `sqcdpDays[]` : `{ id, site_id, workshop_id, date, axis: "S"|"Q"|"C"|"D"|"P", status: "ok"|"ko", note, topic_id?, by, created_at, updated_at }`. Un écart avec une note crée un sujet `topics[]` (`source: "SQCDP"`).
+- `meetings[]` : `{ id, site_id, workshop_id, date, started_at, ended_at, duration_s, present[], topics, escalated, by }`.
+- `escalations[]` : `answered_at` à la réponse ; délai de réaction = `answered_at − created_at`.

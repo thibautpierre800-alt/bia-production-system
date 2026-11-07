@@ -33,6 +33,7 @@ const scripts = [
   "polyvalence.js",
   "idees.js",
   "equilibrage.js",
+  "sqcdp-jour.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {
