@@ -1,5 +1,21 @@
 # Changelog
 
+## 8.43.0 — 7 novembre 2026
+
+**Le TOP 5 à l’écran de l’atelier : ce qui s’y dit remonte, ce qui descend arrive avec son contexte.**
+
+- **Écran TOP 5**, pour la télévision de l’atelier : plein écran, lisible à 3 m, préparé à partir des faits.
+  - Une page par lettre S, Q, C, D, P, avec le fait du jour : signaux sécurité, non-conformités et réclamations, TRS des feuilles de poste et micro-arrêts, actions en retard, idées sans réponse. La lettre du mois est affichée à côté.
+  - Les lettres se cochent sur l’écran. Un écart monte au TOP 15.
+  - Sous chaque lettre, « Ce qui s’est dit » garde la phrase importante.
+  - Puis les pages « Réponses à vos remontées » (« Dite à l’équipe » ferme la boucle), « Informations » et « Clôture » (présents, point tenu).
+  - On passe d’une page à l’autre avec les flèches, une télécommande ou en glissant le doigt. Le chronomètre compte 5 minutes.
+  - Adresse directe : `…/#top5`.
+- **Informations descendantes** : la direction, le site ou le TOP 15 écrit une information pour le Groupe, un site ou un atelier, avec « Ce que ça change pour vous » et une date de fin. Chaque atelier la marque « Dite à l’équipe ». L’auteur voit « Dite dans 3/5 » et les ateliers où elle reste à dire.
+- **Voir › TOP 5** : les TOP 5 tenus aujourd’hui (durée, présents, écarts), les informations et leur diffusion, « Ce qui s’est dit » sur 7 jours.
+- **TOP 15** : nouveau point « Ce qui s’est dit aux TOP 5 » dans l’ordre du jour. Le total reste 15 minutes.
+- Accueil : la nouveauté « TOP 5 à l’écran ».
+
 ## 8.42.0 — 7 novembre 2026
 
 **Contrôle complet de l’application et ergonomie de navigation.**
