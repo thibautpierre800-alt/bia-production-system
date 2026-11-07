@@ -2209,3 +2209,65 @@ test("Environnement 8.37 · saisie mensuelle, ratios par unité, référence et 
   assert.ok(a.q(".ev-grid td.ok"), "Objectif tenu en vert");
   assert.match(a.run('reBlock("env",{type:"mensuelle",site_id:"group",sites:["marzin"]}).html'), /Marzin/);
 });
+
+test("Non-conformités 8.38 · scan de la commande, analyse automatique, proposition, 8D prérempli, Pareto", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('state.role="director";state.site="marzin";render()');
+  const tabs = JSON.parse(a.run('JSON.stringify(uxTabs(uxStages().find(s=>s.id==="resoudre")).map(x=>x.label))'));
+  assert.equal(tabs[0], "Non-conformités");
+  a.run('state.ncOn=true;switchView("kaizen");state.ncOn=true;render()');
+  assert.match(a.q(".page-head h1").textContent, /Non-conformités/);
+  // Import des commandes (extraction ERP, dates françaises)
+  a.click("#appView [data-nc-orders]");
+  const d = a.run("auAddDays(-2)"), fr = `${d.slice(8, 10)}/${d.slice(5, 7)}/${d.slice(0, 4)}`;
+  a.fill("#ncCsv", `Commande;Client;Article;Désignation;Quantité;Ligne;Date fabrication;Lot;Livraison;Livrée\nCDE-1;Client A;PAN-22;Panneau noyer;80;Plaqueuse 2;${fr};L1;;non\nCDE-2;Client B;PAN-22;Panneau noyer;50;Plaqueuse 2;${fr};L2;;non\nCDE-3;Client C;PAN-22;Panneau noyer;40;Plaqueuse 2;${fr};L3;;oui`);
+  a.submit("#ncOrdForm");
+  assert.equal(a.run('data.orders.length'), 3);
+  assert.equal(a.run('ncOrder("cde-1").prod_date'), d);
+  // Données de production et historique
+  a.run(`data.mlLines=[{id:"LG-1",site_id:"marzin",name:"Plaqueuse 2",causes:ML_CAUSES,typical_min:1}];data.trsShifts=[{id:"FP-1",line_id:"LG-1",site_id:"marzin",date:"${d}",team:"Matin",shift_min:480,planned_min:40,stops:[{kind:"Réglage",min:25,note:"Changement de placage"}],micro_min:10,good:1250,scrap:60,rate_ph:240}];data.ncs=[{id:"NC-901",site_id:"marzin",date:auAddDays(-20),article:"PAN-22",line:"Plaqueuse 2",origin:"Interne",defect:"Collage, décollement",qty:5,severity:"Mineure",text:"x"},{id:"NC-902",site_id:"marzin",date:auAddDays(-9),article:"PAN-22",line:"Plaqueuse 2",origin:"Interne",defect:"Collage, décollement",qty:3,severity:"Mineure",text:"y"}];render()`);
+  // Scan (la douchette tape le numéro puis Entrée)
+  a.click("#appView [data-nc-new]");
+  a.fill("#ncOrder", " cde-1 ");
+  a.run('document.querySelector("#ncOrder").dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}))');
+  assert.equal(a.q("#ncClient").value, "Client A");
+  assert.equal(a.q("#ncArticle").value, "PAN-22");
+  assert.equal(a.q("#ncLine").value, "Plaqueuse 2");
+  a.click('[data-nc-group="defect"] [data-nc-pick="Collage, décollement"]');
+  a.fill("#ncQty", "14");
+  a.fill("#ncText", "Décollement en rive sur 14 panneaux");
+  const auto = a.q("#ncAuto").textContent;
+  assert.match(auto, /même article : 2/);
+  assert.match(auto, /TRS[\s\S]*Réglage 25 min/);
+  assert.match(auto, /CDE-2/, "Commande du même article à vérifier");
+  assert.doesNotMatch(auto, /CDE-3/, "Une commande livrée n’est pas proposée");
+  assert.match(auto, /Proposition : 8D[\s\S]*client est touché[\s\S]*3e non-conformité/);
+  a.click('[data-nc-save="8D"]');
+  const nc = JSON.parse(a.run("JSON.stringify(data.ncs[0])"));
+  assert.equal(nc.order_no, "CDE-1", "Le numéro de la base est repris");
+  assert.equal(nc.decision, "8D");
+  const sd = JSON.parse(a.run(`JSON.stringify(data.documents.find(x=>x.problem_id==="${nc.problem_id}").structured_data)`));
+  assert.match(sd.d2, /Quoi : Collage[\s\S]*Combien : 14 pièce\(s\) \(17,5 % de la commande\)/);
+  assert.match(sd.d3, /lot L1[\s\S]*CDE-2/);
+  assert.match(sd.d4_occurrence, /TRS[\s\S]*Réglage 25 min[\s\S]*NC-901/);
+  assert.ok(sd.d1 && sd.d0 && sd.d4_escape);
+  assert.deepEqual(JSON.parse(a.run(`JSON.stringify(data.problems.find(p=>p.id==="${nc.problem_id}").pareto)`)), [{ label: "Collage, décollement", value: 3 }]);
+  assert.equal(a.run("state.view"), "resolution");
+  // Mineure, première fois : action simple
+  a.run('state.ncOn=true;switchView("kaizen");state.ncOn=true;render()');
+  a.click("#appView [data-nc-new]");
+  a.fill("#ncArticle", "CHT-1");
+  a.click('[data-nc-group="origin"] [data-nc-pick="Interne"]');
+  a.click('[data-nc-group="severity"] [data-nc-pick="Mineure"]');
+  a.fill("#ncText", "Rayure");
+  assert.match(a.q("#ncAuto").textContent, /Proposition : une action corrective/);
+  a.click('[data-nc-save="Action"]');
+  assert.ok(a.run("data.ncs[0].action_id"));
+  // Pareto automatique
+  const P = JSON.parse(a.run('JSON.stringify(ncPareto(ncRows(),"defect"))'));
+  assert.equal(P.list[0].label, "Collage, décollement");
+  assert.equal(P.list[0].v, 3);
+  assert.match(a.q(".nc-pareto").textContent, /font 80 %/);
+  assert.deepEqual(JSON.parse(a.run('JSON.stringify([...document.querySelectorAll("#appView button")].filter(b=>!b.onclick&&!b.disabled).map(b=>b.outerHTML.slice(0,60)))')), []);
+});
