@@ -2831,3 +2831,9 @@ button.bp-cell:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
 .nc-pareto .nc-vital .sm-g-l{font-weight:800}
 .nc-cols code{font-size:13px;word-break:break-all}
 .nc-camera{position:fixed;inset:0;z-index:100;background:rgba(20,20,20,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#fff;padding:16px}.nc-camera video{width:min(92vw,520px);border-radius:12px;background:#000}
+/* 8.39 · Réclamation client */
+.nc-claim[hidden]{display:none}
+.nc-steps{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.nc-step{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border-left:4px solid #c9c8c1;background:#fff}.nc-step span{display:flex;flex-direction:column}.nc-step small{font-size:13px;color:var(--muted)}
+.nc-step.late{border-left-color:var(--red);background:#fbebeb}.nc-step.done{border-left-color:var(--green)}.nc-step.lated{border-left-color:var(--orange)}.nc-step input{max-width:170px}
+.nc-late{color:var(--red);font-weight:700}
