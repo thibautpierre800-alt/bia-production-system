@@ -2401,3 +2401,6 @@ button.bp-cell:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
 .rv-act{display:flex;gap:8px;align-items:center;font-size:13.5px}
 @media screen and (max-width:540px){.rv-st{grid-template-columns:repeat(2,minmax(0,1fr))}.roadmap-board{display:grid!important;grid-template-columns:minmax(0,1fr)!important;overflow:visible!important}.roadmap-horizon{min-width:0!important;width:auto!important;min-height:0!important}}
 .rv-panel .section-title{flex-wrap:wrap;gap:8px}.rv-panel .section-title>div{flex:1 1 240px}
+/* ---------- 8.28 · Fiche avant / après ---------- */
+.ba-form .bp-ba{margin-bottom:2px}
+.ba-sheet footer{background:#f0efea;color:#55554f}

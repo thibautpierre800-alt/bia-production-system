@@ -192,3 +192,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.27.0 (additive)
 
 - `roadmapReviews[]` (non indexée) : `{ id: "RV-001", date, by, items[{ kind: "jalon"|"priorite", ref, label, s: "done"|"ok"|"risk"|"late", note, decision, action_id }], learning, next_date, created_at }`. Une action créée en revue porte `origin_type: "Roadmap"` et, pour une priorité, `origin_id` = la priorité.
+
+## Extension 8.28.0 (additive)
+
+- Aucun champ nouveau : `documents[]` de type `BEFORE_AFTER` garde `structured_data.{ before_photo, after_photo, problem, description, gain }` et `kaizen_id`. Une bonne pratique partagée depuis une fiche porte `source_id` = la fiche.
