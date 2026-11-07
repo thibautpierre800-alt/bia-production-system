@@ -2394,8 +2394,8 @@ test("Ergonomie 8.42 · nouveautés à l’accueil, onglets « Plus » sur tél�
   const a = app(t);
   demo(a);
   a.run('try{localStorage.removeItem("bia-news-seen")}catch{};state.role="lean";state.site="group";state.view="home";render()');
-  assert.match(a.q(".er-news").textContent, /TOP 5 à l’écran[\s\S]*Tour de contrôle[\s\S]*Échantillothèque[\s\S]*Non-conformités/);
-  a.click('[data-er-news="1"]');
+  assert.match(a.q(".er-news").textContent, /Informations à tous les TOP 5[\s\S]*TOP 5 à l’écran[\s\S]*Tour de contrôle[\s\S]*Échantillothèque[\s\S]*Non-conformités/);
+  a.click('[data-er-news="2"]');
   assert.equal(a.run("state.pilotTab"), "tour");
   a.run('state.view="home";render()');
   a.click("[data-er-seen]");
@@ -2461,4 +2461,39 @@ test("TOP 5 8.43 · écran atelier, lettres, ce qui s’est dit, informations de
   // Le Responsable Lean le trouve dans Voir
   a.run('state.role="lean";state.site="group";switchView("pilotage")');
   assert.ok(JSON.parse(a.run('JSON.stringify(uxTabs(uxStages().find(s=>s.id==="voir")).map(t=>t.key))')).includes("top5"));
+});
+
+test("Informations 8.44 · urgente en bandeau, question de l’équipe, réponse qui redescend", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('state.role="director";state.site="marzin";state.workshop=null;state.t5Tab=true;switchView("sqcdp")');
+  a.click("[data-t5-newinfo]");
+  a.run('document.getElementById("t5Title").value="Coupure électrique mardi 6 h";document.getElementById("t5Why").value="Lignes arrêtées jusqu’à 8 h";document.getElementById("t5Urgent").checked=true;document.getElementById("t5InfoForm").requestSubmit()');
+  a.run("void 0");
+  assert.equal(a.run("data.infos[0].urgent"), true);
+  const ws = a.run('(osActive(data.workshops).find(w=>w.site_id==="marzin")||{}).id||""');
+  a.run(`state.role="teamlead";state.workshop=${JSON.stringify(ws)}||null;t5Open()`);
+  assert.match(a.q("#t5Screen .t5-urgent").textContent, /Coupure électrique/, "bandeau urgent sur la page S");
+  a.click('#t5Screen [data-t5-go="6"]');
+  a.run('const f=document.querySelector("#t5Screen [data-t5-q]");f.querySelector("input").value="Qui redémarre la ligne 2 ?";f.requestSubmit()');
+  assert.equal(a.run("data.infos[0].questions.length"), 1);
+  a.click("#t5Screen [data-t5-tell]");
+  a.click('#t5Screen [data-t5-go="0"]');
+  assert.equal(a.q("#t5Screen .t5-urgent"), null, "dite : le bandeau disparaît");
+  a.click('#t5Screen [data-t5-go="7"]');
+  a.click("#t5Screen [data-t5-held]");
+  a.click("#t5Screen [data-t5-x]");
+  assert.match(a.run('reBlock("top5dit",{site_id:"marzin",type:"top15"}).html'), /Qui redémarre la ligne 2/);
+  // Le directeur répond
+  a.run('state.role="director";state.t5Tab=true;switchView("sqcdp")');
+  assert.match(a.q(".t5-qsec").textContent, /Qui redémarre la ligne 2/);
+  a.run('const f=document.querySelector("[data-t5-ans]");f.querySelector("input").value="La maintenance, à 7 h 45";f.requestSubmit()');
+  assert.equal(a.run("data.infos[0].questions[0].answer"), "La maintenance, à 7 h 45");
+  assert.equal(a.q(".t5-qsec"), null);
+  // La réponse redescend à l’atelier
+  a.run(`state.role="teamlead";state.workshop=${JSON.stringify(ws)}||null;t5Open();t5Go(5)`);
+  assert.match(a.q("#t5Screen").textContent, /La maintenance, à 7 h 45/);
+  a.click("#t5Screen [data-t5-qret]");
+  assert.ok(a.run("data.infos[0].questions[0].returned_at"));
+  a.run("t5Close()");
 });

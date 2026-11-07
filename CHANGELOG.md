@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.44.0 — 7 novembre 2026
+
+**Une information envoyée au TOP 5 obtient maintenant une réponse des équipes.**
+
+- **Question de l’équipe** : sur l’écran TOP 5, sous chaque information, « Une question de l’équipe ? ». La question apparaît dans Voir › TOP 5 (« Questions des équipes ») et dans le point « Ce qui s’est dit aux TOP 5 » du TOP 15. L’auteur de l’information ou un responsable du périmètre y répond. La réponse redescend dans « Réponses » de l’atelier qui a posé la question. « Dite à l’équipe » ferme la boucle.
+- **Information urgente** : elle s’affiche en bandeau rouge en haut de chaque page de l’écran TOP 5, jusqu’à ce que l’atelier la marque « Dite à l’équipe ».
+- **Photo** : une information peut porter une photo, affichée en grand sur l’écran (plan, pièce, consigne).
+- « Ce qui s’est dit » garde les questions posées pendant le point.
+
 ## 8.43.0 — 7 novembre 2026
 
 **Le TOP 5 à l’écran de l’atelier : ce qui s’y dit remonte, ce qui descend arrive avec son contexte.**
