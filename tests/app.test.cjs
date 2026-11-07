@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-19-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.19.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-20-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.20.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -475,6 +475,7 @@ test('Gemba : plusieurs constats, action traçable, retour terrain et clôture',
 });
 test('VSM : calculs incomplets, ordre conservé, retrait réversible, état futur distinct',t=>{
   const a=app(t),{run,fill,submit,click,q}=a;run('simpleDocument("VSM")');fill('#documentTitle','Flux panneaux');fill('#documentOwner','VSL');submit('#documentForm');const id=run('data.documents[0].id');
+  assert.ok(q('.vf'),'Nouvelle VSM : éditeur pas à pas');click('[data-vf-free]');
   click('[data-os="vsmTable"]');assert.match(q('#vsmPreview').textContent,/—/);fill('[data-vsm-meta="demand_per_day"]','200');fill('[data-vsm-meta="available_minutes"]','400');
   click('#addVsmNode');fill('[data-vsm-node="0"][data-key="name"]','Découpe');fill('[data-vsm-node="0"][data-key="ct"]','40');click('#addVsmNode');fill('[data-vsm-node="1"][data-key="name"]','Assemblage');fill('[data-vsm-node="1"][data-key="ct"]','60');
   click('[data-vsm-up="1"]');assert.equal(q('[data-vsm-node="0"][data-key="name"]').value,'Assemblage');assert.equal(q('[data-vsm-node="1"][data-key="name"]').value,'Découpe');

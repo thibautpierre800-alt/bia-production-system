@@ -147,3 +147,10 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `sqcdpDays[]` : `{ id, site_id, workshop_id, date, axis: "S"|"Q"|"C"|"D"|"P", status: "ok"|"ko", note, topic_id?, by, created_at, updated_at }`. Un écart avec une note crée un sujet `topics[]` (`source: "SQCDP"`).
 - `meetings[]` : `{ id, site_id, workshop_id, date, started_at, ended_at, duration_s, present[], topics, escalated, by }`.
 - `escalations[]` : `answered_at` à la réponse ; délai de réaction = `answered_at − created_at`.
+
+## Extension 8.20.0 (additive)
+
+- `documents[]` VSM, `vsm.current` et `vsm.future` : `supplier`, `customer`, `delivery`, `info`, `fg_wip` (stock de produits finis, en pièces).
+- Processus : `order`, `scrap` (%), `burst` (éclair Kaizen), `burst_action_id`.
+- Jours de stock = pièces / demande par jour (à défaut, attente en minutes / temps net). Délai = Σ jours × temps net + Σ temps de cycle. VA / délai = Σ valeur ajoutée / délai.
+- Actions issues d’un éclair : `origin_type: "VSM"`, `origin_id` = la VSM.

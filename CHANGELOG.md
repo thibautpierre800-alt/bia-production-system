@@ -1,5 +1,22 @@
 # Changelog
 
+## 8.20.0 — 7 novembre 2026
+
+**VSM pas à pas, avec les symboles normalisés et l’échelle de temps.**
+
+- Une VSM s’ouvre désormais sur un éditeur pas à pas, pensé pour le téléphone.
+  - Demande et temps net ; fournisseur, livraisons, client et pilotage.
+  - Pour chaque processus, le stock devant lui (en pièces, converti en jours) et sa boîte de données : temps de cycle, valeur ajoutée, changement de série, disponibilité, opérateurs, rebut.
+  - Puis le stock de produits finis. Les étapes se réordonnent et se retirent.
+- La carte se dessine toute seule avec les symboles d’usage : usines fournisseur et client, contrôle de production et flux d’information, boîtes processus et boîtes de données, triangles de stock, flèches poussées, éclairs Kaizen.
+  - L’échelle de temps montre les jours de stock en haut et les secondes de valeur ajoutée en bas, avec le délai total, la valeur ajoutée et leur rapport.
+  - Le goulot est en contour épais, une étape au-dessus du takt en rouge. Carte à afficher en A4 paysage.
+- État actuel et état futur (copie de l’actuel), comparés sur le délai, les stocks, la valeur ajoutée et le nombre d’étapes. Chaque éclair Kaizen devient une action datée.
+- L’éditeur graphique libre et le tableau restent accessibles depuis la VSM ; les VSM existantes s’ouvrent telles quelles.
+- La valeur ajoutée d’une étape ne peut pas dépasser son temps de cycle.
+
+Données : documents VSM existants ; champs ajoutés `supplier`, `customer`, `delivery`, `info`, `fg_wip` et, par processus, `order`, `scrap`, `burst`, `burst_action_id` ; rien n’est retiré.
+
 ## 8.19.0 — 7 novembre 2026
 
 **SQCDP au quotidien : le point du jour, les lettres du mois, la tenue du rituel et les escalades.**

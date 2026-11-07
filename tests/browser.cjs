@@ -433,6 +433,8 @@ async function main() {
       state.role = "dg";
       editDocument("DOC-VSM-demo");
     });
+    assert.ok(await page.locator(".vf-map").count(), "VSM pas à pas en lecture");
+    await page.click("[data-vf-free]");
     assert.equal(await page.locator("#osVsmNode [name=ct]").isDisabled(), true);
     assert.equal(await page.locator("[data-vsm-add]").count(), 0);
     await page.evaluate(() => {
