@@ -48,6 +48,7 @@ const scripts = [
   "parametres.js",
   "connecteurs.js",
   "reunions.js",
+  "cascade.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {

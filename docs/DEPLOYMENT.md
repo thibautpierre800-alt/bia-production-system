@@ -193,3 +193,7 @@ La branche `backup/before-8.32.0-2026-11-07` conserve le commit `767a533`, qui c
 ## Retour à 8.32.0
 
 La branche `backup/before-8.33.0-2026-11-07` conserve le commit `2a453c0`, qui correspond à la version 8.32.0. La 8.33.0 ajoute `reunions.js` et les collections `instances` et `instanceSessions`. La 8.32.0 les ignore ; les actions nées en réunion restent des actions ordinaires.
+
+## Retour à 8.33.0
+
+La branche `backup/before-8.34.0-2026-11-07` conserve le commit `833e04b`, qui correspond à la version 8.33.0. La 8.34.0 ajoute `cascade.js`. Les champs ajoutés aux sujets et aux escalades sont ignorés par la 8.33.0, et les TOP 15 y apparaissent comme des instances ordinaires.

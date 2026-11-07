@@ -20,11 +20,12 @@
 const RE_TYPES = {
   comex: { label: "COMEX", cadence: "Trimestriel", duration: 60, time: "10:00", chair: "Direction générale", participants: "Comité exécutif, Responsable Lean", purpose: "Rendre compte des résultats et du programme, obtenir les décisions qui relèvent de la direction.", agenda: [["perf", 15], ["securite", 5], ["programme", 15], ["gains", 10], ["decisions", 15]] },
   copil: { label: "COPIL amélioration continue", cadence: "Mensuel", duration: 90, time: "14:00", chair: "Responsable Lean", participants: "Direction, méthodes, directeurs de site", purpose: "Piloter le programme : jalons, chantiers, gains, risques et décisions.", agenda: [["suivi", 10], ["programme", 25], ["chantiers", 20], ["gains", 10], ["risques", 15], ["decisions", 10]] },
-  mensuelle: { label: "Revue mensuelle des sites", cadence: "Mensuel", duration: 120, time: "10:00", chair: "Directeur opérationnel Groupe", participants: "Responsables des sites, directeur opérationnel Groupe, Responsable Lean", purpose: "Comparer les sites sur les mêmes faits, partager ce qui marche, décider ce qui demande le Groupe.", agenda: [["securite", 10], ["suivi", 10], ["perf", 25], ["ecarts", 15], ["chantiers", 20], ["partage", 20], ["decisions", 20]] },
-  hebdo: { label: "Revue hebdomadaire", cadence: "Hebdomadaire", duration: 45, time: "09:00", chair: "Responsable de site", participants: "Responsable de site, Responsable Lean", purpose: "Faire avancer les priorités du site : sécurité, écarts, chantiers, aide attendue du Groupe.", agenda: [["securite", 5], ["suivi", 10], ["ecarts", 10], ["chantiers", 10], ["retards", 5], ["aide", 5]] },
+  mensuelle: { label: "Revue mensuelle des sites", cadence: "Mensuel", duration: 120, time: "10:00", chair: "Directeur opérationnel Groupe", participants: "Responsables des sites, directeur opérationnel Groupe, Responsable Lean", purpose: "Comparer les sites sur les mêmes faits, partager ce qui marche, décider ce qui demande le Groupe.", agenda: [["securite", 10], ["suivi", 10], ["remontees", 15], ["perf", 20], ["ecarts", 10], ["chantiers", 15], ["partage", 15], ["decisions", 15], ["retours", 10]] },
+  hebdo: { label: "Revue hebdomadaire", cadence: "Hebdomadaire", duration: 45, time: "09:00", chair: "Responsable de site", participants: "Responsable de site, Responsable Lean", purpose: "Faire avancer les priorités du site : sécurité, écarts, chantiers, aide attendue du Groupe.", agenda: [["securite", 5], ["suivi", 5], ["remontees", 8], ["ecarts", 8], ["chantiers", 8], ["retards", 3], ["aide", 3], ["retours", 5]] },
+  top15: { label: "TOP 15", cadence: "Chaque jour ouvré", duration: 15, time: "08:45", chair: "Responsable de site", participants: "Responsable de site, responsables d’atelier, maintenance, qualité, logistique", purpose: "Chaque jour : ce que les TOP 5 ont remonté, la réponse qui redescend, ce qui monte à la revue du site.", agenda: [["securite24", 2], ["lettres", 3], ["remontees", 5], ["retours", 2], ["suivi", 3]] },
 };
-const RE_ORDER = ["comex", "copil", "mensuelle", "hebdo"];
-const RE_CADENCES = [["Hebdomadaire", 7], ["Toutes les 2 semaines", 14], ["Mensuel", "m1"], ["Toutes les 6 semaines", 42], ["Trimestriel", "m3"]];
+const RE_ORDER = ["top15", "hebdo", "mensuelle", "copil", "comex"];
+const RE_CADENCES = [["Chaque jour ouvré", "d1"], ["Hebdomadaire", 7], ["Toutes les 2 semaines", 14], ["Mensuel", "m1"], ["Toutes les 6 semaines", 42], ["Trimestriel", "m3"]];
 const RE_BLOCKS = {
   securite: "Sécurité", suivi: "Actions de la dernière réunion", ecarts: "Indicateurs hors cible", perf: "Performance par site",
   chantiers: "Chantiers", retards: "Actions en retard", aide: "Ce que le site attend du Groupe", partage: "Bonnes pratiques à partager",
@@ -36,19 +37,21 @@ const RE_BLOCKS = {
 function reRows() { return (data.instances || []).filter((r) => !r.archived_at); }
 function reGet(id) { return reRows().find((r) => r.id === id) || null; }
 function reSessions(id) { return (data.instanceSessions || []).filter((s) => !s.archived_at && (!id || s.instance_id === id)).sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.created_at).localeCompare(String(a.created_at))); }
-function reTitle(r) { return r.type === "hebdo" ? `${r.title || RE_TYPES.hebdo.label} · ${getSiteName(r.site_id)}` : r.title || RE_TYPES[r.type]?.label || "Réunion"; }
+function reTitle(r) { return RE_SITE_TYPES.includes(r.type) ? `${r.title || RE_TYPES.hebdo.label} · ${getSiteName(r.site_id)}` : r.title || RE_TYPES[r.type]?.label || "Réunion"; }
 function reSites(r) { return r.site_id && r.site_id !== "group" ? [r.site_id] : OPERATIONAL_SITES.map((s) => s.id); }
+const RE_SITE_TYPES = ["hebdo", "top15"];
 function reSee(r) {
   if (!role().nav.includes("daily") || ["teamlead", "operator"].includes(state.role)) return false;
-  if (state.role === "director") return r.type === "hebdo" ? r.site_id === state.site : r.type !== "comex";
+  if (state.role === "director") return RE_SITE_TYPES.includes(r.type) ? r.site_id === state.site : r.type !== "comex";
   return true;
 }
 function reAdmin() { return state.role === "lean" && !role().readonly; }
-function reHold(r) { return !role().readonly && (state.role === "lean" || (state.role === "director" && r.type === "hebdo" && r.site_id === state.site)); }
+function reHold(r) { return !role().readonly && (state.role === "lean" || (state.role === "director" && RE_SITE_TYPES.includes(r.type) && r.site_id === state.site)); }
 function reCan() { return ["lean", "director", "dg"].includes(state.role) && role().nav.includes("daily"); }
 function reAddMonths(d, n) { const x = new Date(d + "T12:00:00"), day = x.getDate(); x.setDate(1); x.setMonth(x.getMonth() + n); x.setDate(Math.min(day, new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate())); return x.toISOString().slice(0, 10); }
 function reAddDays(d, n) { const x = new Date(d + "T12:00:00"); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); }
-function reNext(from, cadence) { const c = RE_CADENCES.find((x) => x[0] === cadence)?.[1] ?? 7; return c === "m1" ? reAddMonths(from, 1) : c === "m3" ? reAddMonths(from, 3) : reAddDays(from, c); }
+function reWorkday(from) { let d = reAddDays(from, 1); while ([0, 6].includes(new Date(d + "T12:00:00").getDay())) d = reAddDays(d, 1); return d; }
+function reNext(from, cadence) { const c = RE_CADENCES.find((x) => x[0] === cadence)?.[1] ?? 7; if (c === "d1") return reWorkday(from); return c === "m1" ? reAddMonths(from, 1) : c === "m3" ? reAddMonths(from, 3) : reAddDays(from, c); }
 function reDays(d) { return Math.round((Date.parse(d + "T12:00:00Z") - Date.parse(today() + "T12:00:00Z")) / 86400000); }
 function reWhen(d) {
   if (!d) return "Date à fixer";
@@ -144,14 +147,15 @@ function reCard(r) {
 }
 function rePage() {
   const rows = reRows().filter(reSee);
-  if (!rows.length) return `${pageHead("Voir", "Réunions", "Les instances de pilotage, préparées à partir des faits.")}<section class="panel re-setup"><h2>Mettre en place les instances</h2><p>Quatre instances, chacune avec son ordre du jour préparé à partir des données, son relevé de décisions et le suivi de ses actions :</p><ul>${RE_ORDER.map((t) => `<li><b>${esc(t === "hebdo" ? "Revue hebdomadaire de chaque site" : RE_TYPES[t].label)}</b> · ${esc(RE_TYPES[t].cadence.toLowerCase())}, ${RE_TYPES[t].duration} min · ${esc(RE_TYPES[t].purpose)}</li>`).join("")}</ul>${reAdmin() ? '<button type="button" class="btn" data-re-setup>Mettre en place les quatre instances</button><p class="hint">Dates, heures, durées, animateurs et participants se modifient ensuite.</p>' : '<p class="hint">À mettre en place par le Responsable Lean.</p>'}</section>`;
-  const soon = rows.filter((r) => r.next_date && reDays(r.next_date) <= 14).sort((a, b) => String(a.next_date).localeCompare(String(b.next_date)) || String(a.time).localeCompare(String(b.time)));
+  if (!rows.length) return `${pageHead("Voir", "Réunions", "Les instances de pilotage, préparées à partir des faits.")}<section class="panel re-setup"><h2>Mettre en place les instances</h2><p>Du TOP 15 de chaque site au COMEX, chaque instance a son ordre du jour préparé à partir des données, son relevé de décisions et le suivi de ses actions. Ce qui ne se règle pas à un niveau monte au suivant ; la réponse redescend jusqu’à celui qui a remonté.</p><ul>${RE_ORDER.map((t) => `<li><b>${esc(t === "hebdo" ? "Revue hebdomadaire de chaque site" : t === "top15" ? "TOP 15 de chaque site" : RE_TYPES[t].label)}</b> · ${esc(RE_TYPES[t].cadence.toLowerCase())}, ${RE_TYPES[t].duration} min · ${esc(RE_TYPES[t].purpose)}</li>`).join("")}</ul>${reAdmin() ? '<button type="button" class="btn" data-re-setup>Mettre en place les instances</button><p class="hint">Dates, heures, durées, animateurs et participants se modifient ensuite.</p>' : '<p class="hint">À mettre en place par le Responsable Lean.</p>'}</section>`;
+  const soon = rows.filter((r) => r.type !== "top15" && r.next_date && reDays(r.next_date) <= 14).sort((a, b) => String(a.next_date).localeCompare(String(b.next_date)) || String(a.time).localeCompare(String(b.time)));
   const agenda = soon.length ? `<section class="panel re-soon"><h2>Les 14 prochains jours</h2><ol class="re-timeline">${soon.map((r) => `<li class="${reDays(r.next_date) < 0 ? "late" : reDays(r.next_date) <= 1 ? "soon" : ""}"><span class="re-date">${esc(reWhen(r.next_date))}${r.time ? ` · ${esc(r.time)}` : ""}</span><button type="button" class="md-link" data-re-open="${esc(r.id)}">${esc(reTitle(r))}</button><small>${r.duration || "?"} min</small></li>`).join("")}</ol></section>` : "";
   const week = (g) => `<ul class="re-week">${g.sort((a, b) => String(a.next_date).localeCompare(String(b.next_date)) || String(a.time).localeCompare(String(b.time))).map((r) => { const last = reSessions(r.id)[0], open = osActive(data.actions).filter((a) => a.meeting_series === r.id && isOpenAction(a)).length, n = reDays(r.next_date || today()); return `<li class="${r.next_date && n < 0 ? "late" : n <= 1 ? "soon" : ""}"><button type="button" class="re-week-main" data-re-open="${esc(r.id)}"><b>${esc(getSiteName(r.site_id))}</b><span>${esc(reWhen(r.next_date))}${r.time ? ` · ${esc(r.time)}` : ""}</span><small>${esc(r.chair || "")} · ${last ? `dernière le ${shortDate(last.date)}` : "pas encore tenue"}${open ? ` · ${jnPlural(open, "action ouverte", "actions ouvertes")}` : ""}</small></button></li>`; }).join("")}</ul>`;
-  const groups = RE_ORDER.map((t) => { const g = rows.filter((r) => r.type === t); return g.length ? `<section class="section"><h2 class="re-h2">${esc(t === "hebdo" ? "Revues hebdomadaires des sites" : RE_TYPES[t].label)}</h2><p class="hint">${esc(RE_TYPES[t].purpose)}${t === "hebdo" ? ` ${RE_TYPES.hebdo.duration} min, chaque semaine.` : ""}</p>${t === "hebdo" ? week(g) : `<div class="re-grid">${g.map(reCard).join("")}</div>`}</section>` : ""; }).join("");
+  const groups = RE_ORDER.map((t) => { const g = rows.filter((r) => r.type === t); return g.length ? `<section class="section"><h2 class="re-h2">${esc(t === "hebdo" ? "Revues hebdomadaires des sites" : t === "top15" ? "TOP 15 des sites" : RE_TYPES[t].label)}</h2><p class="hint">${esc(RE_TYPES[t].purpose)}${t === "hebdo" ? ` ${RE_TYPES.hebdo.duration} min, chaque semaine.` : t === "top15" ? " 15 min, chaque jour ouvré." : ""}</p>${t === "top15" && typeof cgTop15List === "function" ? cgTop15List(g) : RE_SITE_TYPES.includes(t) ? week(g) : `<div class="re-grid">${g.map(reCard).join("")}</div>`}</section>` : ""; }).join("");
   const past = reSessions().filter((s) => { const r = reGet(s.instance_id); return r && reSee(r); }).slice(0, 10);
   const hist = past.length ? `<section class="panel section"><h2>Derniers relevés</h2><ul class="pm-rows">${past.map((s) => `<li><div class="pm-row-main"><b>${esc(reTitle(reGet(s.instance_id)))}</b><span>${shortDate(s.date)} · ${jnPlural((s.decisions || []).length, "décision", "décisions")} · ${jnPlural((s.action_ids || []).length, "action", "actions")}${s.by ? ` · ${esc(s.by)}` : ""}</span></div><div class="pm-row-act"><button type="button" class="btn secondary small" data-re-minutes="${esc(s.id)}">Relevé</button></div></li>`).join("")}</ul></section>` : "";
-  return `${pageHead("Voir", "Réunions", "Chaque instance prépare son ordre du jour à partir des faits, garde ses décisions et suit ses actions.")}${agenda}${groups}${hist}`;
+  const missing = reAdmin() && !rows.some((r) => r.type === "top15") ? `<section class="panel re-setup"><h2>Compléter la cascade</h2><p>Ajoute un TOP 15 par site (15 min, chaque jour ouvré) : il reçoit ce que les TOP 5 remontent, répond ou monte à la revue hebdomadaire.</p><button type="button" class="btn" data-re-top15>Ajouter les TOP 15</button></section>` : "";
+  return `${pageHead("Voir", "Réunions", "Chaque instance prépare son ordre du jour à partir des faits, garde ses décisions et suit ses actions.")}${typeof cgOverview === "function" ? cgOverview() : ""}${missing}${agenda}${groups}${hist}`;
 }
 function reDraftKey(id) { return `bia-re-draft-${id}`; }
 function reDraft(id) { try { return JSON.parse(localStorage.getItem(reDraftKey(id)) || "null"); } catch { return null; } }
@@ -160,15 +164,17 @@ function reSiteSelect(r, value = "") {
   return `<select data-re-asite aria-label="Site de l’action"><option value="group">Groupe</option>${OPERATIONAL_SITES.map((s) => `<option value="${esc(s.id)}" ${s.id === value ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select>`;
 }
 function reActRow(r, a = {}) { return `<div class="re-act"><input data-re-aw placeholder="Quoi" value="${esc(a.w || "")}" aria-label="Quoi" autocomplete="off"><input data-re-ao list="ownerList" placeholder="Qui" value="${esc(a.o || "")}" aria-label="Qui"><input type="date" data-re-ad min="${today()}" value="${esc(a.d || reAddDays(today(), 7))}" aria-label="Pour quand">${reSiteSelect(r, a.s)}</div>`; }
+let reCurrentDraft = {};
 function reDossier(id) {
   const r = reGet(id);
   if (!r || !reSee(r)) { state.meetOpen = null; return rePage(); }
   const t = RE_TYPES[r.type] || RE_TYPES.hebdo, hold = reHold(r), draft = hold ? reDraft(r.id) || {} : {};
+  reCurrentDraft = draft;
   const blocks = t.agenda.map(([k, min]) => ({ k, min, ...reBlock(k, r) })), total = t.agenda.reduce((s, x) => s + x[1], 0);
   const people = String(r.participants || "").split(/[,;]/).map((x) => x.trim()).filter(Boolean), present = new Set(draft.present || []);
   const pend = blocks.find((b) => b.pending)?.pending || [];
   const form = hold ? `<section class="panel re-close"><h2>Décisions et actions</h2>
-      <div class="ap-field"><span class="metric-label">Présents</span><div class="filters">${people.map((p) => `<button type="button" class="chip ${present.has(p) ? "active" : ""}" data-re-p="${esc(p)}" aria-pressed="${present.has(p)}">${esc(p)}</button>`).join("")}</div><input id="reOthers" placeholder="Autres présents (facultatif)" value="${esc(draft.others || "")}" autocomplete="off"></div>
+      <div class="ap-field"><span class="metric-label">Présents</span><div class="filters">${people.map((p) => `<button type="button" class="chip ${present.has(p) ? "active" : ""}" data-re-p="${esc(p)}" aria-pressed="${present.has(p)}">${esc(p.charAt(0).toUpperCase() + p.slice(1))}</button>`).join("")}</div><input id="reOthers" placeholder="Autres présents (facultatif)" value="${esc(draft.others || "")}" autocomplete="off"></div>
       ${pend.length ? `<div class="ap-field"><span class="metric-label">Décisions attendues : la réponse donnée</span>${pend.map((d) => `<label class="field re-dec-pend">${esc(d.title)}<input data-re-dp="${esc(d.id)}" placeholder="Décision prise (laisser vide si reportée)" value="${esc(draft.dp?.[d.id] || "")}"></label>`).join("")}</div>` : ""}
       <div class="ap-field"><span class="metric-label">Décisions prises</span><div id="reDecs">${(draft.decs?.length ? draft.decs : [""]).map((x) => `<input data-re-dec value="${esc(x)}" placeholder="Une décision, en une phrase" autocomplete="off">`).join("")}</div><button type="button" class="btn ghost small" data-re-add-dec>+ Décision</button></div>
       <div class="ap-field"><span class="metric-label">Actions : quoi, qui, pour quand</span><div id="reActs">${(draft.acts?.length ? draft.acts : [{}]).map((a) => reActRow(r, a)).join("")}</div><button type="button" class="btn ghost small" data-re-add-act>+ Action</button>${ownerDatalist()}</div>
@@ -211,6 +217,7 @@ function reSetup() {
     add(make("comex", "group", nth(1, 4, 2), "10:00"));
     add(make("copil", "group", nth(2, 2), "14:00"));
     add(make("mensuelle", "group", nth(1, 1), "10:00"));
+    OPERATIONAL_SITES.forEach((s) => { const owner = osRecord(s.id)?.row.owner; add(make("top15", s.id, [0, 6].includes(new Date(today() + "T12:00:00").getDay()) ? reWorkday(today()) : today(), "08:45", { chair: owner && !/^à /i.test(owner) ? owner : RE_TYPES.top15.chair })); });
     OPERATIONAL_SITES.forEach((s, i) => { const owner = osRecord(s.id)?.row.owner; add(make("hebdo", s.id, reAddDays(monday, Math.floor(i / 2)), i % 2 ? "14:00" : "09:00", { chair: owner && !/^à /i.test(owner) ? owner : RE_TYPES.hebdo.chair })); });
   })) return;
   render(); toast(`${reRows().length} instances en place : ajustez dates, heures et animateurs avec « Modifier ».`);
@@ -242,6 +249,9 @@ function reCollect(root) {
     dp: Object.fromEntries([...root.querySelectorAll("[data-re-dp]")].map((t) => [t.dataset.reDp, t.value])),
     decs: [...root.querySelectorAll("[data-re-dec]")].map((t) => t.value),
     acts: [...root.querySelectorAll(".re-act")].map((x) => ({ w: x.querySelector("[data-re-aw]").value, o: x.querySelector("[data-re-ao]").value, d: x.querySelector("[data-re-ad]").value, s: x.querySelector("[data-re-asite]")?.value || "" })),
+    ans: Object.fromEntries([...root.querySelectorAll("[data-re-ans]")].map((t) => [t.dataset.reAns, t.value])),
+    up: Object.fromEntries([...root.querySelectorAll("[data-re-up]")].map((t) => [t.dataset.reUp, t.type === "checkbox" ? (t.checked ? "1" : "") : t.value])),
+    ret: [...root.querySelectorAll("[data-re-ret]")].filter((t) => t.checked).map((t) => t.dataset.reRet),
     next: $("reNext")?.value || "",
   };
 }
@@ -263,6 +273,7 @@ function reClose(id) {
       return aid;
     });
     const decisions = decs.map((text) => ({ text }));
+    if (typeof cgApply === "function") decisions.push(...cgApply(r, d, by));
     dp.forEach(([did, text]) => { const x = data.decisions.find((y) => y.id === did); if (x) { x.status = "Clos"; x.result = text.trim(); x.updated_at = now(); recordHistory(x, "Clos", `${reTitle(r)} du ${shortDate(today())}`); decisions.push({ text: `${x.title} : ${text.trim()}`, decision_id: did }); } });
     const present = [...d.present, ...d.others.split(/[,;]/).map((x) => x.trim()).filter(Boolean)];
     data.instanceSessions.unshift({ id: sid, instance_id: r.id, type: r.type, site_id: r.site_id, date: today(), by, present, notes: Object.fromEntries(Object.entries(d.notes).filter(([, v]) => v.trim())), decisions, action_ids: ids, counts, next_date: d.next, created_at: now() });
@@ -277,7 +288,7 @@ function reClose(id) {
 function reIcs(id) {
   const r = reGet(id);
   if (!r) return;
-  const rule = { Hebdomadaire: "FREQ=WEEKLY", "Toutes les 2 semaines": "FREQ=WEEKLY;INTERVAL=2", Mensuel: "FREQ=MONTHLY", "Toutes les 6 semaines": "FREQ=WEEKLY;INTERVAL=6", Trimestriel: "FREQ=MONTHLY;INTERVAL=3" }[r.cadence] || "FREQ=WEEKLY";
+  const rule = { "Chaque jour ouvré": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", Hebdomadaire: "FREQ=WEEKLY", "Toutes les 2 semaines": "FREQ=WEEKLY;INTERVAL=2", Mensuel: "FREQ=MONTHLY", "Toutes les 6 semaines": "FREQ=WEEKLY;INTERVAL=6", Trimestriel: "FREQ=MONTHLY;INTERVAL=3" }[r.cadence] || "FREQ=WEEKLY";
   const d = String(r.next_date || today()).replace(/-/g, ""), tm = String(r.time || "09:00").replace(":", "") + "00", t = RE_TYPES[r.type] || RE_TYPES.hebdo;
   const txt = (s) => String(s || "").replace(/\\/g, "\\\\").replace(/[,;]/g, (m) => "\\" + m).replace(/\n/g, "\\n");
   const desc = `${t.purpose}\nOrdre du jour : ${t.agenda.map(([k, m]) => `${RE_BLOCKS[k]} (${m} min)`).join(", ")}.\nDossier préparé dans BIA Lean OS › Voir › Réunions.`;
@@ -312,7 +323,7 @@ const reWatchBase = jnWatchCard;
 jnWatchCard = function () {
   const base = reWatchBase();
   if (!reCan() || role().readonly) return base;
-  const due = reRows().filter((r) => reSee(r) && reHold(r) && r.next_date && reDays(r.next_date) <= 1 && (state.site === "group" || r.site_id === "group" || r.site_id === state.site)).sort((a, b) => String(a.next_date).localeCompare(String(b.next_date)));
+  const due = reRows().filter((r) => r.type !== "top15" && reSee(r) && reHold(r) && r.next_date && reDays(r.next_date) <= 1 && (state.site === "group" || r.site_id === "group" || r.site_id === state.site)).sort((a, b) => String(a.next_date).localeCompare(String(b.next_date)));
   if (!due.length) return base;
   const rows = due.slice(0, 3).map((r) => `<button type="button" class="jn-row" data-re-go="${esc(r.id)}"><span class="jn-row-main"><span class="jn-tag ${reDays(r.next_date) < 0 ? "tone-open" : "tone-progress"}">Réunion</span><b>${esc(reTitle(r))}</b><span class="hint">${esc(reWhen(r.next_date))}${r.time ? ` · ${esc(r.time)}` : ""} · dossier prêt</span></span></button>`).join("");
   if (!base) return `<section class="jn-card jn-watch" aria-label="À surveiller"><div class="jn-card-head"><h2>À surveiller</h2></div><div class="jn-rows">${rows}</div></section>`;
