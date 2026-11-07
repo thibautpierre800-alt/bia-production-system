@@ -2454,3 +2454,33 @@ button.bp-cell:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
 .eg-tag.ok{color:var(--green)}.eg-tag.none{color:var(--red)}
 .eg-ctx{padding:10px 12px;border-left:4px solid var(--orange);background:var(--orange-soft);border-radius:6px;font-size:13px;font-weight:700;margin-bottom:4px}
 @media(max-width:600px){.eg-do .btn{flex:1 1 calc(50% - 8px);min-height:44px}.eg-card{padding:12px 13px}}
+
+/* ---------- 8.30 · Journal d'activité ---------- */
+.jr-tools{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.jr-tools .filters{margin:0}
+.jr-search input{width:100%;max-width:520px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit;font-size:15px}
+.jr-count{margin:0 0 14px;font-size:13px;font-weight:800}
+.jr-count .hint{font-weight:400}
+.jr-day{margin:0 0 18px}
+.jr-day h3{margin:0 0 8px;font-size:15px;text-transform:capitalize}
+.jr-day h3 small{font-size:12px;font-weight:600;color:var(--muted);text-transform:none}
+.jr-list{list-style:none;margin:0;padding:0;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.jr-ev{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;padding:11px 14px;border-top:1px solid #ecebe6;position:relative}
+.jr-ev:first-child{border-top:0}
+.jr-ev time{font-size:12px;font-weight:800;color:var(--muted);padding-top:2px;font-variant-numeric:tabular-nums}
+.jr-ev time::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;background:#c9c8c1}
+.jr-done time::before{background:var(--green)}.jr-create time::before{background:var(--blue)}.jr-due time::before{background:#e09a2b}.jr-archive time::before{background:#8b8b85}.jr-rules time::before{background:var(--orange)}.jr-status time::before{background:#555}
+.jr-body{min-width:0}
+.jr-body p{margin:0;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.jr-body p small{font-size:11px;color:var(--muted);font-weight:700}
+.jr-extra{color:#55554f;font-size:13px!important}
+.jr-due .jr-extra{color:#a85a00;font-weight:700}
+.jr-done .jr-extra{color:var(--green);font-weight:700}
+.jr-site{display:inline-block;margin-top:4px;font-size:11px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+.jr-det{margin-top:6px;font-size:13px}
+.jr-det summary{cursor:pointer;color:#55554f;font-weight:700;min-height:28px;display:flex;align-items:center}
+.jr-det dl{margin:6px 0 0;display:grid;gap:4px}
+.jr-det dl div{display:grid;grid-template-columns:minmax(90px,30%) minmax(0,1fr);gap:8px}
+.jr-det dt{font-weight:800;color:#3a3a36}.jr-det dd{margin:0;overflow-wrap:anywhere;color:#3a3a36}
+.jr-more{display:flex;justify-content:center;margin:6px 0 20px}
+@media(max-width:600px){.jr-ev{grid-template-columns:46px minmax(0,1fr);padding:10px 12px}.jr-det dl div{grid-template-columns:1fr;gap:0}.jr-tools .filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}}
