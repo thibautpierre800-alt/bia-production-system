@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','pratiques.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-20-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.20.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-21-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.21.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -618,8 +618,9 @@ test('Formation, roadmap, bibliothèque et bonnes pratiques restent opérationne
   run('state.view="training";render();openTraining("FOR-016")');assert.match(q('#modalContent').textContent,/VSL/);run('closeModal();openTrainingPerson("PER-001")');assert.match(q('#modalContent').textContent,/Validation RH/);
   run('closeModal();state.view="roadmap";render()');assert.match(q('#appView').textContent,/Roadmap/);
   run('state.view="tools";startTool("smed")');assert.match(q('#appView').textContent,/À faire maintenant/);assert.equal(run('data.toolRuns.some(r=>r.module_id==="smed")'),true);
-  run('practiceForm()');fill('#practiceTitle','Support de gabarits');fill('#practiceSummary','Rangement visuel au poste');fill('#practiceEvidence','Temps de recherche mesuré');fill('#practiceStatus','Publiée');submit('#practiceForm');assert.ok(q('#practiceForm'));
-  fill('#practiceTransfer','Vérifier la place et la charge');fill('#practiceValidator','Lean Groupe');submit('#practiceForm');const id=run('data.practices[0].id');run(`openRecord('${id}')`);assert.equal(q('#practiceTitle').value,'Support de gabarits');
+  run('practiceForm()');assert.ok(q('#bpNewForm'));fill('#bpTitle','Support de gabarits');fill('#bpSummary','Rangement visuel au poste');submit('#bpNewForm');const id=run('data.practices[0].id');assert.equal(run('data.practices[0].status'),'À compléter');assert.ok(q('.bp-study [data-bp-publish][disabled]'));
+  fill('.bp-form [data-bp-f="evidence"]','Temps de recherche mesuré');fill('.bp-form [data-bp-f="transfer"]','Vérifier la place et la charge');fill('#bpValidator','Lean Groupe');click('[data-bp-publish]');assert.equal(run(`data.practices.find(p=>p.id==='${id}').status`),'Publiée');
+  run(`closeModal();openRecord('${id}')`);assert.ok(q('.bp-study'));click('[data-bp-full]');assert.equal(q('#practiceTitle').value,'Support de gabarits');
 });
 test('Import : structure, référentiel et doublons contrôlés avant restauration',t=>{
   const {run}=app(t);assert.throws(()=>run('validateImport({meta:{schema:5}})'));

@@ -141,3 +141,7 @@ La branche `backup/before-8.19.0-2026-11-07` conserve le commit `ff33adf`, corre
 ## Retour à 8.19.0
 
 La branche `backup/before-8.20.0-2026-11-07` conserve le commit `63fea6c`, correspondant à la version 8.19.0. La 8.20.0 ajoute `vsm-flux.js` et quelques champs aux VSM ; la 8.19.0 ouvre les mêmes VSM dans l’éditeur graphique libre, qui lit l’ordre des étapes par leur position.
+
+## Retour à 8.20.0
+
+La branche `backup/before-8.21.0-2026-11-07` conserve le commit `817ae3e`, qui correspond à la version 8.20.0. La 8.21.0 ajoute `pratiques.js`, des champs aux bonnes pratiques et aux déploiements, et la collection `opls`. La 8.20.0 ouvre les mêmes pratiques dans le formulaire d'origine et ignore les OPL.
