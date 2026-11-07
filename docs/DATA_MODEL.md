@@ -196,3 +196,8 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.28.0 (additive)
 
 - Aucun champ nouveau : `documents[]` de type `BEFORE_AFTER` garde `structured_data.{ before_photo, after_photo, problem, description, gain }` et `kaizen_id`. Une bonne pratique partagée depuis une fiche porte `source_id` = la fiche.
+
+## Extension 8.29.0 (additive)
+
+- `gapReviews[]` (non indexée) : `{ id: "EC-001", site_id, kpi_id, measure_id, decision: "watch", reason, note, by, at, until }`. Une surveillance couvre l’écart jusqu’à `until`, sauf si un nouveau relevé fait apparaître un signal.
+- Une action créée depuis un écart porte `kpi_id`, `origin_type: "KPI"`, `origin_id` = l’indicateur et `category: "Performance"`. Un chantier créé depuis un écart porte `kpi_id` et `kpi{ label, unit, base, target }`.

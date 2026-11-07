@@ -173,3 +173,7 @@ La branche `backup/before-8.27.0-2026-11-07` conserve le commit `28fe26a`, qui c
 ## Retour à 8.27.0
 
 La branche `backup/before-8.28.0-2026-11-07` conserve le commit `de84657`, qui correspond à la version 8.27.0. La 8.28.0 ajoute `avant-apres.js`, sans nouveau champ : la 8.27.0 rouvre les mêmes fiches dans son formulaire.
+
+## Retour à 8.28.0
+
+La branche `backup/before-8.29.0-2026-11-07` conserve le commit `6fa1ae7`, qui correspond à la version 8.28.0. La 8.29.0 ajoute `ecarts.js` et la collection `gapReviews`. La 8.28.0 ignore cette collection ; les actions créées depuis un écart restent des actions ordinaires.
