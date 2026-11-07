@@ -237,3 +237,7 @@ La branche `backup/before-8.42.0-2026-11-07` conserve le commit `1123d09`, qui c
 ## Retour à 8.42.0
 
 La branche `backup/before-8.43.0-2026-11-07` conserve le commit de la version 8.42.0. La 8.43.0 ajoute `top5.js`. Pour la télévision, utiliser `…/#top5` sur un appareil où le site et l’atelier ont été choisis. Tant que le stockage partagé n’est pas installé, saisir le point sur l’écran lui-même.
+
+## Retour à 8.43.0
+
+La branche `backup/before-8.44.0-2026-11-07` conserve la version 8.43.0. Aucun nouveau fichier.

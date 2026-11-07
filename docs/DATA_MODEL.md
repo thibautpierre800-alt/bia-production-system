@@ -278,3 +278,7 @@ Aucune nouvelle donnée. La clé locale `bia-news-seen` retient la dernière nou
 ## Extension 8.43.0 (additive)
 
 Nouvelle collection `infos[]` : `{ id, site_id ("group" | site), workshop_id, title, why, text, from, start, end, relayed[{ site_id, workshop_id, at, by }], created_at, archived_at }`. `meetings[]` reçoit `kind: "top5"`, `letters`, `notes { S, Q, C, D, P, free }`, `raised[]`, `infos[]` et `answers[]`. Le brouillon du point est gardé sur l’appareil (`bia-t5-<site>-<atelier>-<date>`).
+
+## Extension 8.44.0 (additive)
+
+`infos[]` reçoit `urgent`, `photo` et `questions[{ id, site_id, workshop_id, text, at, by, answer, answered_at, answered_by, returned_at, returned_by }]`. `meetings[]` (TOP 5) reçoit `questions[]`.
