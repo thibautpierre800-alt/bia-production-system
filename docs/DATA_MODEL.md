@@ -214,3 +214,9 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 
 - `connectors[].status` : `À spécifier`, `Contrat reçu`, `Test local`, `Import régulier`, `Automatique`.
 - `syncLog[]` : `ignored` = nombre de lignes sans valeur ignorées à l’import.
+
+## Extension 8.33.0 (additive)
+
+- `instances[]` (non indexée) : `{ id: "INS-001", type: "comex"|"copil"|"mensuelle"|"hebdo", site_id, title, cadence, time, duration, chair, participants, next_date, last_date }`.
+- `instanceSessions[]` (non indexée) : `{ id: "RE-001", instance_id, type, site_id, date, by, present[], notes{ point: texte }, decisions[{ text, decision_id }], action_ids[], counts{}, next_date, created_at }`.
+- Une action créée en réunion porte `origin_type: "Réunion"`, `meeting_id` (la séance) et `meeting_series` (l’instance). Une décision attendue tranchée en réunion passe à `status: "Clos"` avec `result`.

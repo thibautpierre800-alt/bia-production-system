@@ -1,5 +1,42 @@
 # Changelog
 
+## 8.33.0 — 7 novembre 2026
+
+**Réunions de pilotage : COMEX, COPIL, revue mensuelle des sites, revue hebdomadaire de chaque site.**
+
+- Nouvel onglet Voir › Réunions. « Mettre en place les quatre instances » crée le COMEX (trimestriel), le COPIL amélioration continue (mensuel), la revue mensuelle des sites (avec le directeur opérationnel Groupe) et une revue hebdomadaire par site.
+  - Les revues hebdomadaires sont réparties du lundi au jeudi.
+  - Cadence, date, heure, durée, animateur et participants se modifient.
+- Le dossier de séance se prépare seul à partir des données. Chaque point a sa durée :
+  - sécurité ;
+  - actions de la dernière réunion ;
+  - indicateurs hors cible, avec leur lecture et leur réponse ;
+  - performance par site ;
+  - chantiers (météo, étape, sans point depuis 7 jours) ;
+  - actions en retard ;
+  - ce que le site attend du Groupe ;
+  - bonnes pratiques à partager ;
+  - gains validés ;
+  - programme amélioration continue (jalons et priorités) ;
+  - risques et points bloquants ;
+  - décisions à prendre.
+- Pendant la réunion :
+  - présents, une note par point, décisions prises ;
+  - réponse aux décisions attendues, qui les ferme ;
+  - actions qui, quoi, pour quand.
+  - Le brouillon est gardé sur l’appareil.
+- « Clore la réunion » :
+  - enregistre le relevé de décisions, à imprimer ;
+  - crée les actions et fixe la prochaine date.
+  - Les actions reviennent au point « Actions de la dernière réunion ».
+- « Imprimer le dossier » prépare la lecture avant la réunion. « Agenda (.ics) » ajoute la série à Outlook avec sa récurrence.
+- L’accueil rappelle la réunion du jour et du lendemain, avec le dossier prêt.
+- Accès :
+  - Le directeur de site voit et tient la revue hebdomadaire de son site, et voit la revue mensuelle et le COPIL.
+  - La DG consulte.
+
+Données : nouvelles collections `instances[]` et `instanceSessions[]` (non indexées) ; les actions nées en réunion portent `meeting_id` et `meeting_series`.
+
 ## 8.32.0 — 7 novembre 2026
 
 **Connecteurs : d’où viennent les chiffres, et comment les faire arriver sans ressaisie.**
