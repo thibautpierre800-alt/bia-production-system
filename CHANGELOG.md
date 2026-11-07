@@ -1,5 +1,31 @@
 # Changelog
 
+## 8.32.0 — 7 novembre 2026
+
+**Connecteurs : d’où viennent les chiffres, et comment les faire arriver sans ressaisie.**
+
+- « D’où viennent les relevés » : pour chaque site et chaque indicateur, le dernier relevé, son origine et son âge.
+  - Origines : saisi, importé, calculé, à vérifier, exemple.
+  - En orange, ce qui est plus ancien que la fréquence de l’indicateur ou manquant.
+- « Importer un fichier » en trois temps :
+  - un modèle pré-rempli : une ligne par site et indicateur, séparateur « ; », lisible dans Excel ;
+  - le fichier ;
+  - la vérification ligne à ligne, avec l’aperçu et l’état de chaque relevé, puis la confirmation.
+- Pendant l’import :
+  - Les lignes sans valeur sont ignorées.
+  - Pour le reste, c’est tout ou rien.
+  - Les lignes en erreur se téléchargent avec leur motif et leur numéro de ligne d’origine.
+- « Systèmes sources » suit le chemin Cadrer → Contrat → Essai sur fichier → Import régulier → Automatique, avec le contact technique et la fréquence.
+  - « + SEQUOIA » prépare la fiche en un geste.
+- « Fiche de raccordement » à imprimer et remettre à l’informatique. Elle contient :
+  - les colonnes du fichier, les indicateurs attendus avec leur définition, et les codes des sites et ateliers ;
+  - les contrôles à l’import, les règles de sécurité et les étapes.
+- En bas de page :
+  - le journal des imports, qui indique aussi le nombre de lignes ignorées ;
+  - la file de synchronisation (préparation serveur).
+
+Données : `connectors[].status` accepte en plus « Import régulier » et « Automatique » ; `syncLog[]` porte `ignored`.
+
 ## 8.31.0 — 7 novembre 2026
 
 **Paramètres : ce que l’appli doit connaître, et ce qui manque encore.**

@@ -185,3 +185,7 @@ La branche `backup/before-8.30.0-2026-11-07` conserve le commit `241adee`, qui c
 ## Retour à 8.30.0
 
 La branche `backup/before-8.31.0-2026-11-07` conserve le commit `d7fc5f0`, qui correspond à la version 8.30.0. La 8.31.0 ajoute `parametres.js`, sans nouveau champ.
+
+## Retour à 8.31.0
+
+La branche `backup/before-8.32.0-2026-11-07` conserve le commit `767a533`, qui correspond à la version 8.31.0. La 8.32.0 ajoute `connecteurs.js`. La 8.31.0 affiche les nouveaux statuts de connecteur tels quels et ignore `syncLog[].ignored`.
