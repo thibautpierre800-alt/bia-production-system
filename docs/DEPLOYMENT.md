@@ -145,3 +145,7 @@ La branche `backup/before-8.20.0-2026-11-07` conserve le commit `63fea6c`, corre
 ## Retour à 8.20.0
 
 La branche `backup/before-8.21.0-2026-11-07` conserve le commit `817ae3e`, qui correspond à la version 8.20.0. La 8.21.0 ajoute `pratiques.js`, des champs aux bonnes pratiques et aux déploiements, et la collection `opls`. La 8.20.0 ouvre les mêmes pratiques dans le formulaire d'origine et ignore les OPL.
+
+## Retour à 8.21.0
+
+La branche `backup/before-8.22.0-2026-11-07` conserve le commit `0ab9fa6`, qui correspond à la version 8.21.0. La 8.22.0 ajoute `bibliotheque.js` et trois fiches dans `lean-library.js`, sans changer les données : les démarches enregistrées (`toolRuns`) restent lisibles par la 8.21.0.

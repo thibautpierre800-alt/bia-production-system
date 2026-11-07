@@ -160,3 +160,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `practices[]` : `problem`, `res_label`, `res_before`, `res_after`, `res_unit` (résultat avant → après), `effort` (Moins d’un jour, Moins d’une semaine, Un chantier), `cost` (€), `where` (où la voir), `before_photo`, `after_photo`, `published_at`. Statuts inchangés : « À compléter », « À valider », « Publiée ».
 - `deployments[]` (une reprise par site) : `interest_at`, `tested_at`, `proven_at`, `deployed_at`, `action_id` (action d’essai du pilote, `origin_type: "Bonne pratique"`, `origin_id` = le déploiement), `local_before`, `local_after`, `local_photo`, `na_reason`, `improvement` (ce que le site a amélioré, affiché sur la fiche d’origine). Étapes inchangées : Candidate, Test, Validée sur autre site, Déployée, Non applicable.
 - `opls[]` (non indexée) : `{ id: "OPL-001", site_id, workshop_id, kind: "base"|"securite"|"amelioration"|"probleme", title, station, author, version, status: "brouillon"|"validee", photo_a, photo_b, points[≤ 3], why, minutes, practice_id, validated_by, validated_at, trained[{ name, date, by, version }] }`. Une personne compte comme formée sur la version en vigueur.
+
+## Extension 8.22.0 (additive)
+
+- Aucune collection nouvelle. `lean-library.js` compte 33 fiches (`opl`, `polyvalence`, `kaizen` ajoutées) et 18 situations « J’ai un problème », chacune reliée à une fiche existante par son titre. Les démarches (`toolRuns[]`) sont inchangées.

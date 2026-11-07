@@ -36,6 +36,7 @@ const scripts = [
   "sqcdp-jour.js",
   "vsm-flux.js",
   "pratiques.js",
+  "bibliotheque.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {
