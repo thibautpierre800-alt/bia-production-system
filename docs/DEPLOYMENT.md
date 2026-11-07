@@ -137,3 +137,7 @@ La branche `backup/before-8.18.0-2026-11-07` conserve le commit `d51b4fa`, corre
 ## Retour à 8.18.0
 
 La branche `backup/before-8.19.0-2026-11-07` conserve le commit `ff33adf`, correspondant à la version 8.18.0. La 8.19.0 ajoute `sqcdp-jour.js` et les collections `sqcdpDays` et `meetings`, que la 8.18.0 ignore et conserve ; les sujets du TOP 15 créés depuis les lettres restent des sujets ordinaires.
+
+## Retour à 8.19.0
+
+La branche `backup/before-8.20.0-2026-11-07` conserve le commit `63fea6c`, correspondant à la version 8.19.0. La 8.20.0 ajoute `vsm-flux.js` et quelques champs aux VSM ; la 8.19.0 ouvre les mêmes VSM dans l’éditeur graphique libre, qui lit l’ordre des étapes par leur position.
