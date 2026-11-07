@@ -205,3 +205,7 @@ La branche `backup/before-8.35.0-2026-11-07` conserve le commit `5d6492b`, qui c
 ## Retour à 8.35.0
 
 La branche `backup/before-8.36.0-2026-11-07` conserve le commit `bd71d36`, qui correspond à la version 8.35.0. La 8.36.0 ajoute `trs.js`. La collection `trsShifts` est ignorée par la 8.35.0. Les relevés TRS de source « Feuilles de poste » restent des relevés ordinaires.
+
+## Retour à 8.36.0
+
+La branche `backup/before-8.37.0-2026-11-07` conserve le commit `51b5a1b`, qui correspond à la version 8.36.0. La 8.37.0 ajoute `gains.js` et `environnement.js`. Les gains de l’ancien registre restent compatibles : `quantity` et `period` sont tenus à jour.

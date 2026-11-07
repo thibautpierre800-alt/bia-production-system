@@ -1,5 +1,62 @@
 # Changelog
 
+## 8.37.0 — 7 novembre 2026
+
+**Les gains et l’environnement deviennent des écrans à part entière : Voir › Gains et Voir › Environnement, à côté de Pilotage.**
+
+### Gains
+- Chaque gain a un avant (la référence), un objectif et un après (la mesure), affichés sur une barre orientée vers le progrès.
+- Il existe sept types de gains :
+  - financier, en trois natures : économie réelle, coût évité, capacité libérée ;
+  - productivité ;
+  - qualité ;
+  - délai et service ;
+  - sécurité et santé ;
+  - environnement ;
+  - humain et social.
+- Un gain se calcule ainsi :
+  - il est annualisé : écart × volume par an pour un gain qui se répète, une seule fois pour un gain ponctuel ;
+  - un gain non financier peut être valorisé en euros (coût horaire, prix du kWh) ;
+  - le coût de mise en œuvre donne le retour sur investissement en mois.
+- Un gain passe par quatre étapes :
+  - estimé, calculé sur l’objectif ;
+  - à valider, une fois l’après mesuré ;
+  - validé par un responsable, avec la preuve ;
+  - revérifié à 3, 6 et 12 mois (tenu ou non tenu).
+- Un seul gain est admis par source, type et unité : il n’y a pas de double comptage.
+- L’écran affiche :
+  - les euros par an validés et en prévision, et leur répartition par nature ;
+  - l’objectif annuel du site ou du groupe ;
+  - le cumul des validations sur l’année, avec la diagonale du rythme à tenir ;
+  - les totaux par type et par site ;
+  - un export CSV.
+- « Résultats sans gain déclaré » liste les chantiers chiffrés et les actions suivies, et préremplit leur gain en un geste.
+- La revue mensuelle et le COPIL affichent les gains en euros par an, avec les plus importants.
+
+### Environnement
+- Chaque site saisit chaque mois sa production (m³, m², pièces ou tonnes), son électricité, son gaz et sa chaleur, son eau, ses déchets non dangereux dont valorisés et ses déchets dangereux.
+- Huit indicateurs sont suivis :
+  - électricité, gaz et chaleur, eau et déchets par unité produite ;
+  - taux de valorisation des déchets ;
+  - déchets dangereux ;
+  - CO₂ de l’énergie, avec les facteurs d’émission du site ;
+  - incidents.
+- Pour chaque indicateur, l’écran donne :
+  - la référence, saisie ou calculée sur la moyenne de l’an dernier ;
+  - l’objectif, saisi ou déduit d’une baisse visée en % ;
+  - le dernier mois et l’écart à la référence ;
+  - la courbe sur 12 mois ;
+  - un détail sur 24 mois avec le tableau des relevés.
+- Les incidents environnementaux et les presque-incidents se déclarent avec une action corrective (catégorie Environnement).
+- Les obligations du site (contrôles, déclarations, registres) se suivent avec leur périodicité et leur échéance, à partir d’exemples à adapter.
+- La vue groupe montre chaque site face à ses objectifs.
+- « À surveiller » signale un mois non saisi ou une obligation en retard.
+- La revue mensuelle et le COPIL ont un bloc Environnement.
+
+Données :
+- `gains[]` étendus : `family`, `nature`, `target`, `per_year`, `recurring`, `euro_rate`, `cost`, `start_date`, `validated_at`, `checks[]` ;
+- nouvelles collections `gainTargets[]`, `envMonths[]`, `envEvents[]`, `envDuties[]` et `envSites[]`.
+
 ## 8.36.0 — 7 novembre 2026
 
 **Le TRS du poste : la feuille de poste saisie, le TRS calculé selon la NF E60-182 et envoyé au pilotage.**
