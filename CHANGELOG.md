@@ -1,5 +1,20 @@
 # Changelog
 
+## 8.17.0 — 7 novembre 2026
+
+**Idées et Kaizen : une idée en 30 secondes, une réponse sous 48 heures, les réalisations à la vue de tous.**
+
+- « Proposer une idée » (accueil, bouton « + », Résoudre › Kaizen) ouvre un formulaire court pour tous les profils, opérateurs compris : photo d’abord, ce qui ne va pas, mon idée, « je peux le faire moi-même » ou « il faut de l’aide », zone, nom (retenu pour la fois suivante).
+- Résoudre › Kaizen devient la page des idées.
+  - « À répondre », avec le temps d’attente ; au-delà de 48 heures, l’idée passe en rouge et remonte dans « À surveiller ».
+  - Deux réponses : « On le fait » (qui, pour quand) ou « Pas maintenant » (avec la raison, obligatoire).
+  - « C’est fait » : photo après et ce que ça a changé ; le responsable valide le gain.
+- Mur des idées réalisées avec photos avant / après et « Bravo » (un par personne). Fiche Kaizen d’une page à imprimer. Chiffres du mois : idées, en attente, réponses sous 48 h, réalisations.
+- L’auteur voit la réponse à ses idées sur l’accueil, sous « Un problème au poste ? ».
+- Le registre en neuf étapes et le registre des gains restent dans l’onglet « Registre et gains ». Une idée créée depuis un autre dossier garde le formulaire complet.
+
+Données : `kaizens[]` reçoit `proposer`, `self`, `before_photo`, `after_photo`, `decision`, `done_at`, `kudos` ; rien n’est retiré.
+
 ## 8.16.0 — 6 novembre 2026
 
 **Polyvalence : la matrice I-L-U-O par équipe et par poste.**
