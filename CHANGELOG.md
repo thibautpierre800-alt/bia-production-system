@@ -1,5 +1,34 @@
 # Changelog
 
+## 8.21.0 — 7 novembre 2026
+
+**Bonnes pratiques partagées entre sites (Yokoten) et leçons ponctuelles (OPL).**
+
+- Bonnes pratiques : chaque site voit le catalogue des pratiques publiées par les autres.
+  - Photo avant et après, résultat chiffré (avant → après), effort pour la refaire, et où en est chaque site.
+  - Les pratiques que le site n'a pas encore regardées sont signalées « Nouveau pour vous ».
+- La fiche d'une page : le problème, ce qu'on a fait, le résultat et sa preuve, l'effort et le coût, les conditions pour la refaire ailleurs, où la voir, le contact.
+  - Brouillon, demande de validation, puis publication par le responsable Lean.
+  - La fiche s'imprime en A4.
+- Chaque site choisit au lieu de se voir imposer la pratique.
+  - « Ça nous intéresse », puis « On l'essaie chez nous » (pilote, date, adaptation, action dans le plan du pilote) ou « Pas pour nous » avec la raison.
+  - Ensuite le résultat prouvé chez soi (photo, avant → après, preuve, validateur), qui clôt l'action d'essai, puis « Déployée » avec le standard du site.
+  - Ce que le site a amélioré au passage revient sur la fiche du site d'origine.
+- Déploiement : tableau pratiques × sites, avec les reprises prouvées par site et le délai entre publication et déploiement.
+- Leçons ponctuelles (Pérenniser › OPL), pour tous les profils.
+  - Un point par leçon. Deux photos selon le type : bon / pas bon, à faire / danger, avant / après, défaut / parade.
+  - Trois points clés au plus, le pourquoi, la durée au poste.
+  - Validée par le chef d'équipe ou le responsable.
+  - Former l'équipe : montrer, expliquer, faire faire, vérifier, puis noter qui est formé, quand, par qui et sur quelle version.
+  - L'OPL A4 porte la grille de signatures. Une nouvelle version repasse en validation et se présente de nouveau à l'équipe.
+- Liens :
+  - « Partager aux sites » depuis une idée dont le gain est validé ;
+  - « Faire l'OPL » depuis une bonne pratique ou une reprise ;
+  - OPL dans le bouton « + » ;
+  - sur l'accueil : pratiques d'autres sites à regarder, essais à conclure, OPL à présenter.
+
+Données : `practices[]` et `deployments[]` existants, avec des champs ajoutés. Nouvelle collection `opls[]`. Rien n'est retiré.
+
 ## 8.20.0 — 7 novembre 2026
 
 **VSM pas à pas, avec les symboles normalisés et l’échelle de temps.**
