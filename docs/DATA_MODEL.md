@@ -135,3 +135,9 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.17.0 (additive)
 
 - `kaizens[]` : `proposer`, `self` (l’auteur peut le faire), `zone_id`, `before_photo`, `after_photo`, `decision { verdict: "go"|"no", reason, by, at }`, `done_at`, `result`, `validated_by`, `kudos[{ by, at }]`. Statuts utilisés : Idée → Mise en œuvre (« On le fait ») → Mesure (« C’est fait ») → Gain validé. Une idée refusée garde le statut Idée avec `decision.verdict = "no"`.
+
+## Extension 8.18.0 (additive)
+
+- `balances[]` : `{ id: "EQ-001", site_id, project_id?, title, owner, demand_per_day, available_min, stations[{ id, name, operators }], elements[{ id, station_id, label, sec, kind: "va"|"nva"|"muda", act?, who?, when?, action_id? }], chrono?: { station_id, started_at, lap_at, ended_at? }, baseline?: { at, stations, elements }, created_at, updated_at }`.
+- Takt = `available_min × 60 / demand_per_day`. Cycle d’un poste = somme des éléments / opérateurs. Efficacité d’équilibrage = contenu total / (opérateurs × cycle du goulot).
+- Actions issues d’un gaspillage : `origin_type: "Équilibrage"`, `balance_id`, sans `origin_id`.

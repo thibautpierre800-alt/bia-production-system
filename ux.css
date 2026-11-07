@@ -1964,3 +1964,61 @@ button.pv-btn:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
 .create-choice.id-choice>span b{font-size:16px}
 @media screen and (max-width:540px){.id-thumb{width:52px;height:52px}.id-card{padding:10px}}
 @media print{.id-sheet,.id-sheet header,.id-sheet footer,.id-st{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+/* ---------- 8.18 · Équilibrage et Yamazumi ---------- */
+.eq-chart{margin:0;padding:12px 14px 10px;border-radius:14px;background:#fff;border:1px solid var(--line);min-width:0}
+.eq-plot{position:relative;display:flex;align-items:flex-end;gap:10px;height:260px;padding:22px 4px 0;border-bottom:2px solid #1d1d1b;overflow-x:auto}
+.eq-col{position:relative;flex:1 0 56px;max-width:120px;height:100%;display:flex;flex-direction:column;justify-content:flex-end}
+.eq-bar{position:relative;flex:1 1 auto;display:flex;align-items:flex-end;justify-content:center}
+.eq-stack{width:72%;display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+.eq-seg{display:block;width:100%;flex:1 1 0;border-top:1px solid rgba(255,255,255,.85);min-height:1px}
+.eq-seg.k-va,.eq-chart i.k-va{background:#1f8a52}.eq-seg.k-nva,.eq-chart i.k-nva{background:#e0a800}.eq-seg.k-muda,.eq-chart i.k-muda{background:#c4321f}
+.eq-ct{position:absolute;left:0;right:0;margin-bottom:3px;text-align:center;font-size:12px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+.eq-col.over .eq-ct{color:#b42318}
+.eq-col.neck .eq-stack{box-shadow:0 0 0 3px #1d1d1b}
+.eq-name{position:absolute;top:100%;left:-4px;right:-4px;margin-top:6px;font-size:11.5px;font-weight:800;text-align:center;line-height:1.2;overflow-wrap:anywhere}
+.eq-name small{color:#62625c}
+.eq-col.neck .eq-name{color:#b42318}
+.eq-takt{position:absolute;left:0;right:0;height:0;border-top:2px dashed #1d5fa8;z-index:2;pointer-events:none}
+.eq-takt em{position:absolute;right:0;bottom:2px;padding:0 4px;background:#fff;font-style:normal;font-size:11.5px;font-weight:900;color:#1d5fa8}
+.eq-chart figcaption{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:52px;font-size:12px;color:#55554f}
+.eq-chart figcaption i{display:inline-block;width:12px;height:12px;margin-right:5px;border-radius:3px;vertical-align:-1px}
+.eq-chart figcaption i.tk{height:0;border-top:2px dashed #1d5fa8;border-radius:0;vertical-align:3px}
+.eq-chart.compact{padding:8px;border:0;background:var(--paper)}
+.eq-chart.compact .eq-plot{height:110px;gap:4px;padding-top:16px}
+.eq-chart.compact .eq-col{flex-basis:20px}
+.eq-chart.compact .eq-ct{font-size:10px}
+.eq-chart.compact .eq-name,.eq-chart.compact figcaption{display:none}
+.eq-chart.compact .eq-takt em{font-size:10px}
+.eq-grid .eq-chart{margin:6px 0}
+.eq-params{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.eq-params label{display:grid;gap:3px;font-size:12px;font-weight:800;color:#55554f}
+.eq-params input{min-height:44px;font:inherit;font-size:16px;font-weight:800;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff}
+.eq-taktline{margin:0;font-size:14px}
+.eq-stations,.eq-els{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.eq-station,.eq-el,.eq-station>*{min-width:0}
+.eq-el .tm-pt-head .sm-dur-in{flex:0 0 84px;width:84px;font-weight:800;text-align:center}
+.eq-kinds .ik-s{white-space:normal;line-height:1.15}
+.eq-station{display:grid;gap:8px;padding:12px;border-radius:14px;background:#fff;border:1px solid var(--line)}
+.eq-station.neck{border:2px solid #1d1d1b}
+.eq-st-head{display:flex;align-items:center;gap:8px}
+.eq-st-head input{flex:1 1 auto;min-width:0;min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:16px;font-weight:900}
+.eq-st-ct{flex:0 0 auto;padding:4px 10px;border-radius:999px;background:#e5f4e4;color:#14603a;font-weight:900;font-variant-numeric:tabular-nums}
+.eq-st-ct.over{background:#fdecea;color:#b42318}
+.eq-st-tools{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+.eq-st-tools .filters{margin:0;align-items:center}
+.eq-el{display:grid;gap:6px;padding:8px 10px;border-radius:12px;background:var(--paper);border-left:5px solid #1f8a52}
+.eq-el.k-nva{border-left-color:#e0a800}.eq-el.k-muda{border-left-color:#c4321f}
+.eq-kinds .ik-s{min-height:40px;font-size:12.5px}
+.ik-s.eq-k.k-va.on{background:#1f8a52;border-color:#1f8a52;color:#fff}.ik-s.eq-k.k-nva.on{background:#e0a800;border-color:#e0a800;color:#1d1d1b}.ik-s.eq-k.k-muda.on{background:#c4321f;border-color:#c4321f;color:#fff}
+.eq-move{margin:0}.eq-move select{width:100%;min-height:44px;font-size:16px;border:1px solid var(--line);border-radius:10px;padding:0 8px;background:#fff}
+.eq-chrono{padding:12px}
+.eq-alert{margin:0;padding:10px 12px;border-radius:12px;background:#fdecea;color:#8a1c12;font-weight:800}
+.eq-ok{margin:0;padding:10px 12px;border-radius:12px;background:#e5f4e4;color:#14603a;font-weight:800}
+.eq-cmp{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:12px;overflow:hidden}
+.eq-cmp th,.eq-cmp td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;font-variant-numeric:tabular-nums}
+.eq-cmp td.ok{color:#14603a;font-weight:900}.eq-cmp tr.neck th{color:#b42318}
+.eq-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:10px}
+.eq-two small{font-size:11.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:#62625c}
+.eq-sheet .eq-chart{border:0}
+@media screen and (max-width:540px){.eq-el .tm-pt-head{flex-wrap:wrap}.eq-el .sm-label{order:0;flex:1 1 100%}.eq-el .tm-pt-head .sm-dur-in{order:1;margin-left:0;margin-right:auto}.eq-el .tm-del{order:2}.eq-plot{height:220px;gap:6px}.eq-col{flex-basis:44px}.eq-two{grid-template-columns:minmax(0,1fr)}}
+@media print{.eq-seg,.eq-takt,.eq-chart figcaption i,.eq-st-ct{-webkit-print-color-adjust:exact;print-color-adjust:exact}.eq-plot{overflow:visible}}
