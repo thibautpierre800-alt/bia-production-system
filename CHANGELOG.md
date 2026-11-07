@@ -1,5 +1,28 @@
 # Changelog
 
+## 8.25.0 — 7 novembre 2026
+
+**Chantiers : une charte d’une page, des étapes, un point par semaine, un gain mesuré et tenu.**
+
+- Créer un chantier : une phrase, la méthode, l’indicateur à faire bouger (aujourd’hui, cible, unité), le pilote et la date.
+- La charte :
+  - le problème chiffré et le périmètre ;
+  - l’indicateur, avec sa référence et sa cible ;
+  - le pilote, le sponsor, l’équipe et la date cible.
+- L’avancement suit six étapes adaptées à la méthode (SMED, VSM, TPM, DMAIC, ou étapes génériques) qui se cochent au fil de l’eau.
+  - L’étape en cours, le statut et l’avancement se calculent tout seuls. Les chantiers existants gardent leur étape.
+- Le point de la semaine se fait en un geste : dans les temps, risque ou bloqué, avec une phrase obligatoire si ça coince. L’historique des points est gardé.
+- Les outils du chantier sont reliés : étude SMED, équilibrage, VSM, dossier de résolution, actions.
+- Le résultat :
+  - les mesures dans le temps face à la référence et à la cible (barres, cible en pointillé) ;
+  - le gain validé par un responsable ;
+  - la tenue à 30, 60 et 90 jours.
+- La clôture n’est possible qu’une fois le gain validé, l’étape de standardisation faite et les actions closes.
+- Le portefeuille montre pour chaque chantier sa météo, son étape, son indicateur et sa date cible. Il signale aussi les chantiers sans point depuis 7 jours, qui remontent sur l’accueil des responsables.
+- Le formulaire complet reste accessible.
+
+Données : `projects[]` existant. Champs ajoutés : `charter`, `kpi`, `steps_done`, `weather`, `measures`, `verified`, `closed_at`. `status`, `progress`, `baseline`, `target` et `result` restent tenus à jour. Rien n’est retiré.
+
 ## 8.24.0 — 7 novembre 2026
 
 **Relève d’équipe : préparée au poste en une minute, reprise confirmée par l’équipe entrante.**

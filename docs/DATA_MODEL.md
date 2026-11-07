@@ -172,3 +172,15 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.24.0 (additive)
 
 - `handovers[]` : `checks` (`securite`, `qualite`, `machines`, `production`, `matiere`, `effectif` → `{ s: "ok"|"watch"|"ko", note }`), `priority_list[]` (trois au plus), `extra`, `ack_note` (question de l’équipe entrante). `situation`, `safety`, `quality`, `production`, `staffing`, `priorities` et `linked_ids` restent remplis pour les écrans existants.
+
+## Extension 8.25.0 (additive)
+
+- `projects[]` :
+  - `charter` : `{ problem, scope, team, sponsor }`.
+  - `kpi` : `{ label, unit, base, target }`. La cible est plus basse que la référence quand une baisse est recherchée.
+  - `steps_done` : `{ cadrer|mesurer|analyser|essayer|standardiser|tenir: "AAAA-MM-JJ" }`. Pour un ancien chantier, il est déduit du statut.
+  - `weather` : `[{ at, s: "ok"|"risk"|"block", note, by }]`.
+  - `measures` : `[{ date, value, by }]`.
+  - `verified` : `{ by, at, text }`.
+  - `closed_at`.
+- `status` est dérivé de l’étape en cours (« Bloqué » si le dernier point le dit, « Clos » à la clôture). `progress` vaut la part des six étapes faites.

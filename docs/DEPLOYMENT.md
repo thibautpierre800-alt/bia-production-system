@@ -157,3 +157,7 @@ La branche `backup/before-8.23.0-2026-11-07` conserve le commit `7569d1e`, qui c
 ## Retour à 8.23.0
 
 La branche `backup/before-8.24.0-2026-11-07` conserve le commit `49a836c`, qui correspond à la version 8.23.0. La 8.24.0 ajoute `releve.js` et quelques champs aux relèves. La 8.23.0 affiche les mêmes relèves à partir de leurs champs d’origine, qui restent remplis.
+
+## Retour à 8.24.0
+
+La branche `backup/before-8.25.0-2026-11-07` conserve le commit `a8ba9cb`, qui correspond à la version 8.24.0. La 8.25.0 ajoute `chantiers.js` et des champs aux chantiers. La 8.24.0 affiche les mêmes chantiers grâce à leurs champs d’origine, qui restent remplis.
