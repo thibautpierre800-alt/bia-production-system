@@ -1,5 +1,17 @@
 # Changelog
 
+## 8.18.0 — 7 novembre 2026
+
+**Équilibrage et goulot : le Yamazumi, du chronomètre au rééquilibrage.**
+
+- Nouvel onglet Résoudre › Équilibrage. Une étude par ligne : demande par jour et temps d’ouverture net (le takt se calcule), postes et nombre d’opérateurs, chantier lié.
+- Temps relevés au téléphone, poste par poste : « Fin d’élément », puis « Fin du cycle » ; le chrono reprend si l’appli se ferme. Saisie à la main en secondes ou en minutes:secondes. Chaque élément est valeur ajoutée, nécessaire ou gaspillage, en un geste.
+- Yamazumi : une colonne empilée par poste face à la ligne du takt, le goulot entouré, le temps de chaque poste. Capacité par jour face à la demande, efficacité d’équilibrage, opérateurs nécessaires.
+- Rééquilibrer : « Figer l’état actuel » garde l’avant. On réduit, supprime ou déplace les éléments du goulot vers un autre poste, et le graphique suit. Le bilan compare avant et après (goulot, capacité, équilibrage, gaspillage).
+- Les gaspillages deviennent des actions datées du plan. Yamazumi à afficher en A4 paysage. La fiche guide « Identifier et exploiter un goulot » mène à l’outil.
+
+Données : nouvelle collection `balances` ; les actions portent `balance_id` (origine « Équilibrage ») ; rien n’est retiré.
+
 ## 8.17.0 — 7 novembre 2026
 
 **Idées et Kaizen : une idée en 30 secondes, une réponse sous 48 heures, les réalisations à la vue de tous.**
