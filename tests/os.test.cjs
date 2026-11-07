@@ -1263,3 +1263,57 @@ test("Équilibrage 8.18 · takt, chrono par poste, Yamazumi, goulot, rééquilib
   assert.match(a.q(".eq-sheet").textContent, /YAMAZUMI[\s\S]*Ligne finition/);
   assert.equal(a.run("validateImport(JSON.parse(JSON.stringify(data))).balances.length"), 1);
 });
+
+test("SQCDP au quotidien 8.19 · lettres vert / rouge, écart vers le TOP 15, calendriers du mois, point tenu avec présence, escalades et délai de réaction", (t) => {
+  const a = app(t);
+  a.run('state.site="marzin";state.role="teamlead";state.view="sqcdp";render()');
+  assert.ok(a.q(".sj-panel"), "Le point du jour en tête du SQCDP");
+  assert.equal(a.all(".sj-tile").length, 5);
+  assert.equal(a.all("#meetingTimer").length, 0, "Un seul chronomètre de point");
+  a.click('[data-sj-today="S"][data-sj-v="ok"]');
+  a.click('[data-sj-today="Q"][data-sj-v="ko"]');
+  assert.ok(a.q('[data-sj-note="Q"]'), "Un écart demande ce qui s’est passé");
+  a.fill('[data-sj-note="Q"] [data-sj-notein]', "3 panneaux décollés");
+  a.submit('[data-sj-note="Q"]');
+  const d = JSON.parse(a.run('JSON.stringify(sjGet(today(),"Q"))'));
+  assert.equal(d.status, "ko");
+  const topic = JSON.parse(a.run(`JSON.stringify(data.topics.find(x=>x.id==="${d.topic_id}"))`));
+  assert.deepEqual([topic.title, topic.axis, topic.status, topic.source], ["3 panneaux décollés", "Q", "Ouvert", "SQCDP"], "L’écart devient un sujet du TOP 15");
+  assert.match(a.q("#appView").textContent, /TOP 15[\s\S]*3 panneaux décollés/);
+  a.click('[data-sj-today="S"][data-sj-v="ok"]');
+  assert.equal(a.run('sjGet(today(),"S")'), null, "Retoucher le même choix l’efface");
+  a.run('document.querySelector(".sj-month").open=true');
+  assert.equal(a.all('.sj-letter').length, 5, "Les cinq lettres du mois");
+  assert.ok(a.q(`.sj-letter [data-sj-day="${a.run("today()")}"][data-sj-axis="Q"].ko`), "Le jour est rouge dans la lettre Q");
+  if (a.run('today().slice(8,10)!=="01"')) {
+    const past = a.run('today().slice(0,8)+"01"');
+    a.click(`[data-sj-day="${past}"][data-sj-axis="D"]`);
+    a.click('[data-sj-pick="ok"]');
+    a.submit("#sjDayForm");
+    assert.equal(a.run(`sjGet("${past}","D").status`), "ok", "Un jour passé se corrige");
+  }
+  assert.ok(a.q(".sj-panel [data-timer]"), "Démarrer le point");
+  a.run("state.timerStarted=Date.now()-8*60000;render()");
+  a.click("[data-sj-close]");
+  a.fill("#sjAddP", "Nora");
+  a.click("[data-sj-addp]");
+  a.submit("#sjCloseForm");
+  const m = JSON.parse(a.run("JSON.stringify(data.meetings[0])"));
+  assert.equal(Math.round(m.duration_s / 60), 8);
+  assert.deepEqual(m.present, ["Nora"]);
+  assert.equal(a.run("state.timerStarted"), null, "Le chronomètre s’arrête");
+  assert.match(a.q(".sj-foot").textContent, /1 point tenu ce mois[\s\S]*8:0\d[\s\S]*1/);
+  a.run(`commitData(()=>data.escalations.unshift({id:"ESC-900",site_id:"marzin",source_id:"${d.topic_id}",title:"Colle : technicien fournisseur",level:2,owner:"Directeur de site",status:"Ouverte",detail:"",result:"",due_date:today(),created_at:new Date(Date.now()-30*36e5).toISOString(),updated_at:now()}));render()`);
+  assert.match(a.q(".sj-esc").textContent, /N2[\s\S]*Colle : technicien fournisseur[\s\S]*depuis 30 h/);
+  a.click('[data-sj-answer="ESC-900"]');
+  a.fill("#sjAns", "Technicien demain 7 h");
+  a.submit("#sjAnsForm");
+  assert.deepEqual(JSON.parse(a.run('JSON.stringify((e=>[e.status,e.result])(data.escalations.find(x=>x.id==="ESC-900")))')), ["Clos", "Technicien demain 7 h"]);
+  assert.equal(Math.round(a.run("sjEscalations().avg")), 30, "Délai de réaction mesuré");
+  a.run("sjPrint()");
+  assert.equal(a.all(".sj-sheet .sj-letter").length, 5, "Lettres à afficher");
+  assert.equal(a.run("osIntegrity(data).length"), 0);
+  a.run('closeModal();state.role="lean";state.site="group";render()');
+  assert.equal(a.run("state.site"), "group");
+  assert.ok(!a.q(".sj-panel"), "Pas de point du jour en vue Groupe");
+});

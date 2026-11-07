@@ -1,5 +1,17 @@
 # Changelog
 
+## 8.19.0 — 7 novembre 2026
+
+**SQCDP au quotidien : le point du jour, les lettres du mois, la tenue du rituel et les escalades.**
+
+- « Le point du jour » en tête de Voir › SQCDP (et du point de pilotage) : pour chaque lettre S, Q, C, D, P, « Bonne journée » ou « Écart » en un geste. Un écart demande ce qui s’est passé, en une phrase, et devient un sujet du TOP 15 (axe de la lettre, priorité haute pour la sécurité).
+- Les lettres du mois, comme au tableau de l’atelier : un calendrier par lettre, jours verts, rouges, week-ends et jours à venir ; un jour passé se corrige d’un geste. Mois précédents consultables. Lettres à afficher en A4 paysage.
+- Le point se démarre et se clôt : durée, présents (repris du dernier point et des équipes de polyvalence) et sujets ouverts sont enregistrés. Tenue du mois : points tenus, durée moyenne, présence moyenne.
+- Escalades en attente de réponse, avec leur niveau et leur âge (en rouge au-delà de 24 heures). « Répondu » les clôt avec la réponse ; délai moyen de réaction du mois.
+- Un seul chronomètre de point sur la page.
+
+Données : nouvelles collections `sqcdpDays` et `meetings` ; les sujets créés depuis une lettre portent `source: "SQCDP"` ; les escalades reçoivent `answered_at` ; rien n’est retiré.
+
 ## 8.18.0 — 7 novembre 2026
 
 **Équilibrage et goulot : le Yamazumi, du chronomètre au rééquilibrage.**
