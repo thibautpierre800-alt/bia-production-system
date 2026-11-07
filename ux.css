@@ -2374,3 +2374,12 @@ button.bp-cell:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
 .cd-sustain li b{font-size:14px}.cd-sustain li.ok{background:#e5f4e4;border-color:#8fd1a8}.cd-sustain li.ko,.cd-sustain li.late{background:#fbebeb;border-color:#e9b4ad}
 .cd-study .sm-body{display:grid;gap:14px}
 @media screen and (max-width:540px){.cd-sustain{grid-template-columns:minmax(0,1fr)}}
+/* ---------- 8.26 · Formation et habilitations ---------- */
+.fr-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid var(--line);border-left:6px solid #c9c8c1}
+.fr-row.soon{border-left-color:#e08a00}.fr-row.late{border-left-color:#c4321f;background:#fff6f4}
+.fr-acts{display:flex;flex-wrap:wrap;gap:6px}
+.fr-st{grid-template-columns:repeat(2,minmax(0,1fr))}.fr-st .rl-sb{min-height:52px;line-height:1.2}
+.fr-skills h3{margin:0 0 6px}
+@media screen and (max-width:540px){.fr-acts{flex:1 1 100%}.fr-acts .btn{flex:1 1 auto}.fr-st{grid-template-columns:minmax(0,1fr)}}
+/* Cases à cocher dans les formulaires courts : taille normale (la règle des champs pleine largeur ne s’applique pas). */
+.jn-form input[type=checkbox]:not([type=file]):not([type=hidden]),.jn-form input[type=radio]:not([type=file]):not([type=hidden]){width:22px;height:22px;min-height:0;flex:0 0 22px;margin:2px 0 0;padding:0}

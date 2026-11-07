@@ -1,5 +1,23 @@
 # Changelog
 
+## 8.26.0 — 7 novembre 2026
+
+**Formation et habilitations : les échéances d’abord, la session en une fois, le dossier complet.**
+
+- Un nouvel onglet « Échéances » liste :
+  - les qualifications expirées ;
+  - celles à renouveler sous 30 jours, puis sous 90 jours ;
+  - les formations suivies mais pas encore validées.
+- Chaque ligne propose « Enregistrer le recyclage », ou « Planifier » pour créer une action datée à l’échéance.
+- L’accueil des responsables signale les qualifications à renouveler.
+- « Session de formation » enregistre une session en une fois : la formation, la date, le formateur et les présents cochés dans la liste.
+  - Les présents sont « Formés » (à valider au poste) ou « Validés » (preuve, niveau et validateur requis).
+  - Chaque présent reçoit sa fiche avec l’échéance calculée.
+- Le dossier individuel montre aussi les compétences au poste : postes tenus (polyvalence I-L-U-O), standards et leçons ponctuelles (OPL) sur lesquels la personne est formée, avec « à reformer » quand la version a changé.
+- Les cases à cocher des formulaires courts (session, relève, reprise de bonne pratique) gardent leur taille normale au téléphone.
+
+Données : `trainingRecords[]` existant. Champ ajouté : `session_id`. Aucune nouvelle collection.
+
 ## 8.25.0 — 7 novembre 2026
 
 **Chantiers : une charte d’une page, des étapes, un point par semaine, un gain mesuré et tenu.**

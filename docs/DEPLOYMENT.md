@@ -161,3 +161,7 @@ La branche `backup/before-8.24.0-2026-11-07` conserve le commit `49a836c`, qui c
 ## Retour à 8.24.0
 
 La branche `backup/before-8.25.0-2026-11-07` conserve le commit `a8ba9cb`, qui correspond à la version 8.24.0. La 8.25.0 ajoute `chantiers.js` et des champs aux chantiers. La 8.24.0 affiche les mêmes chantiers grâce à leurs champs d’origine, qui restent remplis.
+
+## Retour à 8.25.0
+
+La branche `backup/before-8.26.0-2026-11-07` conserve le commit `ed5b695`, qui correspond à la version 8.25.0. La 8.26.0 ajoute `formation.js` et le champ `session_id` aux fiches de formation. La 8.25.0 ignore ce champ.
