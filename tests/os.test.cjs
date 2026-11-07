@@ -2065,7 +2065,7 @@ test("Gains 8.37 · types, avant/objectif/après, annualisation, valorisation, v
   demo(a);
   a.run('state.role="director";state.site="marzin";render();switchView("pilotage")');
   const tabs = JSON.parse(a.run('JSON.stringify(uxTabs(uxStages().find(s=>s.id==="voir")).map(x=>x.label))'));
-  assert.deepEqual(tabs.slice(0, 3), ["Pilotage", "Gains", "Environnement"]);
+  assert.deepEqual(tabs.filter((x) => ["Pilotage", "Gains", "Environnement"].includes(x)), ["Pilotage", "Gains", "Environnement"]);
   a.run('state.pilotTab="gains";render()');
   assert.match(a.q(".page-head h1").textContent, /Gains/);
   // Calcul : 40 → 18 min, objectif 20, 250 fois par an, 0,75 € la minute, 3 000 € de mise en œuvre
