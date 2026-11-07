@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared interaction rules. All records remain local; roles are UI profiles, not authentication.
-const APP_VERSION="8.40.0";
+const APP_VERSION="8.40.1";
 let modalSaver = null, modalDirty = false, modalOpener = null, modalTimer = null;
 let lastStored = localStorage.getItem(STORAGE_KEY);
 let storageConflict = false;
@@ -247,7 +247,13 @@ function initExperience() {
   window.addEventListener("hashchange",()=>{const view=location.hash.slice(1);if(role().nav.includes(view)&&requestCloseModal()){state.view=view;render();}});
   if(role().nav.includes(location.hash.slice(1)))state.view=location.hash.slice(1);
   if(!storageConflict&&rawBeforeOS&&JSON.parse(rawBeforeOS)?.meta?.schema===6)save();
-  if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
+  if("serviceWorker" in navigator){
+    window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));
+    // 8.40.1 · Une nouvelle version installée prend la main : le dire, et recharger d’un geste.
+    const hadController=!!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange",()=>{if(hadController)showUpdateBanner();});
+    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{});});
+  }
   render();
 }
 
@@ -274,4 +280,12 @@ function toolRunForm(id) {
   const run=data.toolRuns.find(r=>r.id===id);if(!run||!allowedSite(run.site_id,true))return;
   modal(`${id} · Responsable de la démarche`,`<form id="toolRunForm"><p>${esc(LEAN_MODULES.find(t=>t.id===run.module_id)?.title)} · ${esc(getSiteName(run.site_id))}</p><label class="field">Responsable<input id="toolRunOwner" required value="${esc(run.owner==="À attribuer"?"":run.owner||"")}"></label><div class="form-actions"><button class="btn">Enregistrer</button></div></form>`);
   $("toolRunForm").onsubmit=e=>{e.preventDefault();const owner=$("toolRunOwner").value.trim();if(!owner)return;if(!commitData(()=>{const row=data.toolRuns.find(r=>r.id===id);row.owner=owner;row.updated_at=now();}))return;closeModal();receipt(id,"Bibliothèque → Mes démarches",run.site_id,"Poursuivre la checklist");render();};
+}
+
+function showUpdateBanner(){
+  if(document.getElementById("updateBanner"))return;
+  const bar=document.createElement("div");bar.id="updateBanner";bar.className="update-banner";bar.setAttribute("role","status");
+  bar.innerHTML='<span>Une nouvelle version de l’application est disponible.</span><button type="button" class="btn small">Mettre à jour</button>';
+  bar.querySelector("button").onclick=()=>location.reload();
+  document.body.appendChild(bar);
 }
