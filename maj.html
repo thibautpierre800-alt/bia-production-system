@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mise à jour · BIA Lean OS</title>
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#1c1b19;color:#f6f5f0;font:18px/1.5 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;padding:24px;text-align:center}
+  b{color:#f29a2e}
+  a{color:#f29a2e}
+</style>
+</head>
+<body>
+<main>
+  <p><b>BIA Lean OS</b></p>
+  <p id="msg">Mise à jour en cours…</p>
+  <p><small>Vos données restent sur cet appareil.</small></p>
+</main>
+<script>
+  // Retire l'ancienne version gardée en mémoire (service worker et cache), sans toucher aux données,
+  // puis ouvre la dernière version de l'application. Ajoutez #tour à l'adresse pour arriver sur la tour de contrôle.
+  (async () => {
+    try {
+      if ("serviceWorker" in navigator) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+      if ("caches" in window) for (const k of await caches.keys()) if (k.startsWith("bia-")) await caches.delete(k);
+    } catch (e) { /* on ouvre l'application quand même */ }
+    document.getElementById("msg").textContent = "C’est fait. Ouverture de l’application…";
+    setTimeout(() => location.replace("./?maj=" + Date.now() + (location.hash || "")), 600);
+  })();
+</script>
+</body>
+</html>
