@@ -282,3 +282,7 @@ Nouvelle collection `infos[]` : `{ id, site_id ("group" | site), workshop_id, ti
 ## Extension 8.44.0 (additive)
 
 `infos[]` reçoit `urgent`, `photo` et `questions[{ id, site_id, workshop_id, text, at, by, answer, answered_at, answered_by, returned_at, returned_by }]`. `meetings[]` (TOP 5) reçoit `questions[]`.
+
+## Extension 8.45.0 (additive)
+
+Aucune nouvelle donnée.

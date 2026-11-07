@@ -1300,7 +1300,8 @@ test("SQCDP au quotidien 8.19 · lettres vert / rouge, écart vers le TOP 15, ca
     a.submit("#sjDayForm");
     assert.equal(a.run(`sjGet("${past}","D").status`), "ok", "Un jour passé se corrige");
   }
-  assert.ok(a.q(".sj-panel [data-timer]"), "Démarrer le point");
+  assert.ok(a.q("[data-t5-open]"), "Lancer le TOP 5 (écran)");
+  assert.equal(a.q(".sj-panel [data-timer]"), null, "un seul départ : l’écran TOP 5");
   a.run("state.timerStarted=Date.now()-8*60000;render()");
   a.click("[data-sj-close]");
   a.fill("#sjAddP", "Nora");
@@ -2496,4 +2497,56 @@ test("Informations 8.44 · urgente en bandeau, question de l’équipe, réponse
   a.click("#t5Screen [data-t5-qret]");
   assert.ok(a.run("data.infos[0].questions[0].returned_at"));
   a.run("t5Close()");
+});
+
+test("TOP 5 8.45 · accueil à un geste, onglets avec compteurs, lettre suivante, clôture guidée, formulaire simplifié", (t) => {
+  const a = app(t);
+  demo(a);
+  const ws = a.run('(osActive(data.workshops).find(w=>w.site_id==="marzin")||{}).id||""');
+  // Le chef d'équipe : son TOP 5 sur l’accueil, son information limitée à son atelier
+  a.run(`state.role="teamlead";state.site="marzin";state.workshop=${JSON.stringify(ws)}||null;try{localStorage.removeItem(t5Key())}catch{};switchView("home")`);
+  assert.match(a.q(".t5-home").textContent, /À tenir aujourd’hui/);
+  a.run("t5InfoForm()");
+  assert.equal(a.all("[data-t5-scope]").length, 1, "le chef d’équipe écrit pour son atelier");
+  a.run('document.getElementById("t5Title").value="Nouveau gabarit poste 3";document.getElementById("t5Title").dispatchEvent(new Event("input"))');
+  assert.match(a.q("#t5Prev").textContent, /Nouveau gabarit poste 3[\s\S]*Sans « ce que ça change »/, "aperçu à l’écran");
+  a.click('[data-t5-span="13"]');
+  a.run('document.getElementById("t5InfoForm").requestSubmit()');
+  assert.equal(a.run("data.infos[0].end"), a.run("auAddDays(13)"));
+  assert.equal(a.run("data.infos[0].workshop_id"), ws || null);
+  a.run('switchView("home")');
+  assert.match(a.q(".t5-home").textContent, /1 info à dire/);
+  // SQCDP : un seul départ
+  a.run('switchView("sqcdp")');
+  assert.match(a.q("#appView").textContent, /Lancer le TOP 5/);
+  a.run('switchView("home")');
+  a.click(".t5-home [data-t5-open]");
+  assert.ok(a.q("#t5Screen"));
+  assert.match(a.q('#t5Screen [data-t5-go="6"]').textContent, /1/, "compteur sur Informations");
+  a.run('window.__st=window.setTimeout;window.setTimeout=(f)=>{f();return 0}');
+  a.click('#t5Screen [data-t5-set="ok"]');
+  a.run('window.setTimeout=window.__st');
+  assert.equal(a.run("t5Idx"), 1, "bonne journée : lettre suivante");
+  // Clôture : lettres à renseigner, mêmes présents que la dernière fois
+  a.run(`commitData(()=>(data.meetings||=[]).unshift({id:"PT-old",kind:"top5",site_id:"marzin",workshop_id:${JSON.stringify(ws)}||null,date:auAddDays(-1),present:["Nora","Karim"],duration_s:240}))`);
+  a.run("t5Go(7)");
+  assert.ok(a.q("#t5Screen [data-t5-same]"), a.run("JSON.stringify({d:t5Draft().present,l:t5LastPresent(),m:(data.meetings||[]).length})"));
+  assert.match(a.q("#t5Screen .t5-miss").textContent, /Q, C, D, P/);
+  a.click("#t5Screen [data-t5-same]");
+  assert.equal(a.run("t5Draft().present.length"), 2);
+  a.click('#t5Screen .t5-sumrow [data-t5-go="1"]');
+  assert.equal(a.run("t5Idx"), 1, "une lettre manquante se rejoint d’un geste");
+  a.run("t5Go(7)");
+  a.click("#t5Screen [data-t5-held]");
+  assert.match(a.q("#t5Screen .t5-heldmsg").textContent, /Point tenu/);
+  a.click("#t5Screen .t5-endrow [data-t5-x]");
+  assert.match(a.q(".t5-home").textContent, /Tenu à/);
+  // Le directeur : question sans réponse sur l’accueil, « Répondre » ouvre Voir › TOP 5
+  a.run(`state.role="teamlead";t5Open();t5Go(6)`);
+  a.run('const f=document.querySelector("#t5Screen [data-t5-q]");f.querySelector("input").value="Où est rangé l’ancien ?";f.requestSubmit()');
+  a.run("t5Close()");
+  a.run('state.role="director";switchView("home")');
+  assert.match(a.q(".t5-home").textContent, /1 question des équipes sans réponse/);
+  a.click(".t5-home [data-t5-tab]");
+  assert.ok(a.q(".t5-qsec"), "Voir › TOP 5, questions en tête");
 });

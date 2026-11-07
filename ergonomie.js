@@ -18,7 +18,8 @@ const ER_NEWS = [
   { v: "8.36", label: "TRS des feuilles de poste", text: "La feuille de poste saisie, le TRS calculé et envoyé au pilotage ; micro-arrêts d’un geste.", nav: "terrain", set: { terrainTab: "micro" } },
 ];
 const ER_SEEN_KEY = "bia-news-seen";
-const ER_PHONE = 820, ER_TABS = 5;
+const ER_PHONE = 820, ER_TABS = 5, ER_SHOW = 4;
+function erItem(n, i) { return `<button type="button" class="er-news-item" data-er-news="${i}"><b>${esc(n.label)}</b><span>${esc(n.text)}</span><small>Ouvrir ›</small></button>`; }
 
 function erPhone() { return window.innerWidth <= ER_PHONE; }
 function erSeen() { try { return localStorage.getItem(ER_SEEN_KEY) || ""; } catch { return ""; } }
@@ -78,7 +79,7 @@ const erHomeBase = renderHome;
 renderHome = function () {
   const html = erHomeBase.apply(this, arguments), news = erNews();
   if (!news.length) return html;
-  const card = `<section class="er-news section" aria-label="Nouveau dans l’application"><div class="er-news-head"><h2>Nouveau dans l’application</h2><button type="button" class="btn ghost small" data-er-seen>J’ai vu</button></div><div class="er-news-list">${news.map((n, i) => `<button type="button" class="er-news-item" data-er-news="${i}"><b>${esc(n.label)}</b><span>${esc(n.text)}</span><small>Ouvrir ›</small></button>`).join("")}</div></section>`;
+  const card = `<section class="er-news section" aria-label="Nouveau dans l’application"><div class="er-news-head"><h2>Nouveau dans l’application</h2><button type="button" class="btn ghost small" data-er-seen>J’ai vu</button></div><div class="er-news-list">${news.slice(0, ER_SHOW).map(erItem).join("")}</div>${news.length > ER_SHOW ? `<details class="er-news-more"><summary>Voir les ${news.length - ER_SHOW} autres nouveautés</summary><div class="er-news-list">${news.slice(ER_SHOW).map((n, i) => erItem(n, i + ER_SHOW)).join("")}</div></details>` : ""}</section>`;
   const i = html.indexOf("</header>");
   return i > 0 && i < 1200 ? html.slice(0, i + 9) + card + html.slice(i + 9) : card + html;
 };
