@@ -1,5 +1,26 @@
 # Changelog
 
+## 8.22.0 — 7 novembre 2026
+
+**Bibliothèque : chaque fiche guide mène à son outil.**
+
+- Chaque fiche se lit au téléphone : à quoi elle sert, quand l’utiliser, la séquence, les pièges à éviter et ce qu’on obtient.
+- Un bloc « Dans l’appli » ouvre les outils refaits qui vont avec la fiche, selon le profil.
+  - Exemples : 5S, SMED, TPM, VSM pas à pas, Yamazumi, A3 / 8D / QRQC, Ishikawa, 5 pourquoi, audit 50 critères, Gemba, rapport d’étonnement, SQCDP, idées, OPL, polyvalence, bonnes pratiques, déploiement, Hoshin, Roadmap.
+  - Une fiche sans écran dédié le dit clairement.
+- « J’ai un problème » propose maintenant les 18 situations. Chacune donne son premier geste, sa fiche et son outil.
+  - Trois situations pointaient vers des fiches inexistantes ; elles sont corrigées.
+  - Quatre situations sont nouvelles : idées qui ne remontent pas, erreur qui revient, poste tenu par une seule personne, un autre site a trouvé mieux.
+- Trois nouvelles fiches (33 au total) : Leçon ponctuelle (OPL), Polyvalence I-L-U-O, Idées et Kaizen des équipes.
+- Les étiquettes sont en clair et en français.
+  - Livrables : « Carte de l’état actuel » au lieu de « Current State », « Retour d’expérience » au lieu de « REX ».
+  - Checklists : « Temps de cycle mesurés au poste » au lieu de « CT ».
+  - « Standard Work » devient « Standard de poste ».
+- Le titre de la fiche, sombre sur fond sombre, n’était presque pas lisible. Il est maintenant lisible.
+- La checklist « Suivre la démarche » reste disponible sous la fiche, avec son avancement par site.
+
+Données : aucune nouvelle collection. Les démarches restent dans `toolRuns[]`.
+
 ## 8.21.0 — 7 novembre 2026
 
 **Bonnes pratiques partagées entre sites (Yokoten) et leçons ponctuelles (OPL).**

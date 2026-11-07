@@ -2247,3 +2247,33 @@ button.bp-cell:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
   .ol-sheet h3{font-size:21px}.ol-points{font-size:16.5px}
 }
 @media print{.bp-sheet,.bp-sheet header,.bp-sheet footer,.bp-impr,.ol-sheet,.ol-band,.ol-img,.ol-why,.ol-sign th,.bp-dot{-webkit-print-color-adjust:exact;print-color-adjust:exact}.ol-sheet,.bp-sheet{padding:0}}
+/* ---------- 8.22 · Bibliothèque : chaque fiche mène à son outil ---------- */
+.lib-top{margin:0 0 10px}
+.lib-head{margin:0 0 14px}
+.lib-head h1{margin:2px 0 6px;font-size:28px;line-height:1.15;letter-spacing:-.4px;color:var(--ink)}
+.lib-head .lead{margin:0 0 6px;font-size:16px;color:#3f3f3b;max-width:720px}
+.lib-when{margin:0;font-size:14px;color:#55554f;max-width:720px}
+.lib-go{padding:14px;border-radius:16px;background:#fff7ec;border:1px solid #f3d3a5;display:grid;gap:10px}
+.lib-go h2{margin:0;font-size:18px}.lib-go p{margin:0}
+.lib-go.quiet{background:#fff;border-color:var(--line)}
+.lib-go-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:8px}
+.lib-go-btn{display:grid;gap:3px;align-content:start;width:100%;min-height:64px;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#fff;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.lib-go-btn b{font-size:15.5px;line-height:1.25}.lib-go-btn span{font-size:12.5px;color:#55554f;line-height:1.35}
+.lib-go-btn.main{background:var(--orange);border-color:var(--orange)}.lib-go-btn.main span{color:#3a2a10}
+.lib-go-btn:hover{border-color:#c9c8c1}.lib-go-btn.main:hover{filter:brightness(.97)}
+.lib-go-btn:focus-visible,.lib-route:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.lib-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.lib-grid h2{margin:0 0 8px;font-size:18px}.lib-grid h2.section{margin-top:16px}
+.lib-steps{margin:0;padding:0;list-style:none;counter-reset:lib;display:grid;gap:6px}
+.lib-steps li{counter-increment:lib;display:flex;gap:10px;align-items:flex-start;font-size:15px;font-weight:700;line-height:1.35}
+.lib-steps li::before{content:counter(lib);flex:0 0 26px;height:26px;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:#fff;font-size:13px;font-weight:900}
+.lib-pits,.lib-deliv,.lib-check{margin:0;padding-left:20px;display:grid;gap:4px;font-size:14.5px}
+.lib-pits li::marker{color:#b42318}.lib-deliv li::marker{color:#1f8a52}
+.lib-journey h2{margin:0 0 4px;font-size:18px}.lib-journey .hint{margin:0 0 8px}.lib-journey .btn{margin-top:10px}
+.lib-tools{display:flex;flex-wrap:wrap;gap:8px}
+.lib-routes{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:8px}
+.lib-route{display:grid;gap:4px;width:100%;height:100%;align-content:start;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#fff;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.lib-route b{font-size:15px;line-height:1.3}.lib-route span{font-size:13.5px;color:#3f3f3b;line-height:1.35}.lib-route small{font-size:12px;font-weight:800;color:#a85a00}
+.lib-route:hover{border-color:#c9c8c1}
+@media screen and (max-width:640px){.lib-grid{grid-template-columns:minmax(0,1fr)}.lib-head h1{font-size:24px}}
+@media print{.lib-go,.lib-top,.lib-tools,.lib-journey .btn{display:none!important}.lib-grid{grid-template-columns:1fr 1fr}}
