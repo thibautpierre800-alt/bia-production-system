@@ -588,7 +588,7 @@ test("Interface 8.0 · une seule navigation, sans pastilles, onglets fusionnés"
   a.run('uxGoStage("observer")');
   assert.equal(a.run("state.view"), "terrain");
   assert.equal(a.run("state.terrainTab"), "gemba");
-  assert.deepEqual(a.all("#pageLocation .ux-tab").map((b) => b.textContent), ["Gemba", "5S", "TPM", "Rapport d’étonnement", "Signaux", "Audits", "Statistiques"]);
+  assert.deepEqual(a.all("#pageLocation .ux-tab").map((b) => b.textContent), ["Gemba", "5S", "TPM", "Micro-arrêts", "Rapport d’étonnement", "Signaux", "Audits", "Statistiques"]);
   assert.equal(a.q("#appView > .tabs"), null, "Sous-onglets fusionnés dans la ligne de l’étape");
   assert.ok(a.q("#contextPanel #siteSelect") && a.q("#contextPanel #roleSelect") && a.q("#contextPanel [data-interface-mode-toggle]") && a.q("#contextMore [data-nav]"));
   a.run('state.role="operator";state.site="marzin";render();uxGoStage("observer")');
@@ -1928,4 +1928,72 @@ test("Cascade 8.34 · TOP 5 → TOP 15 → revue hebdo → mensuelle → COPIL, 
   a.run('closeModal();state.meetOn=false;state.meetOpen=null;switchView("daily")');
   assert.match(a.all('[data-os="level"]').map((b) => b.textContent).join(","), /N1 · TOP 5,N2 · TOP 15,N3 · Revue hebdo du site,N4 · Groupe/);
   assert.equal(a.run("osIntegrity(data).length"), 0);
+});
+
+test("Micro-arrêts 8.35 · ligne, comptage d’un geste, chronomètre, seuil de panne, Pareto, TOP 5, TOP 15 et action", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('state.role="teamlead";state.site="marzin";state.workshop="";mlGo()');
+  assert.equal(a.run("state.terrainTab"), "micro");
+  assert.ok(a.q(".cs-empty [data-ml-newline]"), "Page vide : ajouter une ligne");
+  a.click("[data-ml-newline]");
+  a.fill("#mlName", "Plaqueuse 2");
+  a.fill("#mlTarget", "4");
+  a.submit("#mlLineForm");
+  const l = JSON.parse(a.run("JSON.stringify(data.mlLines[0])"));
+  assert.equal(l.threshold_min, 5);
+  assert.equal(l.causes.length, 8, "Causes par défaut");
+  // Comptage d'un geste : durée type
+  a.click('[data-ml-cause="Bourrage, coincement"]');
+  a.click('[data-ml-cause="Bourrage, coincement"]');
+  a.click('[data-ml-cause="Manque matière"]');
+  assert.equal(a.run("mlSum(data.mlLines[0]).n"), 3);
+  assert.equal(a.run("mlSum(data.mlLines[0]).min"), 3);
+  // Chronomètre : durée réelle
+  a.run('mlSetRun(data.mlLines[0].id,Date.now()-90e3);render()');
+  assert.ok(a.q(".ml-counter.running .ml-elapsed"));
+  a.click('[data-ml-cause="Capteur, détection"]');
+  assert.equal(a.run("data.microStops[0].timed"), true);
+  assert.ok(Math.abs(a.run("data.microStops[0].dur_s") - 90) <= 2);
+  assert.equal(a.run("mlRun(data.mlLines[0].id)"), null, "Le chronomètre est arrêté");
+  // Au-delà du seuil : c'est une panne
+  a.run('mlSetRun(data.mlLines[0].id,Date.now()-8*60e3);render()');
+  a.click('[data-ml-cause="Autre"]');
+  assert.match(a.q("#modalContent").textContent, /c’est une panne/);
+  assert.equal(a.run("mlSum(data.mlLines[0]).n"), 4, "Rien n’est compté avant le choix");
+  a.click("[data-ml-keep]");
+  assert.equal(a.run("mlSum(data.mlLines[0]).n"), 5);
+  // Annuler le dernier
+  a.click("[data-ml-undo]");
+  assert.equal(a.run("mlSum(data.mlLines[0]).n"), 4);
+  assert.ok(!a.run('data.microStops.some(s=>s.cause==="Autre")'), "Le dernier saisi est annulé, pas le plus récent en heure");
+  // Lecture : Pareto, points de TRS, objectif dépassé
+  const s = JSON.parse(a.run("JSON.stringify(mlSum(data.mlLines[0]))"));
+  assert.equal(s.top.c, "Bourrage, coincement");
+  assert.ok(Math.abs(s.min - 4.5) < 0.05, "1 + 1 + 1 min comptées et 90 s chronométrées");
+  assert.ok(s.over, "Au-dessus de l’objectif de 4 min");
+  assert.ok(Math.abs(s.pts - (s.min / 420) * 100) < 1e-9);
+  assert.match(a.q(".ml-read").textContent, /cause n°1[\s\S]*Les causes[\s\S]*Quand/);
+  // TOP 5 : le C affiche les micro-arrêts ; Ma journée : à surveiller
+  a.run('switchView("sqcdp")');
+  assert.match(a.q('[data-sj-tile="C"] .ml-sj').textContent, /Micro-arrêts aujourd’hui : 4/);
+  a.run('switchView("home")');
+  assert.ok(a.q('.jn-watch [data-ml-go]'), "Ligne au-dessus de l’objectif à surveiller");
+  // Suites
+  a.run("mlGo()");
+  a.click("[data-ml-top15]");
+  assert.equal(a.run("data.topics[0].source"), "Micro-arrêts");
+  assert.equal(a.run("data.topics[0].axis"), "C");
+  a.click("[data-ml-action]");
+  a.fill("#mlActTitle", "Poser un guide d’entrée");
+  a.fill("#mlActWho", "Chef d’équipe Marzin");
+  a.submit("#mlActForm");
+  assert.match(a.run("data.actions[0].finding"), /Micro-arrêts · Bourrage/);
+  // Tous les boutons sont branchés ; l'opérateur compte, ne crée pas de ligne
+  assert.deepEqual(JSON.parse(a.run('JSON.stringify([...document.querySelectorAll("#appView button")].filter(b=>!b.onclick&&!b.disabled).map(b=>b.outerHTML.slice(0,60)))')), []);
+  a.run('state.role="operator";mlGo()');
+  assert.ok(!a.q("[data-ml-newline]"));
+  assert.ok(a.q('[data-ml-cause]:not([disabled])'), "L’opérateur compte");
+  a.run('state.role="director";state.site="sodeplax";mlGo()');
+  assert.ok(a.q(".cs-empty"), "Les lignes d’un autre site ne se mélangent pas");
 });

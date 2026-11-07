@@ -1,5 +1,44 @@
 # Changelog
 
+## 8.35.0 — 7 novembre 2026
+
+**Micro-arrêts de ligne, et l’application reprise pour le terrain : doigts gantés, téléphone, tablette du tableau.**
+
+Micro-arrêts (Observer › Micro-arrêts) :
+- Une ligne ou un poste a :
+  - son seuil, au-delà duquel l’arrêt est une panne (5 min par défaut) ;
+  - la durée type d’un arrêt compté (1 min) ;
+  - son temps d’ouverture du jour ;
+  - son objectif de minutes perdues ;
+  - ses causes (huit par défaut, modifiables).
+- Au poste, un geste suffit :
+  - toucher la cause compte un arrêt avec la durée type ;
+  - « La ligne s’arrête » lance le chronomètre, et la cause touchée quand la ligne repart enregistre la durée réelle.
+  - « Annuler le dernier » corrige une erreur de doigt.
+- Un arrêt chronométré au-delà du seuil se déclare comme panne en TPM : machine, heures et cause sont repris. On peut aussi le compter quand même en micro-arrêt.
+- La lecture du jour et sur 7 ou 30 jours donne :
+  - les arrêts et les minutes perdues par jour suivi ;
+  - les points de TRS perdus (minutes perdues divisées par le temps d’ouverture) ;
+  - le Pareto des causes avec la part cumulée ;
+  - les arrêts par heure ;
+  - les 14 derniers jours contre l’objectif.
+- La cause n°1 peut aller au TOP 15 (lettre C) ou devenir une action.
+- Une ligne au-dessus de son objectif apparaît dans « À surveiller ».
+- Le C du TOP 5 affiche les micro-arrêts du jour.
+- Une feuille de bâtonnage (causes par heure, A4 paysage) sert aux lignes sans téléphone.
+- « Micro-arrêt » est ajouté au menu de création.
+
+Ergonomie terrain :
+- Sur téléphone et tablette :
+  - boutons, puces, onglets, listes et champs font au moins 44 px de haut ;
+  - cases à cocher de 22 px ;
+  - liens agrandis au toucher sans changer la mise en page.
+- Le texte d’aide, les pastilles, les étiquettes et les tableaux passent à 13 px au moins (12 px pour les surtitres).
+- Les matrices de maturité et d’indicateurs gardent des cases de 40 px au toucher. Elles défilent sur le côté, avec la colonne des sites fixe.
+- L’écran atelier agrandit le TOP 5 pour une lecture à distance : lettres, boutons « Bonne journée » / « Écart », escalades et réponses à dire.
+
+Données : `mlLines[]` et `microStops[]` (non indexées, 120 jours de comptages conservés).
+
 ## 8.34.0 — 7 novembre 2026
 
 **La cascade : TOP 5 → TOP 15 → revue hebdomadaire → revue mensuelle → COPIL, COMEX, et la réponse qui redescend.**

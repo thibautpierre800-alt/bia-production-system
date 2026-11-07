@@ -197,3 +197,7 @@ La branche `backup/before-8.33.0-2026-11-07` conserve le commit `2a453c0`, qui c
 ## Retour à 8.33.0
 
 La branche `backup/before-8.34.0-2026-11-07` conserve le commit `833e04b`, qui correspond à la version 8.33.0. La 8.34.0 ajoute `cascade.js`. Les champs ajoutés aux sujets et aux escalades sont ignorés par la 8.33.0, et les TOP 15 y apparaissent comme des instances ordinaires.
+
+## Retour à 8.34.0
+
+La branche `backup/before-8.35.0-2026-11-07` conserve le commit `5d6492b`, qui correspond à la version 8.34.0. La 8.35.0 ajoute `microarrets.js` et des règles CSS. Les collections `mlLines` et `microStops` sont ignorées par la 8.34.0.

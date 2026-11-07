@@ -2675,3 +2675,75 @@ button.bp-cell:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
 .cg-back li div{display:flex;flex-direction:column;gap:2px;min-width:0}.cg-back li span{font-size:14px;font-weight:700}.cg-back li small{color:#55554f;font-size:12px}
 @media(max-width:900px){.cg-steps{grid-template-columns:1fr;gap:12px}.cg-steps li{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between}.cg-arrow{right:auto;left:22px;top:auto;bottom:-10px;transform:rotate(135deg)}.cg-do{grid-template-columns:1fr}}
 @media(max-width:600px){.cg-back li{flex-direction:column;align-items:stretch}.cg-back .btn{align-self:flex-start}}
+
+/* ---------- 8.35 · Micro-arrêts ---------- */
+.ml-lines{margin:0 0 12px}.ml-lines .chip.ml-over{border-color:var(--red);color:var(--red)}
+.ml-counter{border:1px solid var(--line);border-radius:14px;background:#fff;padding:16px}
+.ml-counter.running{border-color:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
+.ml-today{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.ml-today h2{margin:0;font-size:20px}.ml-today .hint{margin:3px 0 0}
+.ml-figs{display:flex;gap:16px}.ml-figs span{display:flex;flex-direction:column}.ml-figs b{font-size:24px;line-height:1.1}.ml-figs small{font-size:13px;color:var(--muted)}.ml-figs .bad b{color:var(--red)}
+.ml-bar{height:10px;border-radius:99px;background:#eceae4;margin:12px 0 4px;overflow:hidden}.ml-bar span{display:block;height:100%;background:var(--green);border-radius:99px}.ml-bar.over span{background:var(--red)}
+.ml-stop{width:100%;min-height:64px;font-size:20px;margin-top:14px;background:var(--red);border-color:var(--red)}
+.ml-or{text-align:center;margin:8px 0 4px}
+.ml-run{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:12px;padding:12px;border-radius:12px;background:var(--red-soft)}
+.ml-elapsed{font-size:48px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1}.ml-elapsed.over{color:var(--red)}
+.ml-run p{margin:0;font-size:15px;text-align:center}
+.ml-causes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px}
+.ml-cause{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:64px;padding:10px 14px;border:2px solid var(--line);border-radius:12px;background:#fbfbf9;font:inherit;font-size:16px;font-weight:800;text-align:left;color:var(--ink);cursor:pointer;touch-action:manipulation}
+.ml-cause:active{transform:scale(.98);background:var(--orange-soft)}.ml-cause b{min-width:28px;text-align:center;font-size:20px;color:var(--orange)}
+.ml-counter.running .ml-cause{border-color:#e8b4b4;background:#fff}
+.ml-cause:disabled{opacity:.6;cursor:default}
+.ml-undo{display:flex;justify-content:flex-end;margin-top:8px}
+.ml-read .section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ml-next{margin:12px 0;padding:12px;border-radius:10px;background:var(--amber-soft);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.ml-next p{margin:0;font-size:15px}.ml-next .row-actions{margin:0}
+.ml-figs2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.ml-figs2 h3{margin:4px 0 8px;font-size:15px}
+.ml-hours,.ml-days{margin:0 0 14px}.ml-hours figcaption,.ml-days figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+.ml-hbars,.ml-dbars{position:relative;display:flex;align-items:flex-end;gap:4px;height:120px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.ml-hcol,.ml-dcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;min-width:0}
+.ml-hcol i,.ml-dcol i{display:block;width:100%;max-width:26px;background:#c9c8c1;border-radius:4px 4px 0 0;min-height:2px}
+.ml-hcol i.peak{background:var(--orange)}.ml-dcol i{background:var(--green)}.ml-dcol i.over{background:var(--red)}
+.ml-hcol small,.ml-dcol small{position:absolute;bottom:-18px;font-size:11px;color:var(--muted)}
+.ml-target{position:absolute;left:0;right:0;border-top:2px dashed var(--ink);z-index:1}.ml-target small{position:absolute;right:0;top:-17px;font-size:11px;background:#fff;padding:0 3px}
+.ml-sj{display:block;width:100%;margin:6px 0;padding:8px 10px;border:0;border-radius:8px;background:#f1f0eb;font:inherit;font-size:14px;text-align:left;color:var(--ink);cursor:pointer;min-height:40px}.ml-sj.over{background:var(--red-soft);color:var(--red)}
+.ml-tally{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}.ml-tally th,.ml-tally td{border:1px solid #9a9993;padding:6px;text-align:left}.ml-tally tbody td{height:34px}.ml-tally thead th{background:#f1f0eb;text-align:center}
+.ml-linerow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+@media(max-width:700px){.ml-figs2{grid-template-columns:1fr}.ml-causes{grid-template-columns:repeat(2,minmax(0,1fr))}.ml-figs{width:100%;justify-content:space-between}.ml-cause{font-size:15px;padding:10px}}
+.ml-stop,.ml-stop:hover{color:#fff}
+.cs-summary .ml-topc b{font-size:17px;line-height:1.25}
+.ml-days{margin-top:22px}
+
+/* ---------- 8.35 · Ergonomie terrain (téléphone, tablette, doigts gantés) ---------- */
+@media (pointer:coarse),(max-width:820px){
+  #appView .btn,#appView .chip,#appView .tab,.ux-tab,#appView select,#appView input:not([type=checkbox]):not([type=radio]):not([type=range]),
+  #appView .in-chip,#appView .ap-counter,#appView .mt-cell,#appView .mt-rowhead,#appView .mt-site,#appView .in-step-btn,#modalContent .btn,#modalContent .chip,#modalContent select,#modalContent input:not([type=checkbox]):not([type=radio]):not([type=range]){min-height:44px}
+  #appView .mt-need{min-height:40px}
+  #appView .chip{padding-inline:14px}
+  #appView input[type=checkbox],#appView input[type=radio],#modalContent input[type=checkbox],#modalContent input[type=radio]{width:22px;height:22px}
+  .md-link,.jn-link,.mt-radar-title{position:relative}
+  .md-link::after,.jn-link::after,.mt-radar-title::after{content:"";position:absolute;inset:-12px -6px}
+  #appView .pill,#appView .chip,#appView .hint,#appView .jn-tag,#appView .ap-due,#appView .ap-meta,#appView dd,#appView td,#appView .source-label,#appView .metric-label,#modalContent .hint{font-size:13px}
+  #appView .eyebrow{font-size:12px}
+  #appView dt,#appView th{font-size:12px}
+  #appView :not(.sqcdp-value)>small,#modalContent small{font-size:max(12px,.85em)}
+  #appView .md-input{font-size:14px}
+}
+/* Écran atelier : le TOP 5 lisible à 3 mètres, sur la tablette du tableau. */
+.presentation .sj-panel h2{font-size:30px}
+.presentation .sj-tiles{gap:16px}
+.presentation .sj-tile{padding:18px}
+.presentation .sj-tile .sj-big{font-size:44px;width:64px;height:64px}
+.presentation .sj-tile-head span{font-size:22px}
+.presentation .sj-btn{min-height:64px;font-size:19px}
+.presentation .sj-foot,.presentation .cg-back li span,.presentation .ml-sj{font-size:18px}
+.presentation .cg-back h3,.presentation .sj-esc h3{font-size:20px}
+@media (pointer:coarse) and (max-width:820px){
+  .mt-row{grid-template-columns:minmax(96px,1.5fr) repeat(var(--mt-cols),minmax(40px,1fr))}
+  .in-row{grid-template-columns:minmax(96px,1.6fr) repeat(var(--in-cols),minmax(40px,1fr))}
+  .mt-row>:first-child,.in-row>:first-child{position:sticky;left:0;z-index:1;background:#fff;box-shadow:4px 0 6px -4px rgba(0,0,0,.18)}
+  .mt-matrix-wrap,.in-matrix-wrap{overscroll-behavior-x:contain}
+  #appView .jn-link{min-height:40px;display:inline-flex;align-items:center}
+}
+.presentation .sqcdp-value small{font-size:26px}
+.presentation .sqcdp-card .pill{display:inline-flex;align-items:center;min-height:30px;padding:4px 12px;font-size:16px}
+.presentation .sj-esc li b{font-size:20px}.presentation .sj-esc .hint{font-size:16px}
