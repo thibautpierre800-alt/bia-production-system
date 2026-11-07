@@ -1,5 +1,21 @@
 # Changelog
 
+## 8.42.0 — 7 novembre 2026
+
+**Contrôle complet de l’application et ergonomie de navigation.**
+
+Contrôle automatique de chaque écran, pour cinq profils (opérateur, chef d’équipe, directeur de site, Lean, direction), sur téléphone et sur ordinateur, soit environ 150 écrans :
+- aucune erreur ;
+- aucun débordement de page ;
+- tous les boutons branchés ;
+- les tableaux larges défilent dans leur cadre.
+
+Améliorations :
+- **Onglets sur téléphone** : au-delà de cinq, les quatre premiers et l’onglet ouvert restent visibles. Les autres passent dans « Plus · n », une liste en grand boutons. Voir passe ainsi de dix onglets à glisser à cinq boutons lisibles.
+- **Pages longues** : un sommaire « Sur cette page » en haut, qui saute à chaque section (Maturité, Formation, Écarts…), et un bouton « Haut de page » qui apparaît quand on a fait défiler.
+- **Accueil** : la carte « Nouveau dans l’application » présente les écrans arrivés depuis la dernière visite : tour de contrôle, échantillothèque, non-conformités, gains, environnement, TRS. Chacun s’ouvre d’un geste, selon le profil. « J’ai vu » range la carte jusqu’à la prochaine nouveauté.
+- **Page `maj.html`** : elle force le chargement de la dernière version sur un appareil resté sur une ancienne, sans toucher aux données.
+
 ## 8.41.0 — 7 novembre 2026
 
 **Tour de contrôle : tous les indicateurs, tous les sites, sur un écran, pour la salle de pilotage.**
