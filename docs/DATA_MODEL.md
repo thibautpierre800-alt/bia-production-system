@@ -258,3 +258,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 
 - `ncs[]`, réclamation client : `claim_ref`, `claim_date`, `returned_qty`, `returned_at`, `cost` (€), `claim_decision` (À décider, Retouche, Rebut, Remplacement, Accepté en l’état, Avoir).
 - Jalons : `ack_at`, `cause_at` et `close8d_at`, les dates auxquelles chaque jalon a été fait.
+
+## Extension 8.40.0 (additive)
+
+- `samples[]` : `{ id (ECH-…), scope (group ou site), site_id, client, articles, defect, zone, criterion, tol_max, tol_unit, over, distance_m, lux, seconds, location, photos{ ok, limit, nok }, status (Brouillon, Validée), validated_by, validated_at, review_months, version }`.

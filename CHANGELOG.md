@@ -1,5 +1,27 @@
 # Changelog
 
+## 8.40.0 — 7 novembre 2026
+
+**Échantillothèque : ce qui passe et ce qui ne passe pas, selon la règle du groupe, du site ou du client.**
+
+- Nouvel onglet Pérenniser › Échantillothèque.
+- **Chaque référence** comprend :
+  - un défaut, celui de la liste des non-conformités ;
+  - une zone de la pièce : A face vue, B chant ou face peu visible, C face cachée ;
+  - un périmètre d’articles (motifs avec *, vide = tous) ;
+  - trois photos : accepté, limite, refusé ;
+  - la tolérance chiffrée en mm, mm², nombre, % ou ΔE (vide = aucun défaut admis) et ce qu’on fait au-delà : refusé, à retoucher, déclassé ;
+  - le critère en clair ;
+  - les conditions de contrôle : distance, éclairage en lux, durée d’observation ;
+  - l’emplacement de l’échantillon physique.
+- **Trois niveaux de règle** : groupe, site et client. La plus précise s’applique : client du site, puis client du groupe, puis site, puis groupe. L’écran dit laquelle s’applique et laquelle elle remplace.
+- **Contrôler une pièce** : on choisit le défaut, la zone, le client et l’article, puis on saisit la valeur mesurée. L’appli répond conforme, à la limite ou hors tolérance. Hors tolérance, le bouton « Déclarer une non-conformité » ouvre une déclaration préremplie.
+- **Lien avec les non-conformités** : la déclaration affiche aussi la règle de l’échantillothèque pour le défaut, l’article et le client.
+- **Écarts entre sites** : un même défaut et une même zone avec des tolérances différentes selon les sites, à harmoniser ou à justifier.
+- **Validation et revalidation** : une référence est validée par un responsable et revalidée tous les 12 mois, ou selon la périodicité choisie. « À surveiller » signale les références à revalider.
+
+Données : `samples[]` (non indexée). Les photos sont rangées dans le magasin photos de l’appareil.
+
 ## 8.39.0 — 7 novembre 2026
 
 **Réclamation client : le retour client suivi de la réception à la clôture du 8D.**
