@@ -13,6 +13,9 @@
  *    D2 en 5W2H, D3 confinement et commandes à vérifier, D4 pistes tirées des données ; Pareto du défaut sur l'article.
  *  - Lecture : Pareto automatique des non-conformités par défaut, article, client, ligne ou origine (90 jours ou 12 mois),
  *    en nombre ou en pièces ; « les premiers font 80 % ».
+ *  - 8.39 · Réclamation client : n° de réclamation, retour physique (pièces, date de réception), décision sur les pièces,
+ *    coût ; trois jalons de réponse au client (accusé et confinement sous 1 jour ouvré, causes et actions sous 10 jours
+ *    ouvrés, 8D clos sous 60 jours), suivis en retard ou à temps ; rapport 8D à envoyer ; « À surveiller ».
  * Données : orders[] { no, site_id, client, article, designation, quantity, line, prod_date, lot, due_date, delivered }
  *           ncs[] { id, site_id, date, order_no, client, article, designation, lot, line, prod_date, origin, defect, qty,
  *                   severity, text, containment, decision, problem_id, action_id, status, by } — non indexées.
@@ -22,6 +25,16 @@ const NC_ORIGINS = ["Client", "Interne", "Fournisseur"];
 const NC_DEFECTS = ["Aspect, rayure", "Dimension", "Collage, décollement", "Teinte, finition", "Placage", "Usinage", "Emballage, transport", "Quantité, référence", "Documentation", "Autre"];
 const NC_SEV = ["Mineure", "Majeure", "Critique"];
 const NC_DIMS = [["defect", "Défaut"], ["article", "Article"], ["client", "Client"], ["line", "Ligne"], ["origin", "Origine"]];
+const NC_CLAIM_DEC = ["À décider", "Retouche", "Rebut", "Remplacement", "Accepté en l’état", "Avoir"];
+const NC_STEPS = [["ack_at", "Accusé de réception et confinement", 1, "w"], ["cause_at", "Causes et actions correctives", 10, "w"], ["close8d_at", "8D clos et envoyé au client", 60, "d"]];
+function ncWorkAdd(day, n) { const d = new Date(`${day}T12:00:00Z`); let k = 0; while (k < n) { d.setUTCDate(d.getUTCDate() + 1); const w = d.getUTCDay(); if (w !== 0 && w !== 6) k++; } return d.toISOString().slice(0, 10); }
+function ncSteps(nc) {
+  if (nc.origin !== "Client") return [];
+  const start = nc.claim_date || nc.date || today();
+  return NC_STEPS.map(([key, label, n, mode]) => { const due = mode === "w" ? ncWorkAdd(start, n) : auAddMonths(start, 2), done = nc[key] || null; return { key, label, due, done, late: !done && due < today(), lateDone: !!done && done > due }; });
+}
+function ncNext(nc) { return ncSteps(nc).find((x) => !x.done) || null; }
+function ncCost(n) { return Number(n.cost) || 0; }
 let ncDim = "defect", ncDays = 90, ncMeasure = "n";
 
 function ncCan() { return role().nav.includes("kaizen") || role().nav.includes("resolution"); }
@@ -93,11 +106,12 @@ function ncPage() {
   const head = pageHead("Résoudre", "Non-conformités", "Scannez la commande : l’application retrouve la fabrication, cherche la récurrence et propose le bon traitement, 8D prérempli compris.",
     `<div class="cs-head-tools">${w ? '<button type="button" class="btn" data-nc-new>Déclarer une non-conformité</button>' : ""}${mgr ? '<button type="button" class="btn ghost" data-nc-orders>Commandes</button>' : ""}</div>`);
   const open = rows.filter((n) => n.status !== "Close"), clients = rows.filter((n) => n.origin === "Client").length, qty = rows.reduce((s, n) => s + (+n.qty || 0), 0), eightD = rows.filter((n) => n.decision === "8D").length;
-  const strip = `<div class="cs-summary"><div><b>${rows.length}</b><span>non-conformités sur ${ncDays} jours</span></div><div class="${clients ? "bad" : ""}"><b>${clients}</b><span>réclamations client</span></div><div><b>${qty.toLocaleString("fr-FR")}</b><span>pièces concernées</span></div><div><b>${open.length}</b><span>ouvertes · ${eightD} en 8D</span></div></div>`;
+  const claims = rows.filter((n) => n.origin === "Client"), lateC = osScope(data.ncs || []).filter((n) => !n.archived_at && n.status !== "Close" && ncSteps(n).some((x) => x.late)), cost = rows.reduce((s, n) => s + ncCost(n), 0);
+  const strip = `<div class="cs-summary"><div><b>${rows.length}</b><span>non-conformités sur ${ncDays} jours</span></div><div class="${clients ? "bad" : ""}"><b>${clients}</b><span>réclamations client</span></div><div><b>${qty.toLocaleString("fr-FR")}</b><span>pièces concernées</span></div><div><b>${open.length}</b><span>ouvertes · ${eightD} en 8D</span></div><div class="${lateC.length ? "bad" : ""}"><b>${lateC.length}</b><span>réponse${lateC.length > 1 ? "s" : ""} client en retard</span></div><div><b>${cost ? `${Math.round(cost).toLocaleString("fr-FR")} €` : "—"}</b><span>coût des réclamations</span></div></div>`;
   const P = ncPareto(rows, ncDim, ncMeasure), max = P.list[0]?.v || 1;
   const dims = `<div class="filters" role="group" aria-label="Classer par">${NC_DIMS.map(([k, l]) => `<button type="button" class="chip ${ncDim === k ? "active" : ""}" data-nc-dim="${k}" aria-pressed="${ncDim === k}">${l}</button>`).join("")}</div><div class="filters" role="group" aria-label="Période et mesure">${[90, 365].map((d) => `<button type="button" class="chip ${ncDays === d ? "active" : ""}" data-nc-days="${d}" aria-pressed="${ncDays === d}">${d === 90 ? "90 jours" : "12 mois"}</button>`).join("")}${[["n", "Nombre"], ["qty", "Pièces"]].map(([k, l]) => `<button type="button" class="chip ${ncMeasure === k ? "active" : ""}" data-nc-meas="${k}" aria-pressed="${ncMeasure === k}">${l}</button>`).join("")}</div>`;
   const pareto = P.list.length ? `<figure class="sm-trend nc-pareto" role="img" aria-label="${esc(P.list.map((x) => `${x.label} ${x.v}`).join(", "))}"><div class="sm-g">${P.list.slice(0, 10).map((x, i) => `<div class="sm-g-row ${i < P.vital ? "nc-vital" : ""}"><span class="sm-g-l">${esc(x.label)}</span><div class="sm-g-track"><div class="sm-g-in"><span class="sm-tbar ${i < P.vital ? "warn" : ""}" style="width:${((x.v / max) * 62).toFixed(1)}%"></span><b class="sm-g-t" style="left:${((x.v / max) * 62).toFixed(1)}%">${x.v.toLocaleString("fr-FR")} · ${Math.round(x.cum * 100)} %</b></div></div></div>`).join("")}</div><figcaption><b>${P.vital} sur ${P.list.length}</b> font 80 % des non-conformités${ncMeasure === "qty" ? " (en pièces)" : ""} : c’est là que commence l’analyse.</figcaption></figure>` : '<p class="hint">Aucune non-conformité sur la période.</p>';
-  const list = rows.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 30).map((n) => `<button type="button" class="jn-row" data-nc-open="${esc(n.id)}"><span class="jn-row-main"><span class="jn-tag ${n.origin === "Client" ? "tone-open" : n.severity === "Critique" ? "tone-open" : "tone-warn"}">${esc(n.origin)} · ${esc(n.severity)}</span><b>${esc(n.defect)} · ${esc(n.article || "article ?")}${n.client ? ` · ${esc(n.client)}` : ""}</b><span class="hint">${shortDate(n.date)} · commande ${esc(n.order_no || "—")} · ${n.qty || 0} pièce${(n.qty || 0) > 1 ? "s" : ""}${n.problem_id ? ` · ${esc(n.decision)} ${esc(n.problem_id)}` : n.action_id ? ` · action ${esc(n.action_id)}` : ""} · ${esc(n.status || "Ouverte")}</span></span></button>`).join("");
+  const list = rows.slice().sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 30).map((n) => `<button type="button" class="jn-row" data-nc-open="${esc(n.id)}"><span class="jn-row-main"><span class="jn-tag ${n.origin === "Client" ? "tone-open" : n.severity === "Critique" ? "tone-open" : "tone-warn"}">${esc(n.origin)} · ${esc(n.severity)}</span><b>${esc(n.defect)} · ${esc(n.article || "article ?")}${n.client ? ` · ${esc(n.client)}` : ""}</b><span class="hint">${shortDate(n.date)} · commande ${esc(n.order_no || "—")} · ${n.qty || 0} pièce${(n.qty || 0) > 1 ? "s" : ""}${n.problem_id ? ` · ${esc(n.decision)} ${esc(n.problem_id)}` : n.action_id ? ` · action ${esc(n.action_id)}` : ""} · ${esc(n.status || "Ouverte")}${n.status !== "Close" && ncNext(n) ? ` · <span class="${ncNext(n).late ? "nc-late" : ""}">${esc(ncNext(n).label.toLowerCase())} pour le ${shortDate(ncNext(n).due)}${ncNext(n).late ? " (en retard)" : ""}</span>` : ""}</span></span></button>`).join("");
   const noOrders = !(data.orders || []).some((o) => state.site === "group" || o.site_id === state.site);
   return `${head}${noOrders && mgr ? `<p class="ts-warn">Aucune commande dans la base : importez l’extraction de l’ERP (n° de commande, client, article, lot, ligne, date de fabrication) pour que le scan retrouve tout. <button type="button" class="btn small secondary" data-nc-orders>Importer</button></p>` : ""}<section class="section">${strip}</section><section class="section"><div class="section-title"><h2>Pareto automatique</h2></div>${dims}${pareto}</section><section class="section"><div class="section-title"><h2>Les non-conformités</h2></div>${list ? `<div class="jn-rows">${list}</div>` : '<p class="hint">Rien de déclaré sur la période.</p>'}</section>${ncHow()}`;
 }
@@ -121,15 +135,22 @@ function ncForm(id = null) {
     <div class="bp-two"><label class="field">Client<input id="ncClient" value="${esc(v.client || "")}" autocomplete="off"></label><label class="field">Article<input id="ncArticle" value="${esc(v.article || "")}" autocomplete="off"></label></div>
     <div class="ts-three nc-three"><label class="field">Lot<input id="ncLot" value="${esc(v.lot || "")}" autocomplete="off"></label><label class="field">Ligne<input id="ncLine" list="ncLines" value="${esc(v.line || "")}" autocomplete="off"><datalist id="ncLines">${(data.mlLines || []).filter((l) => l.site_id === siteId && !l.archived_at).map((l) => `<option value="${esc(l.name)}">`).join("")}</datalist></label><label class="field">Fabriqué le<input id="ncProd" type="date" max="${today()}" value="${esc(v.prod_date || "")}"></label></div>
     <div class="field"><span class="metric-label">Origine</span>${chips("origin", NC_ORIGINS, v.origin)}</div>
+    <fieldset class="ts-fs nc-claim" id="ncClaim"><legend>Réclamation client</legend>
+      <div class="bp-two"><label class="field">N° de réclamation du client<input id="ncClaimRef" value="${esc(v.claim_ref || "")}" autocomplete="off"></label><label class="field">Reçue le<input id="ncClaimDate" type="date" max="${today()}" value="${esc(v.claim_date || today())}"></label></div>
+      <div class="ts-three nc-three"><label class="field">Pièces retournées<input id="ncRetQty" type="number" inputmode="numeric" min="0" value="${esc(v.returned_qty ?? "")}"></label><label class="field">Reçues le<input id="ncRetAt" type="date" max="${today()}" value="${esc(v.returned_at || "")}"></label><label class="field">Coût estimé (€)<input id="ncCost" type="number" inputmode="decimal" min="0" step="any" value="${esc(v.cost ?? "")}"><small>Retouche, transport, avoir, remplacement</small></label></div>
+      <div class="field"><span class="metric-label">Décision sur les pièces</span>${chips("claim_decision", NC_CLAIM_DEC, v.claim_decision || "À décider")}</div>
+      <div class="nc-steps" id="ncSteps"></div>
+    </fieldset>
     <div class="field"><span class="metric-label">Défaut</span>${chips("defect", NC_DEFECTS, v.defect)}</div>
     <div class="bp-two"><label class="field">Pièces concernées<input id="ncQty" type="number" inputmode="numeric" min="0" value="${esc(v.qty ?? "")}"></label><div class="field"><span class="metric-label">Gravité</span>${chips("severity", NC_SEV, v.severity)}</div></div>
     <label class="field">Ce qui a été constaté<textarea id="ncText" rows="3" maxlength="800" required>${esc(v.text || "")}</textarea></label>
     <label class="field">Mesure immédiate<input id="ncCont" maxlength="200" value="${esc(v.containment || "")}" placeholder="Ex. lot bloqué, tri du stock, client prévenu" autocomplete="off"></label>
     <section class="nc-auto" aria-live="polite"><h3>Analyse automatique</h3><div id="ncAuto"></div></section>
     <div class="form-actions" id="ncActs"></div></form>`);
-  const root = $("modalContent"), pick = { origin: v.origin, defect: v.defect, severity: v.severity };
+  const root = $("modalContent"), pick = { origin: v.origin, defect: v.defect, severity: v.severity, claim_decision: v.claim_decision || "À décider" };
+  const stepVals = Object.fromEntries(NC_STEPS.map(([k]) => [k, v[k] || ""]));
   root.querySelectorAll("[data-nc-group]").forEach((g) => g.querySelectorAll("[data-nc-pick]").forEach((b) => (b.onclick = () => { pick[g.dataset.ncGroup] = b.dataset.ncPick; g.querySelectorAll("[data-nc-pick]").forEach((x) => { x.classList.toggle("active", x === b); x.setAttribute("aria-pressed", String(x === b)); }); live(); })));
-  const read = () => ({ site_id: siteId, order_no: $("ncOrder").value.trim(), client: $("ncClient").value.trim(), article: $("ncArticle").value.trim(), lot: $("ncLot").value.trim(), line: $("ncLine").value.trim(), prod_date: $("ncProd").value || null, origin: pick.origin, defect: pick.defect, severity: pick.severity, qty: Number($("ncQty").value) || 0, text: $("ncText").value.trim(), containment: $("ncCont").value.trim(), designation: old?.designation || "" });
+  const read = () => ({ site_id: siteId, order_no: $("ncOrder").value.trim(), client: $("ncClient").value.trim(), article: $("ncArticle").value.trim(), lot: $("ncLot").value.trim(), line: $("ncLine").value.trim(), prod_date: $("ncProd").value || null, origin: pick.origin, defect: pick.defect, severity: pick.severity, qty: Number($("ncQty").value) || 0, text: $("ncText").value.trim(), containment: $("ncCont").value.trim(), designation: old?.designation || "", ...(pick.origin === "Client" ? { claim_ref: $("ncClaimRef").value.trim(), claim_date: $("ncClaimDate").value || today(), returned_qty: Number($("ncRetQty").value) || 0, returned_at: $("ncRetAt").value || null, cost: Number($("ncCost").value) || 0, claim_decision: pick.claim_decision, ...Object.fromEntries(NC_STEPS.map(([k]) => [k, root.querySelector(`[data-nc-step="${k}"]`)?.value || stepVals[k] || null])) } : {}) });
   const lookup = () => {
     const o = ncOrder($("ncOrder").value, siteId) || ncOrder($("ncOrder").value);
     if (!$("ncOrder").value.trim()) { $("ncOrderCard").innerHTML = ""; return; }
@@ -138,19 +159,28 @@ function ncForm(id = null) {
     [["ncClient", "client"], ["ncArticle", "article"], ["ncLot", "lot"], ["ncLine", "line"], ["ncProd", "prod_date"]].forEach(([fid, k]) => { if (o[k] && !$(fid).value) $(fid).value = o[k]; });
     live();
   };
+  const steps = () => {
+    $("ncClaim").hidden = pick.origin !== "Client";
+    if (pick.origin !== "Client") return;
+    const nc = read();
+    $("ncSteps").innerHTML = `<span class="metric-label">Réponse au client</span>${ncSteps(nc).map((x) => `<label class="nc-step ${x.late ? "late" : x.done ? (x.lateDone ? "lated" : "done") : ""}"><span><b>${esc(x.label)}</b><small>pour le ${shortDate(x.due)}${x.late ? " · en retard" : x.done ? (x.lateDone ? " · fait en retard" : " · fait") : ""}</small></span><input type="date" data-nc-step="${x.key}" max="${today()}" value="${esc(x.done || "")}" aria-label="${esc(x.label)} : fait le"></label>`).join("")}<small class="hint">Délais usuels d’une réclamation, à ajuster avec chaque client.</small>`;
+    $("ncSteps").querySelectorAll("[data-nc-step]").forEach((i) => (i.onchange = () => { stepVals[i.dataset.ncStep] = i.value; steps(); }));
+  };
   const live = () => {
+    steps();
     const nc = read(), ctx = ncContext({ ...nc, id: old?.id }), adv = ncAdvice(nc, ctx);
     $("ncAuto").innerHTML = `${ncContextHtml(nc, ctx)}<p class="nc-advice"><b>Proposition : ${adv.method === "Action" ? "une action corrective" : adv.method}</b> · ${adv.why.map(esc).join(", ")}.</p>`;
     const done = old?.problem_id || old?.action_id;
-    $("ncActs").innerHTML = done ? `<button class="btn jn-big" data-nc-save="">Enregistrer</button>${old.problem_id ? `<button type="button" class="btn secondary" data-nc-goto="${esc(old.problem_id)}">Ouvrir le ${esc(old.decision)}</button>` : ""}${old.status !== "Close" ? '<button type="button" class="btn ghost" data-nc-close>Clore</button>' : ""}<button type="button" class="btn ghost" data-close-modal>Fermer</button>`
+    $("ncActs").innerHTML = done ? `<button class="btn jn-big" data-nc-save="">Enregistrer</button>${old.problem_id ? `<button type="button" class="btn secondary" data-nc-goto="${esc(old.problem_id)}">Ouvrir le ${esc(old.decision)}</button>` : ""}${old.problem_id && old.origin === "Client" && typeof mdPrint === "function" ? `<button type="button" class="btn ghost" data-nc-report="${esc(old.problem_id)}">Rapport ${esc(old.decision)} pour le client</button>` : ""}${old.status !== "Close" ? '<button type="button" class="btn ghost" data-nc-close>Clore</button>' : ""}<button type="button" class="btn ghost" data-close-modal>Fermer</button>`
       : `<button class="btn jn-big" data-nc-save="${adv.method}">${adv.method === "Action" ? "Enregistrer et créer l’action" : `Enregistrer et ouvrir le ${adv.method} prérempli`}</button>${["8D", "QRQC", "Action"].filter((m) => m !== adv.method).map((m) => `<button type="button" class="btn secondary" data-nc-save="${m}">${m === "Action" ? "Plutôt une action" : `Plutôt un ${m}`}</button>`).join("")}<button type="button" class="btn ghost" data-nc-save="">Enregistrer seulement</button>`;
     $("ncActs").querySelectorAll("[data-nc-save]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); ncSave(old, read(), b.dataset.ncSave); }));
+    $("ncActs").querySelector("[data-nc-report]")?.addEventListener("click", (e) => { const pid = e.currentTarget.dataset.ncReport; closeModal(); mdPrint(pid); });
     $("ncActs").querySelector("[data-nc-goto]")?.addEventListener("click", (e) => { closeModal(); state.site = old.site_id; state.selectedProblemId = e.currentTarget.dataset.ncGoto; switchView("resolution"); });
     $("ncActs").querySelector("[data-nc-close]")?.addEventListener("click", () => { if (!commitData(() => { const n = data.ncs.find((x) => x.id === old.id); n.status = "Close"; n.closed_at = now(); })) return; modalDirty = false; closeModal(); render(); toast("Non-conformité close."); });
   };
   $("ncOrder").addEventListener("change", lookup);
   $("ncOrder").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); lookup(); $("ncText").focus(); } });
-  $("ncForm").addEventListener("input", (e) => { if (e.target.id !== "ncOrder") live(); });
+  $("ncForm").addEventListener("input", (e) => { if (e.target.id !== "ncOrder" && !e.target.dataset.ncStep) live(); });
   $("ncForm").onsubmit = (e) => e.preventDefault();
   root.querySelector("[data-nc-cam]")?.addEventListener("click", () => ncCamera((code) => { $("ncOrder").value = code; lookup(); }));
   if (v.order_no) lookup(); else live();
@@ -292,5 +322,15 @@ function ncBind(root = document) {
   root.querySelectorAll("[data-nc-days]").forEach((b) => (b.onclick = () => { ncDays = Number(b.dataset.ncDays) || 90; render(); }));
   root.querySelectorAll("[data-nc-meas]").forEach((b) => (b.onclick = () => { ncMeasure = b.dataset.ncMeas; render(); }));
 }
+const ncWatchBase = jnWatchCard;
+jnWatchCard = function () {
+  const base = ncWatchBase();
+  if (!ncCan() || role().readonly) return base;
+  const late = osScope(data.ncs || []).filter((n) => !n.archived_at && n.status !== "Close" && ncNext(n)?.late).slice(0, 3);
+  if (!late.length) return base;
+  const rows = late.map((n) => `<button type="button" class="jn-row" data-nc-open="${esc(n.id)}"><span class="jn-row-main"><span class="jn-tag tone-open">Réclamation</span><b>${esc(n.client || "Client")} · ${esc(ncNext(n).label.toLowerCase())}</b><span class="hint">${esc(n.id)}${n.claim_ref ? ` · réf. ${esc(n.claim_ref)}` : ""} · attendu le ${shortDate(ncNext(n).due)}</span></span></button>`).join("");
+  if (!base) return `<section class="jn-card jn-watch" aria-label="À surveiller"><div class="jn-card-head"><h2>À surveiller</h2></div><div class="jn-rows">${rows}</div></section>`;
+  return base.replace(/(<div class="jn-rows">)/, `$1${rows}`);
+};
 const ncOsBindBase = osBind;
 osBind = function () { const out = ncOsBindBase.apply(this, arguments); ncBind(document); return out; };

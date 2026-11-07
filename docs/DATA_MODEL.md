@@ -253,3 +253,8 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `orders[]` : `{ no, site_id, client, article, designation, quantity, line, prod_date, lot, due_date, delivered }`, importées de l’ERP.
 - `ncs[]` : `{ id (NC-…), site_id, date, order_no, client, article, designation, lot, line, prod_date, origin, defect, qty, severity, text, containment, decision (8D, QRQC, Action), problem_id, action_id, status (Ouverte, En analyse, Close) }`.
 - `problems[]` : `nc_id` et `nc_article` pour un dossier ouvert depuis une non-conformité ; `pareto` est prérempli avec les défauts de l’article.
+
+## Extension 8.39.0 (additive)
+
+- `ncs[]`, réclamation client : `claim_ref`, `claim_date`, `returned_qty`, `returned_at`, `cost` (€), `claim_decision` (À décider, Retouche, Rebut, Remplacement, Accepté en l’état, Avoir).
+- Jalons : `ack_at`, `cause_at` et `close8d_at`, les dates auxquelles chaque jalon a été fait.

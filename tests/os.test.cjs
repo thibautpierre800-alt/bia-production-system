@@ -2271,3 +2271,38 @@ test("Non-conformités 8.38 · scan de la commande, analyse automatique, proposi
   assert.match(a.q(".nc-pareto").textContent, /font 80 %/);
   assert.deepEqual(JSON.parse(a.run('JSON.stringify([...document.querySelectorAll("#appView button")].filter(b=>!b.onclick&&!b.disabled).map(b=>b.outerHTML.slice(0,60)))')), []);
 });
+
+test("Réclamation client 8.39 · retour, décision, coût, jalons de réponse en retard, À surveiller, rapport 8D", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('state.role="director";state.site="marzin";render();state.ncOn=true;switchView("kaizen");state.ncOn=true;render()');
+  assert.equal(a.run('ncWorkAdd("2026-11-06",1)'), "2026-11-09", "Vendredi + 1 jour ouvré = lundi");
+  a.click("#appView [data-nc-new]");
+  assert.equal(a.q("#ncClaim").hidden, false, "Origine client par défaut : bloc réclamation visible");
+  a.fill("#ncArticle", "PAN-22");
+  a.fill("#ncClaimRef", "RC-2026-118");
+  a.fill("#ncClaimDate", a.run("auAddDays(-20)"));
+  a.fill("#ncRetQty", "14");
+  a.fill("#ncCost", "1850");
+  a.click('[data-nc-group="claim_decision"] [data-nc-pick="Remplacement"]');
+  a.fill("#ncText", "Décollement en rive");
+  assert.match(a.q("#ncSteps").textContent, /Accusé de réception[\s\S]*en retard/);
+  a.run('document.querySelector(\'[data-nc-step="ack_at"]\').value=auAddDays(-19);document.querySelector(\'[data-nc-step="ack_at"]\').dispatchEvent(new Event("change"))');
+  a.click('[data-nc-save="8D"]');
+  const n = JSON.parse(a.run("JSON.stringify(data.ncs[0])"));
+  assert.equal(n.claim_ref, "RC-2026-118");
+  assert.equal(n.returned_qty, 14);
+  assert.equal(n.cost, 1850);
+  assert.equal(n.claim_decision, "Remplacement");
+  assert.ok(n.ack_at, "Accusé enregistré");
+  assert.equal(a.run(`ncNext(data.ncs[0]).key`), "cause_at");
+  assert.equal(a.run(`ncNext(data.ncs[0]).late`), true, "Causes attendues sous 10 jours ouvrés : en retard");
+  a.run('switchView("home")');
+  assert.ok(a.q(`.jn-watch [data-nc-open="${n.id}"]`), "Réponse client en retard à surveiller");
+  a.run('state.ncOn=true;switchView("kaizen");state.ncOn=true;render()');
+  assert.match(a.q(".cs-summary").textContent, /1\s*réponse client en retard[\s\S]*1\s850\s€/);
+  a.click(`#appView [data-nc-open="${n.id}"]`);
+  assert.ok(a.q("[data-nc-report]"), "Rapport 8D pour le client");
+  a.click("[data-nc-group=\"origin\"] [data-nc-pick=\"Interne\"]");
+  assert.equal(a.q("#ncClaim").hidden, true);
+});

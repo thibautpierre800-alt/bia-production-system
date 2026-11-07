@@ -1,5 +1,24 @@
 # Changelog
 
+## 8.39.0 — 7 novembre 2026
+
+**Réclamation client : le retour client suivi de la réception à la clôture du 8D.**
+
+- Une non-conformité d’origine client ouvre le bloc « Réclamation client ». On y renseigne :
+  - le n° de réclamation du client et sa date de réception ;
+  - les pièces retournées et leur date de réception ;
+  - le coût estimé (retouche, transport, avoir, remplacement) ;
+  - la décision sur les pièces : retouche, rebut, remplacement, accepté en l’état, avoir.
+- La réponse au client suit trois jalons, chacun avec sa date « fait le » :
+  - accusé de réception et confinement, sous 1 jour ouvré ;
+  - causes et actions correctives, sous 10 jours ouvrés ;
+  - 8D clos et envoyé, sous 2 mois.
+- Chaque jalon apparaît à temps, en retard, fait ou fait en retard. Ces délais sont les délais usuels, à ajuster avec chaque client.
+- La liste des non-conformités affiche le prochain jalon. Le résumé compte les réponses client en retard et le coût des réclamations. « À surveiller » remonte les réponses en retard.
+- Le bouton « Rapport 8D pour le client » imprime le 8D ou le met en PDF, prêt à envoyer.
+
+Données : `ncs[]` porte `claim_ref`, `claim_date`, `returned_qty`, `returned_at`, `cost`, `claim_decision`, `ack_at`, `cause_at` et `close8d_at`.
+
 ## 8.38.0 — 7 novembre 2026
 
 **Non-conformités : on scanne la commande, l’analyse se fait seule et le 8D arrive prérempli.**
