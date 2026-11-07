@@ -1,5 +1,28 @@
 # Changelog
 
+## 8.30.0 — 7 novembre 2026
+
+**Journal d’activité : qui a fait quoi, quand, en phrases lisibles.**
+
+- Chaque événement devient une phrase :
+  - « a créé l’action A-021 · … » ;
+  - « a reporté l’échéance de l’action … : 12/11 → 19/11 » ;
+  - « a clôturé … », « a validé … », « a changé le statut du signal … » ;
+  - « a modifié les règles de management ».
+- Les noms de champs sont traduits (Statut, Responsable, Échéance…). Les dates et les textes longs sont mis en forme dans « Valeurs modifiées ».
+- Les événements sont regroupés par jour (Aujourd’hui, Hier, date), avec l’heure, l’auteur et, au niveau Groupe, le site.
+- Filtres :
+  - période (7 jours, 30 jours, tout) ;
+  - type (statuts, créations, échéances, archivages, règles) ;
+  - auteur, site et recherche.
+- « Voir plus » charge les événements par 60.
+- « Exporter (CSV) » télécharge les événements filtrés, séparés par « ; » et lisibles dans Excel.
+- Auteur : chaque nouvel événement porte le nom déclaré sur l’appareil (« Je suis »), en plus du profil.
+  - Avant cette version, seul le profil était enregistré.
+  - Ce nom reste une déclaration locale : ce n’est pas une authentification.
+
+Données : `activity[]` inchangé ; les nouveaux événements portent en plus `person` et `role`.
+
 ## 8.29.0 — 7 novembre 2026
 
 **Écarts : chaque indicateur hors cible a une réponse, et l’écran dit quand réagir.**

@@ -201,3 +201,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 
 - `gapReviews[]` (non indexée) : `{ id: "EC-001", site_id, kpi_id, measure_id, decision: "watch", reason, note, by, at, until }`. Une surveillance couvre l’écart jusqu’à `until`, sauf si un nouveau relevé fait apparaître un signal.
 - Une action créée depuis un écart porte `kpi_id`, `origin_type: "KPI"`, `origin_id` = l’indicateur et `category: "Performance"`. Un chantier créé depuis un écart porte `kpi_id` et `kpi{ label, unit, base, target }`.
+
+## Extension 8.30.0 (additive)
+
+- `activity[]` : les nouveaux événements portent en plus `person` (nom déclaré sur l’appareil, facultatif) et `role` (profil). Les anciens événements restent lisibles avec `actor`.
