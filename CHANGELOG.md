@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.45.1 — 7 novembre 2026
+
+- Voir › TOP 5, vue Groupe : la liste des ateliers où une information reste à dire donne le nom du site (« Europlacage, Marzin, Profiline »), et plus seulement « Atelier principal ».
+
 ## 8.45.0 — 7 novembre 2026
 
 **Le TOP 5 plus simple : un seul départ, moins de gestes, un écran qui guide.**

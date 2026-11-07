@@ -286,3 +286,7 @@ Nouvelle collection `infos[]` : `{ id, site_id ("group" | site), workshop_id, ti
 ## Extension 8.45.0 (additive)
 
 Aucune nouvelle donnée.
+
+## Extension 8.45.1 (additive)
+
+Aucune nouvelle donnée.
