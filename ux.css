@@ -2861,3 +2861,34 @@ button.bp-cell:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
 .update-banner{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:90;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;border-radius:12px;background:#1c1b19;color:#f6f5f0;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:15px;max-width:calc(100vw - 32px)}
 .update-banner .btn{background:var(--orange);border-color:var(--orange);color:#1c1b19;min-height:40px}
 @media(min-width:821px){.update-banner{bottom:24px}}
+
+/* ---------- 8.41 · Tour de contrôle ---------- */
+.tr-screen{background:#14140f;color:#f1efe8;border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:16px;font-variant-numeric:tabular-nums}
+.tr-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}.tr-head h1{margin:0;font-size:30px;color:#fff}.tr-eye{margin:0;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#f29a2e}
+.tr-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tr-clock{font-size:15px;color:#c9c6bb;margin-right:6px;text-transform:capitalize}
+.tr-screen .btn.secondary{background:#2a2924;color:#f1efe8;border-color:#3b3a33}
+.tr-band{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tr-big{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:12px;background:#22211c;border-top:4px solid #4a4840}
+.tr-big b{font-size:34px;line-height:1.05;color:#fff}.tr-big b small{font-size:16px;color:#a9a59a}.tr-big span{font-size:14px;color:#c9c6bb}.tr-big>small{font-size:13px;color:#f29a2e}
+.tr-big.ok{border-top-color:#3fae63}.tr-big.warn{border-top-color:#f29a2e}.tr-big.bad{border-top-color:#e5534b}.tr-big.bad b{color:#ff8a80}
+.tr-main{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(280px,1fr);gap:14px;align-items:start}
+.tr-matrix{overflow-x:auto;border-radius:12px;background:#1b1a16}
+.tr-matrix table{width:100%;border-collapse:separate;border-spacing:4px;font-size:15px}
+.tr-matrix th{font-size:12px;font-weight:800;color:#a9a59a;text-align:center;padding:6px 4px;vertical-align:bottom}.tr-matrix th span{display:block;font-size:15px;color:#f29a2e}
+.tr-matrix tbody th{text-align:left}
+.tr-sitebtn{background:none;border:0;color:#fff;font:inherit;font-size:16px;font-weight:800;cursor:pointer;padding:8px 4px;min-height:44px;text-align:left}.tr-sitebtn:hover{color:#f29a2e}
+.tr-c{text-align:center;padding:8px 4px;border-radius:8px;background:#2a2924;min-width:64px}.tr-c b{font-size:19px;color:#fff}.tr-c small{display:block;font-size:11px;color:#c9c6bb}
+.tr-c.ok{background:#1f4d2e}.tr-c.warn{background:#5a4210}.tr-c.gap{background:#5c1f1b}.tr-c .in-arrow{font-style:normal;margin-left:3px;font-size:14px}.tr-c .in-arrow.up{color:#7fd69a}.tr-c .in-arrow.down{color:#ff8a80}
+.tr-feed{background:#1b1a16;border-radius:12px;padding:12px}.tr-feed h2{margin:0 0 8px;font-size:17px;color:#fff;display:flex;justify-content:space-between}.tr-feed h2 span{background:#e5534b;color:#fff;border-radius:99px;padding:0 10px;font-size:15px}
+.tr-feed ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.tr-feed li button{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;background:#26251f;border:0;border-left:4px solid #6b6a64;border-radius:8px;padding:8px 10px;color:#f1efe8;font:inherit;font-size:14px;cursor:pointer;min-height:44px}
+.tr-feed li.l3 button{border-left-color:#e5534b}.tr-feed li.l2 button{border-left-color:#f29a2e}.tr-al-k{font-weight:800;color:#fff}
+.tr-calm,.tr-more{color:#a9a59a;font-size:14px;margin:4px 0 0}.tr-foot{margin:0;font-size:13px;color:#8f8b80}
+body.tr-full .sidebar,body.tr-full .topbar,body.tr-full .ux-tabs,body.tr-full #mobileNav,body.tr-full .fab,body.tr-full header.app-header{display:none!important}
+body.tr-full #appView,body.tr-full main{padding:0!important;margin:0!important;max-width:none!important}
+body.tr-full .tr-screen{border-radius:0;min-height:100vh}
+.tr-screen.tv .tr-big b{font-size:42px}.tr-screen.tv .tr-c b{font-size:23px}
+@media(max-width:900px){.tr-main{grid-template-columns:1fr}.tr-big b{font-size:28px}}
+body.tr-full .workspace{margin-left:0!important}
+body.tr-full .main-content{padding:0!important;max-width:none!important}
+body.tr-full .quick-action-dock,body.tr-full .mode-banner,body.tr-full .mobile-nav{display:none!important}
