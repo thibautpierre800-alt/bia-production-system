@@ -1,5 +1,33 @@
 # Changelog
 
+## 8.45.0 — 7 novembre 2026
+
+**Le TOP 5 plus simple : un seul départ, moins de gestes, un écran qui guide.**
+
+Revue d’ergonomie du circuit TOP 5 et informations, profil par profil, sur téléphone et sur télévision.
+
+- **Accueil, à un geste :**
+  - Chef d’équipe : la carte « TOP 5 · son atelier » dit « À tenir aujourd’hui » ou « Tenu à 8 h 07 », avec les compteurs (urgentes, informations à dire, réponses à redire) et le bouton « Lancer le TOP 5 ».
+  - Directeur et Lean : « 2/5 tenus », les questions des équipes sans réponse (« Répondre ») et « + Information ».
+  - Opérateur : les informations en cours, lisibles même s’il était absent au TOP 5.
+- **Un seul départ** : dans SQCDP, « Écran atelier » et « Démarrer le TOP 5 » sont remplacés par « Lancer le TOP 5 ». Les lettres restent saisissables sur la page pour le téléphone.
+- **Écran TOP 5 :**
+  - Les onglets portent leurs compteurs (réponses à redire, informations à dire, rouge s’il y a une urgente, ✓ quand le point est tenu).
+  - « Bonne journée » passe tout seul à la lettre suivante.
+  - Touches V (bonne journée) et E (écart).
+  - Le chronomètre se remet à zéro d’un geste, et repart tout seul si l’écran a été ouvert plus de 30 min avant.
+  - Libellés courts sur téléphone.
+- **Clôture guidée :**
+  - Les lettres à renseigner se rejoignent d’un geste.
+  - « Mêmes présents que la dernière fois ».
+  - Une fois tenu : « Point tenu à 8 h 07 · gardé pour le TOP 15 », « Mettre à jour le compte rendu », « Fermer l’écran ».
+- **Information, formulaire simplifié :**
+  - « Pour » et « À dire » se choisissent en un geste : Aujourd’hui, 3 jours, 1 semaine, 2 semaines, ou des dates.
+  - Un vrai bouton photo et l’urgence expliquée.
+  - Un aperçu de ce que l’équipe verra à l’écran, avec un rappel si « ce que ça change » manque.
+  - Le chef d’équipe écrit pour son atelier. Le site et le Groupe sont réservés aux directeurs et au Lean, qui seuls répondent aux questions de leur périmètre.
+- Accueil : les nouveautés se limitent aux quatre dernières ; les autres sont repliées.
+
 ## 8.44.0 — 7 novembre 2026
 
 **Une information envoyée au TOP 5 obtient maintenant une réponse des équipes.**

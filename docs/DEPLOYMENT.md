@@ -241,3 +241,7 @@ La branche `backup/before-8.43.0-2026-11-07` conserve le commit de la version 8.
 ## Retour à 8.43.0
 
 La branche `backup/before-8.44.0-2026-11-07` conserve la version 8.43.0. Aucun nouveau fichier.
+
+## Retour à 8.44.0
+
+La branche `backup/before-8.45.0-2026-11-07` conserve la version 8.44.0. Aucun nouveau fichier.
