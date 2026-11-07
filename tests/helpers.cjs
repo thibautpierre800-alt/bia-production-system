@@ -43,6 +43,7 @@ const scripts = [
   "formation.js",
   "roadmap-revue.js",
   "avant-apres.js",
+  "ecarts.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {

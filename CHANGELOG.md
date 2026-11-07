@@ -1,5 +1,28 @@
 # Changelog
 
+## 8.29.0 — 7 novembre 2026
+
+**Écarts : chaque indicateur hors cible a une réponse, et l’écran dit quand réagir.**
+
+- Une carte par indicateur hors cible : la valeur, la cible, la courbe avec la cible en pointillé et, dès 6 relevés, la zone des limites habituelles.
+- L’écran lit la courbe en une phrase, pour ne réagir qu’aux vrais signaux :
+  - Événement : cible zéro dépassée, chaque cas se traite.
+  - Rupture : un relevé sort des limites habituelles (moyenne ± 2,66 × écart moyen entre deux relevés, carte XmR).
+  - Changement de niveau : 8 relevés de suite du mauvais côté de la moyenne.
+  - Dérive : 5 relevés de suite, chacun moins bon que le précédent.
+  - Toujours hors cible : pas de signal, mais la moyenne n’atteint pas la cible ; il faut changer le système, pas réagir à chaque relevé.
+  - En progrès, Variation normale, Trop peu de relevés.
+- La réponse est visible : un problème, un chantier ou une action déjà ouverts sur l’indicateur et le site. Sinon, « Sans réponse », avec la réponse conseillée en premier :
+  - QRQC pour un signal, chantier pour un écart sans signal ;
+  - action rapide (quoi, qui, pour quand) ;
+  - surveillance décidée, avec un motif et une date pour revoir. Échue ou rattrapée par un signal, l’écart repasse « Sans réponse ».
+- Le chantier lancé depuis un écart reprend l’indicateur, la valeur actuelle, la cible et l’unité.
+- Filtres Sans réponse, Pris en charge et Tous ; puces par site au niveau Groupe.
+- Pilotage › « À creuser » montre la même lecture et l’état de la réponse. L’accueil signale les écarts sans réponse.
+- Les liens à corriger restent réservés au Responsable Lean.
+
+Données : nouvelle collection `gapReviews[]` (non indexée) pour les décisions de surveillance ; les réponses restent des problèmes, chantiers et actions reliés par `kpi_id`.
+
 ## 8.28.0 — 7 novembre 2026
 
 **Fiche avant / après : deux photos côte à côte, trois lignes, une fiche à afficher, et la suite.**
