@@ -2389,3 +2389,25 @@ test("Tour de contrôle 8.41 · tous les sites et indicateurs, alertes classées
   a.run('state.role="teamlead";render()');
   assert.equal(a.run("trCan()"), false);
 });
+
+test("Ergonomie 8.42 · nouveautés à l’accueil, onglets « Plus » sur téléphone, sommaire des pages longues", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('try{localStorage.removeItem("bia-news-seen")}catch{};state.role="lean";state.site="group";state.view="home";render()');
+  assert.match(a.q(".er-news").textContent, /Tour de contrôle[\s\S]*Échantillothèque[\s\S]*Non-conformités/);
+  a.click('[data-er-news="0"]');
+  assert.equal(a.run("state.pilotTab"), "tour");
+  a.run('state.view="home";render()');
+  a.click("[data-er-seen]");
+  assert.equal(a.q(".er-news"), null, "« J’ai vu » range la carte");
+  // Le chef d'équipe ne se voit proposer que ses écrans
+  a.run('try{localStorage.removeItem("bia-news-seen")}catch{};state.role="teamlead";state.site="marzin";render()');
+  assert.deepEqual(JSON.parse(a.run("JSON.stringify(erNews().map(n=>n.label))")).includes("Tour de contrôle"), false);
+  // Onglets sur téléphone
+  a.run('window.innerWidth=390;state.role="lean";state.site="group";state.pilotTab="";switchView("pilotage")');
+  const row = a.run('uxTabRow()');
+  assert.match(row, /Plus · \d/);
+  assert.equal((row.match(/data-ux-tab=/g) || []).length, 4);
+  a.run('window.innerWidth=1366');
+  assert.doesNotMatch(a.run('uxTabRow()'), /Plus ·/);
+});

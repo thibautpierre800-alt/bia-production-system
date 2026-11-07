@@ -229,3 +229,7 @@ La branche `backup/before-8.40.1-2026-11-07` conserve le commit `226097f`, qui c
 ## Retour à 8.40.1
 
 La branche `backup/before-8.41.0-2026-11-07` conserve le commit `1abdb8f`, qui correspond à la version 8.40.1. La 8.41.0 ajoute `tour.js`. Pour un écran de salle, ouvrir l’adresse de l’appli suivie de `#tour`, avec un profil Lean, direction ou directeur de site.
+
+## Retour à 8.41.0
+
+La branche `backup/before-8.42.0-2026-11-07` conserve le commit `1123d09`, qui correspond à la version 8.41.0. La 8.42.0 ajoute `ergonomie.js`. La page `maj.html`, ajoutée après la 8.41.0, débloque un appareil resté sur une ancienne version.

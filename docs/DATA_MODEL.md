@@ -270,3 +270,7 @@ Aucun changement de données en 8.40.1.
 ## Extension 8.41.0 (additive)
 
 Aucune nouvelle donnée en 8.41 : la tour lit les collections existantes.
+
+## Extension 8.42.0 (additive)
+
+Aucune nouvelle donnée. La clé locale `bia-news-seen` retient la dernière nouveauté vue sur l’appareil.

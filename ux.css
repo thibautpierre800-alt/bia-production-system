@@ -2892,3 +2892,20 @@ body.tr-full .tr-screen{border-radius:0;min-height:100vh}
 body.tr-full .workspace{margin-left:0!important}
 body.tr-full .main-content{padding:0!important;max-width:none!important}
 body.tr-full .quick-action-dock,body.tr-full .mode-banner,body.tr-full .mobile-nav{display:none!important}
+
+/* ---------- 8.42 · Ergonomie de navigation ---------- */
+.er-tabs .er-more{color:var(--orange);font-weight:800}
+.er-sheet{display:flex;flex-direction:column;gap:8px}
+.er-sheet-btn{min-height:52px;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:#fff;font:inherit;font-size:17px;font-weight:700;text-align:left;color:var(--ink);cursor:pointer}
+.er-sheet-btn.active{border-color:var(--orange);background:var(--orange-soft)}
+.er-jump{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;scrollbar-width:none;align-items:center;margin:0 0 14px;padding-bottom:2px}
+.er-jump span{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);white-space:nowrap;margin-right:4px}
+.er-jump .chip{white-space:nowrap}
+.er-top{position:fixed;left:16px;bottom:84px;z-index:40;min-height:44px;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-weight:800;box-shadow:0 4px 14px rgba(0,0,0,.15);cursor:pointer}
+@media(min-width:821px){.er-top{left:auto;right:96px;bottom:28px}}
+.er-news{border:1px solid #f2c99a;background:linear-gradient(180deg,#fff7ec,#fff);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.er-news-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.er-news-head h2{margin:0;font-size:18px}
+.er-news-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:10px}
+.er-news-item{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit;text-align:left;color:var(--ink);cursor:pointer;min-height:44px}
+.er-news-item b{font-size:15px}.er-news-item span{font-size:13px;color:var(--muted)}.er-news-item small{font-size:13px;color:var(--orange);font-weight:800}
+@media(max-width:820px){.er-news-item span{display:none}.er-news-list{grid-template-columns:1fr 1fr}.er-news{padding:12px}.er-news-head h2{font-size:16px}}
