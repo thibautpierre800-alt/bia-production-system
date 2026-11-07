@@ -209,3 +209,7 @@ La branche `backup/before-8.36.0-2026-11-07` conserve le commit `bd71d36`, qui c
 ## Retour à 8.36.0
 
 La branche `backup/before-8.37.0-2026-11-07` conserve le commit `51b5a1b`, qui correspond à la version 8.36.0. La 8.37.0 ajoute `gains.js` et `environnement.js`. Les gains de l’ancien registre restent compatibles : `quantity` et `period` sont tenus à jour.
+
+## Retour à 8.37.0
+
+La branche `backup/before-8.38.0-2026-11-07` conserve le commit `d04c0ab`, qui correspond à la version 8.37.0. La 8.38.0 ajoute `nc.js`. Les commandes viennent d’une extraction CSV de l’ERP, en attendant un connecteur.

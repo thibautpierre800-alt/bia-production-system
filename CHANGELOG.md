@@ -1,5 +1,34 @@
 # Changelog
 
+## 8.38.0 — 7 novembre 2026
+
+**Non-conformités : on scanne la commande, l’analyse se fait seule et le 8D arrive prérempli.**
+
+- Nouvel onglet Résoudre › Non-conformités, aussi dans le menu de création.
+- **Déclarer** :
+  - on scanne le numéro de commande avec une douchette (elle tape le numéro, puis Entrée) ou avec la caméra du téléphone quand le navigateur sait lire les codes-barres, ou on le saisit ;
+  - la commande est retrouvée dans la base : client, article, désignation, lot, ligne, date de fabrication et quantité ;
+  - on indique l’origine (client, interne, fournisseur), le défaut, la quantité, la gravité et la mesure immédiate.
+- **L’analyse automatique se fait pendant la saisie** :
+  - récurrence sur 90 jours : même article, même client, même défaut sur la même ligne, dossiers déjà ouverts ;
+  - production du jour de fabrication : TRS, qualité, rebuts, arrêts, micro-arrêts, pannes TPM, signaux ;
+  - autres commandes du même article, pas encore livrées, à vérifier.
+- **Le traitement proposé est expliqué** :
+  - un 8D si le client est touché, si la gravité est critique ou si le défaut se répète ;
+  - un QRQC pour une non-conformité interne majeure ;
+  - une action simple pour une mineure isolée.
+- **Le 8D ou le QRQC est créé prérempli** :
+  - D0 : urgence et action réflexe ;
+  - D1 : équipe proposée ;
+  - D2 : 5W2H complet, avec la part de la commande touchée ;
+  - D3 : lot à bloquer et commandes à vérifier ;
+  - D4 : pistes tirées des données et récurrence, plus les questions de non-détection ;
+  - Pareto des défauts de l’article sur 12 mois.
+- **Pareto automatique des non-conformités** : par défaut, article, client, ligne ou origine, sur 90 jours ou 12 mois, en nombre ou en pièces. L’écran indique combien de catégories font 80 % du total.
+- **Import des commandes** : collez ou chargez l’extraction de l’ERP en CSV (séparateur ; ou ,, dates jj/mm/aaaa acceptées). Des commandes d’exemple sont fournies pour la démonstration.
+
+Données : `orders[]` et `ncs[]` (non indexées). `problems[]` porte `nc_id` et `nc_article`.
+
 ## 8.37.0 — 7 novembre 2026
 
 **Les gains et l’environnement deviennent des écrans à part entière : Voir › Gains et Voir › Environnement, à côté de Pilotage.**

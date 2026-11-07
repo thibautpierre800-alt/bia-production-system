@@ -247,3 +247,9 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 - `envEvents[]` : `{ site_id, date, kind, severity, text, immediate, action_id }`.
 - `envDuties[]` : `{ site_id, name, every_months, last_date, owner }`.
 - `envSites[]` : `{ site_id, prod_unit, f_elec, f_gas, ref{}, target{}, cut_pct }`.
+
+## Extension 8.38.0 (additive)
+
+- `orders[]` : `{ no, site_id, client, article, designation, quantity, line, prod_date, lot, due_date, delivered }`, importées de l’ERP.
+- `ncs[]` : `{ id (NC-…), site_id, date, order_no, client, article, designation, lot, line, prod_date, origin, defect, qty, severity, text, containment, decision (8D, QRQC, Action), problem_id, action_id, status (Ouverte, En analyse, Close) }`.
+- `problems[]` : `nc_id` et `nc_article` pour un dossier ouvert depuis une non-conformité ; `pareto` est prérempli avec les défauts de l’article.
