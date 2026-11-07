@@ -188,3 +188,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.26.0 (additive)
 
 - `trainingRecords[]` : `session_id` (fiches créées ensemble lors d’une session). Échéance : `expires_at` = date de validation + `validity_months` de la formation. La dernière fiche par personne et par formation fait foi.
+
+## Extension 8.27.0 (additive)
+
+- `roadmapReviews[]` (non indexée) : `{ id: "RV-001", date, by, items[{ kind: "jalon"|"priorite", ref, label, s: "done"|"ok"|"risk"|"late", note, decision, action_id }], learning, next_date, created_at }`. Une action créée en revue porte `origin_type: "Roadmap"` et, pour une priorité, `origin_id` = la priorité.

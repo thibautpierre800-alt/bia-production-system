@@ -1,5 +1,25 @@
 # Changelog
 
+## 8.27.0 — 7 novembre 2026
+
+**Roadmap : la revue mensuelle devient un rituel tenu et tracé.**
+
+- « Faire la revue » passe en revue chaque jalon du plan non atteint et chaque priorité hors plan : atteint, dans les temps, à risque ou en retard.
+  - Un jalon dont la date est passée arrive en retard.
+  - Ce qui est à risque ou en retard demande pourquoi, en une phrase.
+- La décision prise peut devenir une action datée, avec son pilote.
+- « Atteint » coche le jalon du plan (Responsable Lean) ou termine la priorité. Les autres statuts ne modifient pas le plan importé.
+- La revue se termine sur ce qu’on retient du mois et la date de la prochaine revue.
+- Sur la page Roadmap :
+  - la dernière revue, avec les points en retard ou à risque et leur décision ;
+  - ce qu’on retient ;
+  - la prochaine revue et l’historique des revues.
+  - Le panneau fixe « Revue mensuelle attendue » est remplacé.
+- L’accueil rappelle la revue quand elle est due.
+- Au téléphone, les priorités hors plan se lisent en liste.
+
+Données : nouvelle collection `roadmapReviews[]`. Le plan importé et `roadmap[]` sont inchangés, sauf les jalons et priorités marqués atteints. Rien n’est retiré.
+
 ## 8.26.0 — 7 novembre 2026
 
 **Formation et habilitations : les échéances d’abord, la session en une fois, le dossier complet.**

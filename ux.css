@@ -2383,3 +2383,21 @@ button.bp-cell:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
 @media screen and (max-width:540px){.fr-acts{flex:1 1 100%}.fr-acts .btn{flex:1 1 auto}.fr-st{grid-template-columns:minmax(0,1fr)}}
 /* Cases à cocher dans les formulaires courts : taille normale (la règle des champs pleine largeur ne s’applique pas). */
 .jn-form input[type=checkbox]:not([type=file]):not([type=hidden]),.jn-form input[type=radio]:not([type=file]):not([type=hidden]){width:22px;height:22px;min-height:0;flex:0 0 22px;margin:2px 0 0;padding:0}
+/* ---------- 8.27 · Roadmap : revue mensuelle ---------- */
+.rv-panel.due{border-left:6px solid var(--orange)}
+.rv-counts{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
+.rv-c{padding:4px 10px;border-radius:999px;font-size:12.5px;background:#f0efea}.rv-c b{font-size:14px}
+.rv-c.rv-done{background:#e5f4e4;color:#14603a}.rv-c.rv-ok{background:#e7f1fb;color:#1d5fa8}.rv-c.rv-risk{background:#f9eeda;color:#8a4b00}.rv-c.rv-late{background:#fbebeb;color:#b42318}
+.rv-watch{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px}
+.rv-watch li{display:grid;gap:2px;padding:8px 12px;border-radius:10px;font-size:13.5px;background:#f9eeda}.rv-watch li.rv-late{background:#fbebeb}
+.rv-learn{margin:0;font-size:14px}
+.rv-items{display:grid;gap:8px}
+.rv-item{display:grid;gap:8px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid var(--line)}
+.rv-head{display:grid;gap:2px}.rv-head b{font-size:15px;line-height:1.3}.rv-head .hint{margin:0;font-size:12.5px}
+.rv-kind{font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#1d5fa8}
+.rv-st{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.rl-sb.rv-done.on{background:#1f8a52;border-color:#1f8a52;color:#fff}.rl-sb.rv-ok.on{background:#1d5fa8;border-color:#1d5fa8;color:#fff}.rl-sb.rv-risk.on{background:#e08a00;border-color:#e08a00;color:#1d1d1b}.rl-sb.rv-late.on{background:#c4321f;border-color:#c4321f;color:#fff}
+.rv-more{display:grid;gap:6px}.rv-more input:not([type=checkbox]){min-height:44px;font-size:16px;width:100%}
+.rv-act{display:flex;gap:8px;align-items:center;font-size:13.5px}
+@media screen and (max-width:540px){.rv-st{grid-template-columns:repeat(2,minmax(0,1fr))}.roadmap-board{display:grid!important;grid-template-columns:minmax(0,1fr)!important;overflow:visible!important}.roadmap-horizon{min-width:0!important;width:auto!important;min-height:0!important}}
+.rv-panel .section-title{flex-wrap:wrap;gap:8px}.rv-panel .section-title>div{flex:1 1 240px}
