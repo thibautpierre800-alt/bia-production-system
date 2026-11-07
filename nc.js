@@ -122,11 +122,11 @@ function ncHow() {
 
 /* ---------- Déclaration ---------- */
 
-function ncForm(id = null) {
+function ncForm(id = null, preset = {}) {
   const old = id ? (data.ncs || []).find((n) => n.id === id) : null;
   const siteId = old?.site_id || (state.site === "group" ? OPERATIONAL_SITES.find((s) => ncWritable(s.id))?.id : state.site);
   if (!siteId || !ncWritable(siteId)) return toast("Choisissez un site de votre périmètre.");
-  const v = old || { origin: "Client", defect: NC_DEFECTS[0], severity: "Majeure", date: today() };
+  const v = old || { origin: "Client", defect: NC_DEFECTS[0], severity: "Majeure", date: today(), ...preset };
   const chips = (name, list, cur) => `<div class="filters nc-chips" data-nc-group="${name}">${list.map((x) => `<button type="button" class="chip ${x === cur ? "active" : ""}" data-nc-pick="${esc(x)}" aria-pressed="${x === cur}">${esc(x)}</button>`).join("")}</div>`;
   const cam = typeof window.BarcodeDetector === "function" && navigator.mediaDevices?.getUserMedia;
   modal(old ? `${old.id} · Non-conformité` : "Déclarer une non-conformité", `<form id="ncForm" class="jn-form nc-form">
@@ -169,7 +169,7 @@ function ncForm(id = null) {
   const live = () => {
     steps();
     const nc = read(), ctx = ncContext({ ...nc, id: old?.id }), adv = ncAdvice(nc, ctx);
-    $("ncAuto").innerHTML = `${ncContextHtml(nc, ctx)}<p class="nc-advice"><b>Proposition : ${adv.method === "Action" ? "une action corrective" : adv.method}</b> · ${adv.why.map(esc).join(", ")}.</p>`;
+    $("ncAuto").innerHTML = `${ncContextHtml(nc, ctx)}${typeof ehRuleLine === "function" ? ehRuleLine(nc) : ""}<p class="nc-advice"><b>Proposition : ${adv.method === "Action" ? "une action corrective" : adv.method}</b> · ${adv.why.map(esc).join(", ")}.</p>`;
     const done = old?.problem_id || old?.action_id;
     $("ncActs").innerHTML = done ? `<button class="btn jn-big" data-nc-save="">Enregistrer</button>${old.problem_id ? `<button type="button" class="btn secondary" data-nc-goto="${esc(old.problem_id)}">Ouvrir le ${esc(old.decision)}</button>` : ""}${old.problem_id && old.origin === "Client" && typeof mdPrint === "function" ? `<button type="button" class="btn ghost" data-nc-report="${esc(old.problem_id)}">Rapport ${esc(old.decision)} pour le client</button>` : ""}${old.status !== "Close" ? '<button type="button" class="btn ghost" data-nc-close>Clore</button>' : ""}<button type="button" class="btn ghost" data-close-modal>Fermer</button>`
       : `<button class="btn jn-big" data-nc-save="${adv.method}">${adv.method === "Action" ? "Enregistrer et créer l’action" : `Enregistrer et ouvrir le ${adv.method} prérempli`}</button>${["8D", "QRQC", "Action"].filter((m) => m !== adv.method).map((m) => `<button type="button" class="btn secondary" data-nc-save="${m}">${m === "Action" ? "Plutôt une action" : `Plutôt un ${m}`}</button>`).join("")}<button type="button" class="btn ghost" data-nc-save="">Enregistrer seulement</button>`;

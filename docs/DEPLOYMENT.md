@@ -217,3 +217,7 @@ La branche `backup/before-8.38.0-2026-11-07` conserve le commit `d04c0ab`, qui c
 ## Retour à 8.38.0
 
 La branche `backup/before-8.39.0-2026-11-07` conserve le commit `14bb6b5`, qui correspond à la version 8.38.0. La 8.39.0 modifie `nc.js` et `ux.css`.
+
+## Retour à 8.39.0
+
+La branche `backup/before-8.40.0-2026-11-07` conserve le commit `4a26665`, qui correspond à la version 8.39.0. La 8.40.0 ajoute `echantillotheque.js` et ouvre `ncForm` à un préremplissage.

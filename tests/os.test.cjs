@@ -2306,3 +2306,49 @@ test("Réclamation client 8.39 · retour, décision, coût, jalons de réponse e
   a.click("[data-nc-group=\"origin\"] [data-nc-pick=\"Interne\"]");
   assert.equal(a.q("#ncClaim").hidden, true);
 });
+
+test("Échantillothèque 8.40 · règles groupe, site, client ; contrôle d’une pièce ; écarts entre sites ; lien non-conformité ; revalidation", (t) => {
+  const a = app(t);
+  demo(a);
+  a.run('state.role="lean";state.site="group";render();state.echOn=true;switchView("documents");state.echOn=true;render()');
+  const tabs = JSON.parse(a.run('JSON.stringify(uxTabs(uxStages().find(s=>s.id==="perenniser")).map(x=>x.label))'));
+  assert.deepEqual(tabs.slice(0, 2), ["Standards", "Échantillothèque"]);
+  // Règle groupe par le formulaire
+  a.click("[data-eh-new]");
+  a.run('document.querySelector("#ehScope").value="group";document.querySelector("#ehDef").value="Aspect, rayure"');
+  a.fill("#ehTol", "10");
+  a.fill("#ehCrit", "Longueur de la rayure visible");
+  a.fill("#ehDist", "1");
+  a.fill("#ehLux", "1000");
+  a.click('[data-eh-save="Validée"]');
+  const g = JSON.parse(a.run("JSON.stringify(data.samples[0])"));
+  assert.equal(g.scope, "group");
+  assert.equal(g.tol_max, 10);
+  assert.equal(g.status, "Validée");
+  // Règle Marzin plus stricte, règle client sans tolérance
+  a.run(`data.samples.push({id:"ECH-M",scope:"marzin",site_id:"marzin",client:"",articles:"",defect:"Aspect, rayure",zone:"A · face vue",tol_max:5,tol_unit:"mm",over:"À retoucher",photos:{},status:"Validée",validated_at:new Date(Date.now()-400*864e5).toISOString(),review_months:12},{id:"ECH-C",scope:"group",site_id:"group",client:"Client A",articles:"PAN-*",defect:"Aspect, rayure",zone:"A · face vue",tol_max:null,tol_unit:"mm",over:"Refusé",photos:{},status:"Validée",validated_at:now(),review_months:12});render()`);
+  const r = (o) => a.run(`ehRule(${JSON.stringify({ defect: "Aspect, rayure", zone: "A · face vue", ...o })}).rule?.id`);
+  assert.equal(r({ site: "marzin" }), "ECH-M", "Le site l’emporte sur le groupe");
+  assert.equal(r({ site: "sodeplax" }), g.id, "Sans règle de site : le groupe");
+  assert.equal(r({ site: "marzin", client: "client a", article: "PAN-18" }), "ECH-C", "Le client l’emporte");
+  assert.equal(r({ site: "marzin", client: "Client A", article: "CHT-1" }), "ECH-M", "Hors périmètre d’articles du client : règle du site");
+  assert.equal(a.run('ehVerdict(data.samples.find(s=>s.id==="ECH-M"),5).label'), "À la limite : conforme");
+  assert.equal(a.run('ehVerdict(data.samples.find(s=>s.id==="ECH-M"),7).label'), "À retoucher");
+  assert.equal(a.run('ehVerdict(data.samples.find(s=>s.id==="ECH-C"),0.5).ok'), false, "Aucun défaut admis");
+  // Écarts entre sites et revalidation
+  assert.match(a.q(".eh-gaps").textContent, /Aspect, rayure[\s\S]*10 mm[\s\S]*5 mm/);
+  assert.equal(a.run('ehReview(data.samples.find(s=>s.id==="ECH-M"))'), true);
+  // Contrôle au poste par le directeur de Marzin, puis non-conformité préremplie
+  a.run('state.role="director";state.site="marzin";render()');
+  assert.match(a.q(".eh-rule").textContent, /remplace : Groupe[\s\S]*accepté jusqu’à 5 mm/);
+  a.fill("#ehMeasure", "7");
+  a.run('document.querySelector("#ehMeasure").dispatchEvent(new Event("change"))');
+  assert.match(a.q(".eh-verdict").textContent, /À retoucher/);
+  a.click("[data-eh-nc]");
+  assert.equal(a.q("#ncText").value.includes("hors tolérance"), true);
+  assert.match(a.q("#ncAuto").textContent, /Échantillothèque[\s\S]*5 mm \(règle Marzin\)/);
+  a.run("closeModal()");
+  a.run('switchView("home")');
+  assert.ok(a.q('.jn-watch [data-eh-go="ECH-M"]'), "Référence à revalider");
+  assert.deepEqual(JSON.parse(a.run('state.echOn=true;switchView("documents");state.echOn=true;render();JSON.stringify([...document.querySelectorAll("#appView button")].filter(b=>!b.onclick&&!b.disabled).map(b=>b.outerHTML.slice(0,60)))')), []);
+});

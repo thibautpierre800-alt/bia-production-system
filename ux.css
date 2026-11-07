@@ -2837,3 +2837,23 @@ button.bp-cell:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
 .nc-step{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border-left:4px solid #c9c8c1;background:#fff}.nc-step span{display:flex;flex-direction:column}.nc-step small{font-size:13px;color:var(--muted)}
 .nc-step.late{border-left-color:var(--red);background:#fbebeb}.nc-step.done{border-left-color:var(--green)}.nc-step.lated{border-left-color:var(--orange)}.nc-step input{max-width:170px}
 .nc-late{color:var(--red);font-weight:700}
+
+/* ---------- 8.40 · Échantillothèque ---------- */
+.eh-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.eh-ph{margin:0;display:flex;flex-direction:column;gap:3px;border-radius:8px;overflow:hidden;border:2px solid #c9c8c1;background:#f1f0eb}
+.eh-ph.ok{border-color:var(--green)}.eh-ph.lim{border-color:var(--orange)}.eh-ph.nok{border-color:var(--red)}
+.eh-ph figcaption{font-size:13px;font-weight:800;text-align:center;padding:2px 0 4px}.eh-ph.ok figcaption{color:var(--green)}.eh-ph.lim figcaption{color:#9a5a00}.eh-ph.nok figcaption{color:var(--red)}
+.eh-img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.eh-noph{display:grid;place-items:center;aspect-ratio:4/3;font-size:12px;color:var(--muted)}
+.eh-photos.big .eh-ph figcaption{font-size:16px}
+.eh-control .eh-rule{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px;display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.eh-rule-head{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}.eh-rule-head b{font-size:17px}
+.eh-tol{margin:0;font-size:17px}.eh-measure{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}.eh-measure .field{max-width:260px}
+.eh-verdict{margin:0 0 8px;padding:10px 16px;border-radius:10px;font-size:20px;font-weight:900}.eh-verdict.ok{background:#e5f4e4;color:var(--green)}.eh-verdict.bad{background:#fbebeb;color:var(--red)}
+.eh-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.eh-card{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;font:inherit;text-align:left;color:var(--ink);cursor:pointer}
+.eh-card-t{display:flex;flex-direction:column;gap:2px}.eh-card-t b{font-size:15px}.eh-card-t span{font-size:14px}.eh-card-t small{font-size:13px;color:var(--muted)}
+.eh-gaps td.bad{background:#fbebeb}
+.eh-pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.eh-pick-cell{display:flex;flex-direction:column;gap:4px;font-weight:800;font-size:14px}.eh-pick-cell input{font-size:12px;min-height:auto!important}
+.eh-prev{border:1px dashed #c9c8c1;border-radius:8px;overflow:hidden;background:#f6f5f0;min-height:60px}
+.eh-ncline{margin:8px 0 0;font-size:14px}
