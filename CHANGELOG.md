@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.40.1 — 7 novembre 2026
+
+**La nouvelle version se signale.**
+
+- Quand une nouvelle version est installée en arrière-plan, un bandeau « Une nouvelle version de l’application est disponible » apparaît, avec un bouton « Mettre à jour » qui recharge la page. Avant, l’appareil gardait l’ancienne version jusqu’à un deuxième rechargement, sans rien dire.
+- L’appli vérifie aussi s’il existe une mise à jour chaque fois qu’on revient sur son onglet.
+
 ## 8.40.0 — 7 novembre 2026
 
 **Échantillothèque : ce qui passe et ce qui ne passe pas, selon la règle du groupe, du site ou du client.**

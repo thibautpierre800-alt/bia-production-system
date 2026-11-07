@@ -262,3 +262,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.40.0 (additive)
 
 - `samples[]` : `{ id (ECH-…), scope (group ou site), site_id, client, articles, defect, zone, criterion, tol_max, tol_unit, over, distance_m, lux, seconds, location, photos{ ok, limit, nok }, status (Brouillon, Validée), validated_by, validated_at, review_months, version }`.
+
+## Extension 8.40.1 (additive)
+
+Aucun changement de données en 8.40.1.
