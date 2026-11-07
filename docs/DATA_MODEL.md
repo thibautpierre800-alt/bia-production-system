@@ -205,3 +205,7 @@ Avant migration, le JSON original est conservé sous `biaProductionSystemV5-befo
 ## Extension 8.30.0 (additive)
 
 - `activity[]` : les nouveaux événements portent en plus `person` (nom déclaré sur l’appareil, facultatif) et `role` (profil). Les anciens événements restent lisibles avec `actor`.
+
+## Extension 8.31.0 (additive)
+
+- Aucun champ nouveau. L’état du paramétrage est calculé à partir de `sites`, `workshops`, `users`, `kpis`, `measures` et `settings`.

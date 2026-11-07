@@ -45,6 +45,7 @@ const scripts = [
   "avant-apres.js",
   "ecarts.js",
   "journal.js",
+  "parametres.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {
