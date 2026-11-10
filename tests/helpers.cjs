@@ -58,6 +58,7 @@ const scripts = [
   "tour.js",
   "ergonomie.js",
   "top5.js",
+  "panneau.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {
@@ -75,6 +76,7 @@ function app(t, stored, url = "https://bia.example/bia-production-system/") {
     virtualConsole: vc,
   });
   const w = dom.window;
+  w.__biaTests = true; // les tests gardent le scénario de formation six sites
   w.scrollTo = () => {};
   w.print = () => (w.printed = true);
   w.HTMLElement.prototype.scrollIntoView = () => {};

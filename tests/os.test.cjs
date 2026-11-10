@@ -7,7 +7,7 @@ function fields(a, values, form = "#osForm") {
 }
 function demo(a) {
   a.run(
-    'data=osFreshData(true);osInit();state.site="group";state.role="lean";render()',
+    'pnUseClean=false;data=osFreshData(true);osInit();state.site="group";state.role="lean";render()',
   );
 }
 function closeAction(a, id) {
@@ -2395,8 +2395,8 @@ test("Ergonomie 8.42 · nouveautés à l’accueil, onglets « Plus » sur tél�
   const a = app(t);
   demo(a);
   a.run('try{localStorage.removeItem("bia-news-seen")}catch{};state.role="lean";state.site="group";state.view="home";render()');
-  assert.match(a.q(".er-news").textContent, /Informations à tous les TOP 5[\s\S]*TOP 5 à l’écran[\s\S]*Tour de contrôle[\s\S]*Échantillothèque[\s\S]*Non-conformités/);
-  a.click('[data-er-news="2"]');
+  assert.match(a.q(".er-news").textContent, /Panneau TOP 5 reporté[\s\S]*Informations à tous les TOP 5[\s\S]*TOP 5 à l’écran[\s\S]*Tour de contrôle[\s\S]*Échantillothèque[\s\S]*Non-conformités/);
+  a.click('[data-er-news="3"]');
   assert.equal(a.run("state.pilotTab"), "tour");
   a.run('state.view="home";render()');
   a.click("[data-er-seen]");
@@ -2549,4 +2549,56 @@ test("TOP 5 8.45 · accueil à un geste, onglets avec compteurs, lettre suivante
   assert.match(a.q(".t5-home").textContent, /1 question des équipes sans réponse/);
   a.click(".t5-home [data-t5-tab]");
   assert.ok(a.q(".t5-qsec"), "Voir › TOP 5, questions en tête");
+});
+
+test("Panneau TOP 5 8.46 · exemple Marzin repartant de zéro, copie du panneau, report après la réunion, sujets au plan d’actions", (t) => {
+  const a = app(t);
+  // L’exemple de démonstration : rien d’autre que le panneau de Marzin et ce qu’il a produit
+  a.run('pnUseClean=true;data=osFreshData(true);osInit();state.role="teamlead";state.site="marzin";state.workshop=null;render()');
+  assert.equal(a.run("data.meta.demo_revision"), 5);
+  assert.equal(a.run("data.signals.length"), 0, "on repart de zéro");
+  assert.equal(a.run("data.boardWeeks.length"), 6);
+  assert.equal(a.run('data.actions.filter(x=>x.board_id==="PN-MARZIN").length'), 4);
+  assert.ok(a.run('data.measures.some(m=>m.code==="service"&&m.value===91)'), "livrées à temps → service client");
+  assert.deepEqual(a.run("osIntegrity(data)"), [], "aucune relation cassée");
+  // Voir › TOP 5 : la copie fidèle du panneau
+  a.run('switchView("home")');
+  assert.match(a.q(".pn-home").textContent, /Panneau TOP 5 Marzin[\s\S]*Reporté par/, "le chef d’équipe voit son panneau à l’accueil");
+  a.click(".pn-home [data-pn-open]");
+  const board = a.q(".pn-board").textContent;
+  assert.match(board, /TOP 5 Marzin[\s\S]*Jours sans accident[\s\S]*47[\s\S]*NC par pôle[\s\S]*Taux d’absentéisme/);
+  assert.match(board, /Stationner les transpalettes[\s\S]*Aspiration déligneuse[\s\S]*Comprendre – décider – suivre/i);
+  assert.ok(a.q(".pn-arrow.good"), "tendance calculée");
+  assert.ok(a.q(".pn-dot.bloque"), "sujet bloqué en rouge");
+  assert.match(a.q(".pn-how").textContent, /reste en atelier[\s\S]*5 minutes[\s\S]*fait le reste/);
+  // Semaine suivante : le report
+  a.run('commitData(()=>{data.boardWeeks=data.boardWeeks.filter(w=>w.week!==pnCurrentWeek(data.boards[0]))});render()');
+  assert.match(a.q(".pn-state").textContent, /Pas encore reporté/);
+  a.run('switchView("home")');
+  a.click(".pn-home [data-pn-open]");
+  assert.ok(a.q("#pnForm"));
+  assert.equal(a.q('#pnForm [name="pn-jsa"]').getAttribute("placeholder"), "40", "valeur de la semaine d’avant en gris");
+  a.fill('#pnForm [name="pn-jsa"]', "47");
+  a.fill('#pnForm [name="pn-abs"]', "6");
+  a.fill('#pnForm [name="pn-ncpole-0"]', "4");
+  a.fill('#pnForm [name="pn-m0"]', "Badge obligatoire au portail");
+  const n = a.all('#pnForm [name$="-st"]').length;
+  a.fill(`#pnForm [name="pn-s${n - 1}-title"]`, "Éclairage zone contrôle");
+  a.fill(`#pnForm [name="pn-s${n - 1}-owner"]`, "Maintenance");
+  a.fill('#pnForm [name="pn-s0-st"]', "resolu");
+  a.submit("#pnForm");
+  assert.equal(a.run("data.boardWeeks.length"), 6);
+  assert.match(a.q(".pn-state").textContent, /Reporté le/);
+  assert.ok(a.q(".pn-arrow.bad"), "absentéisme en hausse : en recul");
+  assert.equal(a.run('data.actions.find(x=>x.title==="Éclairage zone contrôle").board_id'), "PN-MARZIN", "nouveau sujet au plan d’actions");
+  assert.ok(a.run('data.measures.some(m=>m.code==="staffing"&&m.value===94)'), "absentéisme 6 % → couverture 94 %");
+  const m = a.run('JSON.stringify(data.meetings.find(x=>x.source==="panneau"&&x.date<=today()&&x.letters&&x.letters.P))');
+  assert.match(m, /"P":"ko"/, "la lettre P remonte en écart");
+  // Les messages redescendent sur l’accueil des équipes ; le directeur lit les panneaux
+  a.run('state.role="operator";switchView("home")');
+  assert.match(a.q(".pn-home").textContent, /Badge obligatoire au portail/);
+  a.run('state.role="dg";state.site="group";render();t5GoTab();render()');
+  assert.match(a.q(".pn-sec").textContent, /TOP 5 Marzin[\s\S]*Reporté par/);
+  assert.ok(a.run('RE_TYPES.top15.agenda.some(([k])=>k==="panneau")'));
+  assert.equal(a.run('RE_TYPES.top15.agenda.reduce((n,x)=>n+x[1],0)'), 15, "le TOP 15 reste à 15 minutes");
 });

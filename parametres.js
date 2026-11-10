@@ -48,7 +48,7 @@ function pmChecks() {
   const esc2 = [2, 3, 4].filter((n) => pmBlank(data.settings?.escalationOwners?.[n]));
   add("escalation", !esc2.length, "Les décideurs d’escalade N2, N3 et N4 sont nommés", `À nommer : ${esc2.map((n) => `N${n}`).join(", ")}`, "rules", esc2.length);
   const shifts = (data.settings?.shifts || []).filter((x) => String(x).trim());
-  add("shifts", shifts.length >= 2, "Les équipes de relève sont définies", "Au moins deux équipes pour la relève", "rules", shifts.length >= 2 ? 0 : 1);
+  add("shifts", shifts.length >= 1, "Les équipes sont définies", "Au moins une équipe (une seule pour un site en journée)", "rules", shifts.length >= 1 ? 0 : 1);
   return out;
 }
 function pmHealth(tab = "sites") {

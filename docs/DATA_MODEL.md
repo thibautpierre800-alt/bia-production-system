@@ -290,3 +290,7 @@ Aucune nouvelle donnée.
 ## Extension 8.45.1 (additive)
 
 Aucune nouvelle donnée.
+
+## Extension 8.46.0 (additive)
+
+`boards[]` : {id, site_id, workshop_id, name, slot, weekday, messages, rows[{id, axis, label, kind (num, text, poles, pair), unit, better, kpi, toKpi}]}. `boardWeeks[]` : {id, board_id, site_id, workshop_id, week (lundi), values, messages[], a3, by, at}. Actions issues du panneau : origin_type « TOP 5 », board_id, pilot, board_status (qualifier, cours, resolu, bloque). Mesures : entry_mode « panneau », board_id. `meta.demo_revision` 5.

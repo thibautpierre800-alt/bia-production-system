@@ -94,6 +94,7 @@ async function main() {
     });
     const url = `http://127.0.0.1:${server.address().port}${prefix}`;
     const start = Date.now();
+    await page.addInitScript(() => { window.__biaTests = true; }); // scénario de formation six sites
     await page.goto(url);
     assert.equal(await page.title(), "BIA Lean Operating System");
     await page.evaluate(() => {

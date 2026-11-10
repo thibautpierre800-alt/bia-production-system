@@ -455,7 +455,7 @@ function osBind() {
       .split("\n")
       .map((x) => x.trim())
       .filter(Boolean);
-    if (!categories.length || shifts.length < 2) return toast("Précisez les catégories et au moins deux équipes de relève.");
+    if (!categories.length || shifts.length < 1) return toast("Précisez les catégories et au moins une équipe.");
     if (
       !commitData(() => {
         data.settings.escalationDays = Number(f.elements.days.value);
