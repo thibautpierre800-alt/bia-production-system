@@ -2555,12 +2555,22 @@ test("Panneau TOP 5 8.46 · exemple Marzin repartant de zéro, copie du panneau,
   const a = app(t);
   // L’exemple de démonstration : rien d’autre que le panneau de Marzin et ce qu’il a produit
   a.run('pnUseClean=true;data=osFreshData(true);osInit();state.role="teamlead";state.site="marzin";state.workshop=null;render()');
-  assert.equal(a.run("data.meta.demo_revision"), 5);
-  assert.equal(a.run("data.signals.length"), 0, "on repart de zéro");
+  assert.equal(a.run("data.meta.demo_revision"), 6);
+  assert.equal(a.run('data.signals.filter(s=>s.site_id!=="marzin").length'), 0, "on repart de zéro : Marzin seulement");
   assert.equal(a.run("data.boardWeeks.length"), 6);
   assert.equal(a.run('data.actions.filter(x=>x.board_id==="PN-MARZIN").length'), 4);
   assert.ok(a.run('data.measures.some(m=>m.code==="service"&&m.value===91)'), "livrées à temps → service client");
   assert.deepEqual(a.run("osIntegrity(data)"), [], "aucune relation cassée");
+  // Le fil rouge : chaque sujet du panneau a son histoire, d’un écran à l’autre
+  assert.equal(a.run('data.signals.find(s=>s.id==="S-PN1").problem_id'), "P-PN1", "signal → A3");
+  assert.ok(a.run('data.actions.filter(x=>x.parent_id==="A-PN2").length>=3'), "A3 → actions détaillées");
+  assert.ok(a.run('data.opls.some(o=>o.practice_id==="BP-PN1"&&o.status==="validee")'), "→ OPL validée");
+  assert.ok(a.run('data.gains.some(g=>g.source_id==="P-PN1")'), "→ gain");
+  assert.ok(a.run('data.escalations.some(e=>e.source_id==="A-PN41")'), "MIC bloquée → escalade");
+  assert.ok(a.run('data.trsShifts.length>20&&data.microStops.length>20'), "feuilles de poste et micro-arrêts");
+  assert.ok(a.run('data.kaizens.filter(k=>k.status==="Idée").length>=2'), "Quick win : idées à qualifier");
+  assert.ok(a.run('["En cours","À vérifier","Clôturée","Ouverte"].every(st=>data.actions.some(x=>x.status===st))'), "états variés");
+  assert.ok(a.run('data.actions.some(x=>x.status!=="Clôturée"&&x.due_date<today())'), "au moins une action en retard");
   // Voir › TOP 5 : la copie fidèle du panneau
   a.run('switchView("home")');
   assert.match(a.q(".pn-home").textContent, /Panneau TOP 5 Marzin[\s\S]*Reporté par/, "le chef d’équipe voit son panneau à l’accueil");
