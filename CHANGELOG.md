@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.46.0 — 11 novembre 2026
+
+- Panneau TOP 5 reporté (`panneau.js`) : le panneau d’atelier reste au feutre ; après la réunion, le chef d’équipe le recopie dans l’application, case par case, dans le même ordre (SQCDP, trois messages, sujets remontés, A3). La valeur de la semaine d’avant s’affiche en gris.
+- L’application calcule les tendances (flèche et courbe sur huit semaines), met à jour le pilotage (livrées à temps → service client, absentéisme → couverture effectif), envoie les nouveaux sujets au plan d’actions et clôture les sujets résolus.
+- Le panneau se lit tel quel dans Voir › TOP 5 (copie fidèle, semaine par semaine), en vue Groupe (panneaux reportés ou non, indicateurs en recul, sujets bloqués) et au TOP 15 (bloc « Panneau TOP 5 de la semaine », le TOP 15 reste à 15 minutes). Les trois messages arrivent sur l’accueil des équipes ; le chef d’équipe a son panneau à reporter sur son accueil.
+- Exemple de démonstration repartant de zéro : le panneau TOP 5 de Marzin (mardi 10 h) reporté six semaines de suite, ses quatre sujets, l’A3 de l’aspiration de la déligneuse, dix actions du plan d’actions qui en découlent (en retard, à vérifier, en cours, clôturées) et les indicateurs du pilotage ; rien d’autre. Une démonstration déjà ouverte est remplacée, l’ancienne gardée en sauvegarde. Les tests gardent le scénario de formation à six sites.
+- Paramétrage : une seule équipe suffit pour un site en journée.
+
 ## 8.45.1 — 7 novembre 2026
 
 - Voir › TOP 5, vue Groupe : la liste des ateliers où une information reste à dire donne le nom du site (« Europlacage, Marzin, Profiline »), et plus seulement « Atelier principal ».

@@ -29,7 +29,7 @@ Les feuilles CSS partagent boutons, champs, cartes, statuts et comportements res
 - `t5Scopes` et `t5Boss`, pour les droits d’écriture et de réponse ;
 - `t5LastPresent`.
 
-Dans SQCDP, le bouton `data-display-mode` (« Écran atelier ») et le bouton `data-timer` sont remplacés par `data-t5-open`. `ergonomie.js` limite la carte des nouveautés à quatre (`ER_SHOW`). `top5.js` : le libellé « reste : … » de `t5Page` affiche le site (et l’atelier quand le site en a plusieurs) pour une information Groupe ou en vue Groupe. Les classes historiques restent compatibles. La navigation est filtrée par rôle et par mode Essentiel/Complet ; ce filtre ne change pas les permissions. Les vues utilisent des ancres, par exemple `#hoshin`, `#pilotage` et l’ancienne ancre `#sqcdp` conservée.
+Dans SQCDP, le bouton `data-display-mode` (« Écran atelier ») et le bouton `data-timer` sont remplacés par `data-t5-open`. `ergonomie.js` limite la carte des nouveautés à quatre (`ER_SHOW`). `top5.js` : le libellé « reste : … » de `t5Page` affiche le site (et l’atelier quand le site en a plusieurs) pour une information Groupe ou en vue Groupe. `panneau.js` : copie du panneau d’atelier (`pnBoardHtml`), report (`pnFormHtml`, `pnSave`), tendances calculées (`pnTrend`), mesures du pilotage (`pnMeasuresFor`), exemple Marzin (`pnCleanDemo`, `pnDemoInto`) ; enveloppe `t5Page`, `renderSqcdp`, `renderHome`, `reBlock`, `osFreshData`, `osBind`. Les classes historiques restent compatibles. La navigation est filtrée par rôle et par mode Essentiel/Complet ; ce filtre ne change pas les permissions. Les vues utilisent des ancres, par exemple `#hoshin`, `#pilotage` et l’ancienne ancre `#sqcdp` conservée.
 
 ## Écriture et lecture
 
