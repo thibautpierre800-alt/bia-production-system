@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.47.0 — 11 novembre 2026
+
+- Exemple de démonstration réécrit, repartant de zéro : l’atelier de Marzin sur six semaines, tout fictif, autour du plan d’action du panneau TOP 5 repris tel quel (Quick win à qualifier, Aspiration déligneuse en cours, Masterwood résolu, Machine MIC bloqué).
+- Un fil rouge par sujet, visible d’un écran à l’autre : signal d’un opérateur → sujet au TOP 5 → A3 ou actions → résultat → OPL → gain. Aspiration : arrêts divisés par 4 après réparation, lisibles sur les feuilles de poste, au panneau (Top 1) et au pilotage (TRS). Masterwood : non-conformités de cote puis plus aucune, gain validé. MIC : escalade au TOP 15, décision redescendue en information. Quick win : idées des opérateurs.
+- Les cinq verbes renseignés : pilotage SQCDP et gains (Voir), signaux, Gemba, rapport d’étonnement, TRS et micro-arrêts (Observer), non-conformités, A3, idées (Résoudre), TOP 5, TOP 15, plan d’actions de 18 actions aux états variés (Agir), OPL, formation, bonne pratique (Pérenniser).
+- Prénoms et initiales inventés ; les autres sites restent vides. Une démonstration déjà ouverte est remplacée, l’ancienne gardée en sauvegarde.
+
 ## 8.46.0 — 11 novembre 2026
 
 - Panneau TOP 5 reporté (`panneau.js`) : le panneau d’atelier reste au feutre ; après la réunion, le chef d’équipe le recopie dans l’application, case par case, dans le même ordre (SQCDP, trois messages, sujets remontés, A3). La valeur de la semaine d’avant s’affiche en gris.
