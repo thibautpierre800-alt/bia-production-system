@@ -2395,8 +2395,8 @@ test("Ergonomie 8.42 · nouveautés à l’accueil, onglets « Plus » sur tél�
   const a = app(t);
   demo(a);
   a.run('try{localStorage.removeItem("bia-news-seen")}catch{};state.role="lean";state.site="group";state.view="home";render()');
-  assert.match(a.q(".er-news").textContent, /Panneau TOP 5 reporté[\s\S]*Informations à tous les TOP 5[\s\S]*TOP 5 à l’écran[\s\S]*Tour de contrôle[\s\S]*Échantillothèque[\s\S]*Non-conformités/);
-  a.click('[data-er-news="3"]');
+  assert.match(a.q(".er-news").textContent, /Le pilotage parle la langue du panneau[\s\S]*Panneau TOP 5 reporté[\s\S]*Informations à tous les TOP 5[\s\S]*TOP 5 à l’écran[\s\S]*Tour de contrôle[\s\S]*Échantillothèque[\s\S]*Non-conformités/);
+  a.click('[data-er-news="4"]');
   assert.equal(a.run("state.pilotTab"), "tour");
   a.run('state.view="home";render()');
   a.click("[data-er-seen]");
@@ -2555,7 +2555,7 @@ test("Panneau TOP 5 8.46 · exemple Marzin repartant de zéro, copie du panneau,
   const a = app(t);
   // L’exemple de démonstration : rien d’autre que le panneau de Marzin et ce qu’il a produit
   a.run('pnUseClean=true;data=osFreshData(true);osInit();state.role="teamlead";state.site="marzin";state.workshop=null;render()');
-  assert.equal(a.run("data.meta.demo_revision"), 9);
+  assert.equal(a.run("data.meta.demo_revision"), 10);
   assert.equal(a.run("data.boards.length"), 7, "un panneau TOP 5 par site");
   assert.ok(a.run('OPERATIONAL_SITES.every(s=>data.measures.some(m=>m.site_id===s.id&&m.code==="trs"))'), "les sept sites ont leurs indicateurs");
   assert.ok(a.run('["zones","machines","smed","balances","samples","skillsMatrix","envMonths","projects"].every(k=>(data[k]||[]).length)'), "toutes les rubriques remplies");
@@ -2639,4 +2639,52 @@ test("Plan d’actions 8.49 · historique des points dans la revue et la fiche, 
   assert.equal(a.run('data.actionReviews.length'), before + 1, "revue interrompue conservée");
   assert.match(a.run('data.actionReviews[0].report'), /Relance faite ce matin/);
   assert.match(a.q(".ap-reviews").textContent, /interrompue/);
+});
+
+test("Pilotage 8.50 · indicateurs du panneau, cibles par usine, rubriques par site, TOP 5 au jour du panneau", (t) => {
+  const a = app(t);
+  a.run('pnUseClean=true;data=osFreshData(true);osInit();state.role="lean";state.site="marzin";state.workshop=null;state.pilotageMode="analysis";state.osTab="tower";switchView("pilotage")');
+  // Les indicateurs du panneau remplacent les cinq indicateurs ; le TRS reste mesuré pour Observer
+  assert.deepEqual(a.run("inKpis().map(k=>k.code)"), ["pn_jsa", "pn_nc", "pn_sav", "pn_err", "pn_ca", "pn_otd", "pn_retard", "pn_abs"]);
+  assert.ok(a.run('osKpi("trs").archived_at&&data.measures.some(m=>m.code==="trs")'), "TRS archivé du pilotage, toujours mesuré");
+  assert.equal(a.run('osLatest("marzin","pn_nc").value'), 10, "NC = somme des trois pôles");
+  assert.equal(a.run('document.querySelectorAll(".pp-card").length'), 5, "cinq cartes S Q C D P");
+  assert.match(a.q(".pp-card").textContent, /Jours sans accident[\s\S]*record 212 j/);
+  assert.match(a.q("#appView").textContent, /Top 1 Réglages machine MIC/);
+  assert.equal(a.run('osStatus(osLatest("marzin","pn_ca"))'), "qualify", "CA sans objectif : à qualifier");
+  // Décider : 7 sites × 8 indicateurs
+  a.run('state.site="group";state.pilotageMode="ritual";render()');
+  assert.equal(a.run('document.querySelectorAll(".sqcdp-cell").length'), 56);
+  assert.match(a.q('[data-sqcdp-site="marzin"][data-sqcdp-code="pn_ca"]').textContent, /Objectif à saisir/);
+  a.click('[data-sqcdp-site="marzin"][data-sqcdp-code="pn_otd"]');
+  assert.match(a.q("#modalContent").textContent, /91/);
+  a.run("closeModal()");
+  // Cibles par usine : objectif CA et NC propres à Marzin
+  a.run('state.adminTab="targets";switchView("settings")');
+  a.fill('[name="pp-marzin-pn_ca"]', "400");
+  a.fill('[name="pp-marzin-pn_nc"]', "12");
+  a.submit("#ppTargets");
+  assert.equal(a.run('data.settings.siteTargets.marzin.pn_ca'), 400);
+  assert.equal(a.run('osStatus(osLatest("marzin","pn_ca"))'), "ok", "412 k€ pour un objectif de 400");
+  assert.equal(a.run('osStatus(osLatest("marzin","pn_nc"))'), "ok", "10 NC pour une cible Marzin à 12");
+  assert.equal(a.run('osStatus(osLatest("profiline","pn_nc"))'), "ok", "les autres usines gardent la cible Groupe");
+  assert.deepEqual(a.run("osIntegrity(data)"), []);
+  // Rubriques par site : seule la base pour Le Moine
+  a.run('state.adminTab="rubriques";render()');
+  a.click('[data-pp-rub-site="le-moine"][data-pp-rub-set="base"]');
+  a.run('state.site="le-moine";render()');
+  const keys = a.run('uxStages().flatMap(s=>uxTabs(s).map(t=>t.key))');
+  assert.ok(["top5", "actions", "signals", "gemba", "micro", "pilotage"].every((k) => keys.includes(k)));
+  assert.ok(!keys.includes("hoshin") && !keys.includes("smed"), "rubriques non cochées masquées");
+  assert.ok(!a.run('uxStages().some(s=>s.id==="perenniser")'), "étape vide masquée");
+  a.run('state.site="marzin";render()');
+  assert.ok(a.run('uxStages().flatMap(s=>uxTabs(s).map(t=>t.key)).includes("hoshin")'), "Marzin garde tout");
+  a.run('data.settings.siteRubriques={};const c=document.createElement("div");c.innerHTML=\'<input type="checkbox" data-pp-rub="marzin|hoshin">\';document.body.append(c);ppBind(c);c.querySelector("input").checked=false;c.querySelector("input").onchange()');
+  assert.equal(a.run('data.settings.siteRubriques.marzin.hoshin'), false);
+  // Installation neuve : la base seulement
+  assert.deepEqual(a.run('(()=>{const b=osFreshData(false);return Object.entries(b.settings.siteRubriques.marzin).filter(([k,v])=>v===true).map(([k])=>k).sort()})()'), ["actions", "gemba", "micro", "signals", "top5"]);
+  // Réunions : le TOP 5 au jour du panneau
+  a.run('state.site="group";data.settings.siteRubriques={};render();uxGo(uxTabs(uxStages().find(s=>s.id==="voir")).find(t=>t.key==="meetings"))');
+  assert.match(a.q(".cg-steps").textContent, /TOP 5Atelier · chaque semaine · devant le panneau7\/7 panneaux reportés/);
+  assert.match(a.q(".pp-top5-week").textContent, /Marzin[\s\S]*mardi[\s\S]*10 h[\s\S]*Karim B\./);
 });
