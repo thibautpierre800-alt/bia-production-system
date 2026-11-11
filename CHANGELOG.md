@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.50.0 — 11 novembre 2026
+
+- Pilotage : les indicateurs du panneau TOP 5 remplacent les cinq indicateurs précédents (jours sans accident, NC, SAV, erreurs internes, CA, commandes livrées à temps, commandes en retard, absentéisme). Le TRS reste suivi dans Observer › TRS.
+- Un site : cinq cartes S Q C D P, avec la valeur de la semaine, la tendance, la courbe, la cible, le record, le détail des NC par pôle et les Top 1 à 3 des pertes.
+- Groupe : une ligne par site dans Analyser, et les sept panneaux côte à côte dans Décider (7 × 8).
+- Paramètres › Cibles par usine : chaque usine peut avoir sa propre cible, sinon celle du Groupe s’applique. Le CA se compare à l’objectif du site (vert dès l’objectif, orange dès 90 %), vide au départ.
+- Paramètres › Rubriques par site : une case cochée rend la rubrique visible pour ce site. Une installation neuve démarre avec TOP 5, plan d’actions, signaux, Gemba et TRS. L’exemple garde tout coché.
+- Réunions : le TOP 5 apparaît chaque semaine au jour et à l’heure du panneau de chaque site, avec son état de report. Le TOP 15 rappelle le dernier panneau du site.
+
 ## 8.49.0 — 11 novembre 2026
 
 - Plan d’actions › Faire le point : chaque action montre son historique (points, reports d’échéance, changements de statut), et non plus le seul dernier point.

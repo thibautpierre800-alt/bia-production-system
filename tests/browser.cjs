@@ -493,10 +493,12 @@ async function main() {
     assert.equal(aiCalls,1);
     await page.evaluate(()=>{closeModal();delete data.settings.assistantEndpoint;save();state.site="group";state.view="pilotage";state.osTab="tower";render()});
     await page.setViewportSize({width:1440,height:1100});
+    await page.waitForTimeout(400);
     assert.equal(await page.locator('.in-site').count(),7);
     assert.equal(await page.locator('#appView select').count(),0);
     await page.locator('.in-wall').screenshot({path:path.join(output,"multisite-74-desktop.png"),animations:"disabled"});
     await page.setViewportSize({width:390,height:844});
+    await page.waitForTimeout(400); // le passage téléphone redessine la page
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
     await page.locator('.in-wall').screenshot({path:path.join(output,"multisite-74-mobile.png"),animations:"disabled"});
     report.improvements74={sustainment:true,vsmImport:true,environment:true,aiMockOnly:true,multisite:true};

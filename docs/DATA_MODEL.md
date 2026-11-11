@@ -314,3 +314,7 @@ Aucun changement.
 ## Extension 8.49.0 (additive)
 
 `actionReviews[]` : {id, site_id, at, started, by, partial, log[{kind, id, title, owner, text}], report}. `meta.demo_revision` 9.
+
+## Extension 8.50.0 (additive)
+
+`kpis[]` : huit indicateurs `pn_jsa`, `pn_nc`, `pn_sav`, `pn_err`, `pn_ca`, `pn_otd`, `pn_retard`, `pn_abs` ; les cinq précédents sont archivés (`archived_at`). `settings.siteTargets` : { site: { code: cible } }. `settings.siteRubriques` : { site: { _default, clé d’onglet: bool } }. `meta.demo_revision` 10.

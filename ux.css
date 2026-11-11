@@ -3079,3 +3079,55 @@ button.t5-time{background:none;border:0;color:inherit;font:inherit;cursor:pointe
 .ap-rev-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .ap-rev-list>li{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff}.ap-rev-list summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
 .ap-rev-counts{margin-left:auto;font-size:.82rem;color:#4a4740}.ap-rev-log{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:.88rem}
+
+/* 8.50 — Pilotage : les indicateurs du panneau TOP 5, cibles par usine, rubriques par site */
+.pp-src{margin:0 0 10px;color:#5d5a52;font-size:.9rem}
+.pp-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.pp-card{background:#fff;border:1px solid #e3e0d8;border-top:5px solid var(--pp-ax);border-radius:14px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.pp-card header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.pp-card h3{margin:0;font-size:1.02rem;flex:1;min-width:0}
+.pp-ax{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;background:var(--pp-ax);color:#fff;font-weight:800;flex:none}
+.pp-badge{font-size:.74rem;font-weight:700;padding:3px 8px;border-radius:999px;background:#eeece6;color:#5d5a52;white-space:nowrap}
+.pp-badge.ok{background:#e3f1e6;color:#1f5a32}.pp-badge.warn{background:#fbefd9;color:#7a4b00}.pp-badge.gap{background:#fbe3e1;color:#9b2a22}
+.pp-line{display:grid;grid-template-columns:minmax(0,1fr) auto 64px minmax(64px,auto);align-items:center;gap:8px;width:100%;padding:8px 4px;border:0;border-top:1px solid #f0eee8;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;border-radius:6px}
+.pp-line:hover,.pp-line:focus-visible{background:#f7f6f2}
+.pp-name{min-width:0;font-size:.92rem;line-height:1.25}
+.pp-name small{display:block;color:#8a857a;font-size:.75rem}
+.pp-val{font-size:1.15rem;white-space:nowrap;color:#2c2a26}
+.pp-val small{font-size:.75rem;font-weight:500;margin-left:2px;color:#6b675e}
+.pp-line.gap .pp-val{color:#b83232}.pp-line.warn .pp-val{color:#a86500}.pp-line.ok .pp-val{color:#1f6a3a}
+.pp-tr{display:flex;align-items:center;gap:4px;color:#6b675e;min-width:0}
+.pp-tr .in-spark{width:44px;height:16px;flex:none}
+.pp-tr .in-arrow{position:static;font-size:16px;min-width:14px}
+.pp-target{font-size:.75rem;color:#8a857a;white-space:nowrap;text-align:right}
+.pp-tops{list-style:none;margin:6px 0 2px;padding:6px 4px 0;border-top:1px dashed #e3e0d8;display:grid;gap:3px;font-size:.85rem;color:#4a4740}
+.pp-tops b{color:var(--pp-ax);margin-right:4px}
+.pp-scroll{overflow-x:auto;scrollbar-width:thin;overscroll-behavior-x:contain}
+.pp-sqcdp .sqcdp-row{grid-template-columns:minmax(118px,1.35fr) repeat(var(--pp-cols),minmax(66px,1fr))}
+.pp-sqcdp{min-width:calc(130px + var(--pp-cols) * 70px)}
+.pp-table{border-collapse:separate;border-spacing:0;width:100%;background:#fff;border:1px solid #e3e0d8;border-radius:12px}
+.pp-table th,.pp-table td{padding:8px 10px;border-bottom:1px solid #f0eee8;text-align:left;font-size:.88rem;vertical-align:middle}
+.pp-table thead th{font-size:.8rem;white-space:nowrap;background:#faf9f5}
+.pp-table thead th small{display:block;font-weight:400;color:#8a857a}
+.pp-table tbody th{font-weight:600;white-space:nowrap;background:#fff;position:sticky;left:0;z-index:1}
+.pp-table thead th:first-child{position:sticky;left:0;z-index:2}
+.pp-table input[type=number]{width:84px;padding:6px 8px;border:1px solid #d8d5cc;border-radius:8px;font:inherit}
+.pp-rub-table td{text-align:center}.pp-rub-table thead th{text-align:center}.pp-rub-table thead th:first-child{text-align:left}
+.pp-rub-table input[type=checkbox]{width:20px;height:20px;accent-color:#b45f00;cursor:pointer}
+.pp-rub-table input:disabled{cursor:default}
+.pp-stage th{background:#f3f1ea !important;font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:#6b675e}
+.pp-base{font-size:.68rem;font-weight:700;color:#1f5a32;background:#e3f1e6;border-radius:999px;padding:1px 6px;margin-left:4px}
+.pp-col-act{display:block;font-weight:400;font-size:.72rem}
+.pp-fact{font-weight:600}
+.re-week li.late .re-week-main small{color:#9b2a22}
+@media (max-width:640px){
+  .pp-cards{grid-template-columns:1fr}
+  .pp-line{grid-template-columns:minmax(0,1fr) auto 48px;gap:6px}
+  .pp-tr .in-spark{display:none}
+  .pp-target{grid-column:1 / -1;text-align:left;margin-top:-4px}
+  .pp-table th,.pp-table td{padding:6px 7px}
+  .pp-table input[type=number]{width:70px}
+  .pp-sqcdp .sqcdp-heading small{display:block;font-size:9px}
+  .pp-sqcdp .sqcdp-row{grid-template-columns:minmax(92px,1.2fr) repeat(var(--pp-cols),minmax(62px,1fr))}
+  .pp-sqcdp{min-width:calc(100px + var(--pp-cols) * 66px)}
+}

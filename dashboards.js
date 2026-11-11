@@ -151,7 +151,7 @@ function renderGroupSqcdp(embedded=false){
           const item=benchmarkObservation(site.id,k.code,period),status=sqcdpGroupStatus(item,k),previous=item?sqcdpPrevious(site.id,k.code,period):null;
           const delta=previous?+(item.value-previous.value).toFixed(2):null;
           const label=osStatusText(status);
-          return `<button role="cell" class="sqcdp-cell ${status}" data-sqcdp-site="${site.id}" data-sqcdp-axis="${k.axis}" aria-label="${esc(site.name)} · ${esc(k.label)} : ${item?`${item.value} ${k.unit}`:"aucune donnée"}, ${label}">
+          return `<button role="cell" class="sqcdp-cell ${status}" data-sqcdp-site="${site.id}" data-sqcdp-axis="${k.axis}" data-sqcdp-code="${k.code}" aria-label="${esc(site.name)} · ${esc(k.label)} : ${item?`${item.value} ${k.unit}`:"aucune donnée"}, ${label}">
             <b>${item?`${item.value}<small>${esc(k.unit)}</small>`:"—"}</b><span>${esc(label)}</span>${sqcdpArrow(k,delta)}
           </button>`;
         }).join("")}</div>`).join("")}
@@ -164,7 +164,7 @@ function renderGroupSqcdp(embedded=false){
     </section>`;
 }
 function openGroupSqcdpCell(siteId,axis){
-  const kpi=GROUP_SQCDP.find(k=>k.axis===axis),site=OPERATIONAL_SITES.find(s=>s.id===siteId);
+  const kpi=GROUP_SQCDP.find(k=>k.code===axis)||GROUP_SQCDP.find(k=>k.axis===axis),site=OPERATIONAL_SITES.find(s=>s.id===siteId);
   if(!kpi||!site)return;
   const periods=benchmarkPeriods(),period=periods.includes(state.benchmarkPeriod)?state.benchmarkPeriod:periods[0]||"";
   const item=benchmarkObservation(siteId,kpi.code,period),previous=item?sqcdpPrevious(siteId,kpi.code,period):null,related=sqcdpRelated(siteId,kpi);
@@ -257,7 +257,7 @@ function bindDashboards() {
   $("pilotPeriod")?.addEventListener("change",e=>{state.period=e.target.value;render();});
   $("benchmarkPeriod")?.addEventListener("change",e=>{state.benchmarkPeriod=e.target.value;render();});
   $("sqcdpGroupPeriod")?.addEventListener("change",e=>{state.benchmarkPeriod=e.target.value;render();});
-  document.querySelectorAll("[data-sqcdp-site]").forEach(b=>b.onclick=()=>openGroupSqcdpCell(b.dataset.sqcdpSite,b.dataset.sqcdpAxis));
+  document.querySelectorAll("[data-sqcdp-site]").forEach(b=>b.onclick=()=>openGroupSqcdpCell(b.dataset.sqcdpSite,b.dataset.sqcdpCode||b.dataset.sqcdpAxis));
   document.querySelectorAll("[data-benchmark-metric]").forEach(b=>b.onclick=()=>{state.benchmarkMetric=b.dataset.benchmarkMetric;render();});
   document.querySelectorAll("[data-benchmark-site]").forEach(b=>b.onclick=()=>{state.pilotSite=b.dataset.benchmarkSite;render();$("pilotDetail")?.scrollIntoView({behavior:"smooth",block:"start"});});
   document.querySelectorAll("[data-new-benchmark]").forEach(b=>b.onclick=()=>benchmarkForm({code:state.benchmarkMetric}));
