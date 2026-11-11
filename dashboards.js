@@ -124,8 +124,13 @@ function sqcdpRelated(siteId,kpi){
   const signals=data.signals.filter(s=>s.site_id===siteId&&isOpenSignal(s)&&types[kpi.axis].includes(s.type));
   return {topics,actions,signals};
 }
+// Période par défaut : la plus récente parmi les plus complètes (un site qui n’a pas encore reporté ne vide pas la revue).
+function benchmarkDefaultPeriod(periods){
+  const recent=periods.slice(0,4),cover=p=>OPERATIONAL_SITES.filter(s=>GROUP_SQCDP.filter(k=>benchmarkObservation(s.id,k.code,p)).length>=3).length,best=Math.max(0,...recent.map(cover));
+  return recent.find(p=>cover(p)===best)||periods[0]||"";
+}
 function renderGroupSqcdp(embedded=false){
-  const periods=benchmarkPeriods(),period=periods.includes(state.benchmarkPeriod)?state.benchmarkPeriod:periods[0]||"";
+  const periods=benchmarkPeriods(),period=periods.includes(state.benchmarkPeriod)?state.benchmarkPeriod:benchmarkDefaultPeriod(periods);
   const cells=OPERATIONAL_SITES.flatMap(site=>GROUP_SQCDP.map(kpi=>sqcdpGroupStatus(benchmarkObservation(site.id,kpi.code,period),kpi)));
   const count=status=>cells.filter(s=>s===status).length,gaps=count("gap"),warns=count("warn"),oks=count("ok"),missing=count("missing"),qualify=count("qualify");
   const openEscalations=[

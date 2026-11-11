@@ -302,3 +302,7 @@ Aucune nouvelle donnée. `meta.demo_revision` 6.
 ## Extension 8.48.0 (additive)
 
 Aucune nouvelle collection. Photos d’exemple : références `photo:DEMO-<nom>`, fichiers `demo/<nom>.jpg`. `boardWeeks[].photo` (facultatif). `meta.demo_revision` 7.
+
+## Extension 8.48.1 (additive)
+
+Mesures issues du panneau : `period` = lundi de la semaine. `meta.demo_revision` 8.

@@ -351,7 +351,7 @@ function pnDemoInto(base) {
 // Le panneau alimente aussi le pilotage : livrées à temps → service client, absentéisme → couverture effectif.
 function pnMeasuresFor(base, b, week, values) {
   base.measures ||= [];
-  const day = pnMeetingDay(b, week);
+  const day = week; // période commune à tous les sites : le lundi de la semaine (comparaison « Décider »)
   base.measures = base.measures.filter((m) => !(m.board_id === b.id && m.period === day && m.code !== "trs" && m.code !== "scrap"));
   for (const r of b.rows || []) {
     const k = r.kpi && (base.kpis || []).find((x) => x.code === r.kpi), v = pnNum(values?.[r.id]);
@@ -455,8 +455,8 @@ function pnStory(base) {
     const day = pnMeetingDay(b, w.week), from = pnDate(day, -7);
     const sh = base.trsShifts.filter((s) => s.date > from && s.date <= day);
     const t = kpi("trs"), sc = kpi("scrap");
-    if (t && sh.length) base.measures.push({ id: uid("MES"), site_id: site, kpi_id: t.id, code: t.code, axis: t.axis, unit: t.unit, period: day, value: +((100 * sh.reduce((s, x) => s + x.good, 0)) / sh.reduce((s, x) => s + (x.rate_ph * (x.shift_min - x.planned_min)) / 60, 0)).toFixed(1), target: t.target, definition: t.definition, source: "Feuilles de poste déligneuse", entry_mode: "panneau", board_id: b.id, synced_at: now() });
-    if (sc && sh.length) base.measures.push({ id: uid("MES"), site_id: site, kpi_id: sc.id, code: sc.code, axis: sc.axis, unit: sc.unit, period: day, value: +((100 * sh.reduce((s, x) => s + x.scrap, 0)) / sh.reduce((s, x) => s + x.good + x.scrap, 0) + (w.week < pnDate(cur(b), -14) ? 1.2 : 0)).toFixed(1), target: sc.target, definition: sc.definition, source: "Feuilles de poste et non-conformités", entry_mode: "panneau", board_id: b.id, synced_at: now() });
+    if (t && sh.length) base.measures.push({ id: uid("MES"), site_id: site, kpi_id: t.id, code: t.code, axis: t.axis, unit: t.unit, period: w.week, value: +((100 * sh.reduce((s, x) => s + x.good, 0)) / sh.reduce((s, x) => s + (x.rate_ph * (x.shift_min - x.planned_min)) / 60, 0)).toFixed(1), target: t.target, definition: t.definition, source: "Feuilles de poste déligneuse", entry_mode: "panneau", board_id: b.id, synced_at: now() });
+    if (sc && sh.length) base.measures.push({ id: uid("MES"), site_id: site, kpi_id: sc.id, code: sc.code, axis: sc.axis, unit: sc.unit, period: w.week, value: +((100 * sh.reduce((s, x) => s + x.scrap, 0)) / sh.reduce((s, x) => s + x.good + x.scrap, 0) + (w.week < pnDate(cur(b), -14) ? 1.2 : 0)).toFixed(1), target: sc.target, definition: sc.definition, source: "Feuilles de poste et non-conformités", entry_mode: "panneau", board_id: b.id, synced_at: now() });
   }
   function cur(bd) { return pnCurrentWeek(bd); }
 
@@ -552,7 +552,7 @@ function pnCleanDemo() {
   const b = base.boards.find((x) => x.id === "PN-MARZIN");
   for (const w of base.boardWeeks.filter((x) => x.board_id === b.id)) pnMeasuresFor(base, b, w.week, w.values);
   const safety = (base.kpis || []).find((k) => k.code === "safety_signal");
-  if (safety) for (const w of base.boardWeeks) base.measures.push({ id: uid("MES"), site_id: "marzin", kpi_id: safety.id, code: safety.code, axis: safety.axis, unit: safety.unit, period: pnMeetingDay(b, w.week), value: 0, target: safety.target, definition: safety.definition, source: `${b.name} · aucun accident (jours sans accident)`, entry_mode: "panneau", board_id: b.id, synced_at: now() });
+  if (safety) for (const w of base.boardWeeks) base.measures.push({ id: uid("MES"), site_id: "marzin", kpi_id: safety.id, code: safety.code, axis: safety.axis, unit: safety.unit, period: w.week, value: 0, target: safety.target, definition: safety.definition, source: `${b.name} · aucun accident (jours sans accident)`, entry_mode: "panneau", board_id: b.id, synced_at: now() });
   pnStory(base);
   return base;
 }
