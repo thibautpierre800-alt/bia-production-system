@@ -277,3 +277,7 @@ La branche `backup/before-8.49.0-2026-11-11` conserve la version 8.48.2.
 ## Retour à 8.49.0
 
 La branche `backup/before-8.50.0-2026-11-11` conserve la version 8.49.0.
+
+## Retour à 8.50.0
+
+La branche `backup/before-8.50.1-2026-11-11` conserve la version 8.50.0.
