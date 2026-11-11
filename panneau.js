@@ -487,7 +487,7 @@ function pnStory(base) {
   } } };
 
   /* Agir · le TOP 15 : la MIC bloquée monte, la décision redescend */
-  base.escalations = [{ id: "ESC-PN1", site_id: site, source_id: "A-PN41", title: "Pièce MIC : délai fournisseur dépassé", level: 2, owner: P.dir, due_date: d(7), detail: "Vis de butée annoncée il y a 3 semaines, toujours pas livrée. 45 min de réglage à chaque changement.", result: "Second fournisseur retenu, livraison sous 10 jours.", status: "Traitée", created_at: at(9), closed_at: at(6) }];
+  base.escalations = [{ id: "ESC-PN1", site_id: site, source_id: "A-PN41", title: "Pièce MIC : délai fournisseur dépassé", level: 2, owner: P.dir, due_date: d(7), detail: "Vis de butée annoncée il y a 3 semaines, toujours pas livrée. 45 min de réglage à chaque changement.", result: "Second fournisseur retenu, livraison sous 10 jours.", status: "Traitée", created_at: at(9), closed_at: at(6), returned_at: at(5, "10:20"), returned_by: P.lead, return_note: "Décision redite au TOP 5 du mardi : second fournisseur, réglages au repère en attendant." }];
   base.topics = [
     { id: "TOP-PN1", site_id: site, title: "Machine MIC bloquée : pièce fournisseur en retard", axis: "C", owner: P.meth, due_date: d(6), priority: "Haute", linked_id: "A-PN41", escalation_id: "ESC-PN1", status: "En cours", decision: "Commander chez un second fournisseur (décision du directeur de site).", created_at: at(9), updated_at: at(6) },
     { id: "TOP-PN2", site_id: site, title: "Aspiration déligneuse : arrêts divisés par 4", axis: "C", owner: P.maint, due_date: d(-16), priority: "Normale", linked_id: "P-PN1", status: "En cours", decision: "Valider le gain à 4 semaines, puis proposer le standard aux autres sites.", created_at: at(11), updated_at: at(5) },

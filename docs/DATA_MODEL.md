@@ -322,3 +322,7 @@ Aucun changement.
 ## Extension 8.50.1 (additive)
 
 `users[]` rempli dans l’exemple ; `sites[].owner` renseigné. `meta.demo_revision` 11.
+
+## Extension 8.50.2 (additive)
+
+`meta.demo_revision` 12.
