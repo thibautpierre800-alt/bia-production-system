@@ -3062,3 +3062,10 @@ button.t5-time{background:none;border:0;color:inherit;font:inherit;cursor:pointe
 @media print{.pn-actions,.pn-how,.pn-week button{display:none}}
 .pn-stl{font-size:.8rem}.pn-msgs.pn-in textarea{resize:vertical;text-align:center;font-size:.85rem}
 .pn-photo{margin:0;display:flex;flex-direction:column;gap:4px;align-items:flex-start}.pn-photo-img{max-width:min(420px,100%);border-radius:8px;border:1px solid var(--line)}.pn-photo figcaption{font-size:.8rem;color:#6b675e}
+
+/* 8.48.2 — Onglets : tous visibles, la barre défile au doigt (fini le bouton « Plus ») */
+.ux .ux-tabs{scroll-behavior:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.ux .ux-tabs .ux-tab{flex:0 0 auto}
+.ux .ux-tabs.er-scroll-right{-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent);mask-image:linear-gradient(90deg,#000 82%,transparent)}
+.ux .ux-tabs.er-scroll-left{-webkit-mask-image:linear-gradient(90deg,transparent,#000 18%);mask-image:linear-gradient(90deg,transparent,#000 18%)}
+.ux .ux-tabs.er-scroll-left.er-scroll-right{-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)}

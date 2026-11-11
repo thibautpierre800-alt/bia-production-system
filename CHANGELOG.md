@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.48.2 — 11 novembre 2026
+
+- Téléphone : le bouton « Plus » qui regroupait les onglets au-delà du quatrième disparaît. Tous les onglets d’une étape restent visibles dans une barre qui défile au doigt ; l’onglet ouvert reste à l’écran, et un dégradé sur le bord indique qu’il y a d’autres onglets.
+
 ## 8.48.1 — 11 novembre 2026
 
 - Pilotage › Décider : les sept sites sont comparés sur une même semaine. Les indicateurs reportés du panneau sont datés du lundi de la semaine, quel que soit le jour de réunion du site.
