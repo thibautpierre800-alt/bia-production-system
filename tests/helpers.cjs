@@ -59,6 +59,7 @@ const scripts = [
   "ergonomie.js",
   "top5.js",
   "panneau.js",
+  "exemple-groupe.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {

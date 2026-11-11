@@ -21,7 +21,12 @@ for (const match of html.matchAll(/(?:src|href)="([^"?#]+)(?:\?[^"#]*)?"/g)) {
     throw Error("Chemin de ressource invalide");
   assets.add(file.replace(/^\.\//, ""));
 }
+// Photos d’illustration de l’exemple de démonstration
+if (fs.existsSync(path.join(root, "demo")))
+  for (const f of fs.readdirSync(path.join(root, "demo")))
+    if (/^[a-z0-9-]+\.jpg$/.test(f)) assets.add(`demo/${f}`);
 fs.mkdirSync(out, { recursive: true });
+fs.mkdirSync(path.join(out, "demo"), { recursive: true });
 for (const file of assets) {
   const source = path.join(root, file);
   if (!fs.existsSync(source)) throw Error("Ressource absente : " + file);

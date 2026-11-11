@@ -111,6 +111,7 @@ function pnBoardHtml(b, monday) {
         <h4>Plan d’action (A3)</h4><div class="pn-a3">${wk?.a3 ? esc(wk.a3) : '<span class="hint">Aucun A3 en cours noté sur le panneau.</span>'}</div>
       </section>
     </div>
+    ${wk?.photo ? `<figure class="pn-photo">${phImg(wk.photo, "pn-photo-img", "Photo du panneau")}<figcaption>Photo du panneau prise après la réunion</figcaption></figure>` : ""}
     <p class="pn-foot">Objectif : comprendre – décider – suivre</p>
     ${pnCanReport(b) ? `<div class="pn-actions"><button type="button" class="btn" data-pn-report="${esc(b.id)}" data-pn-for="${esc(monday)}">${wk ? "Corriger le report" : "Reporter le panneau"}</button><span class="hint">${wk ? "" : "Après la réunion, recopier le panneau : environ 5 minutes."}</span></div>` : ""}
   </div>`;
