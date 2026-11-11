@@ -3131,3 +3131,7 @@ button.t5-time{background:none;border:0;color:inherit;font:inherit;cursor:pointe
   .pp-sqcdp .sqcdp-row{grid-template-columns:minmax(92px,1.2fr) repeat(var(--pp-cols),minmax(62px,1fr))}
   .pp-sqcdp{min-width:calc(100px + var(--pp-cols) * 66px)}
 }
+
+/* 8.50.3 — étape de déploiement par site */
+.pp-step{display:block;margin:4px auto 0;font:inherit;font-size:.72rem;padding:2px 4px;border:1px solid #d8d5cc;border-radius:6px;background:#fff;max-width:118px}
+.pp-step-ro{display:block;font-size:.72rem;color:#6b675e;font-style:normal}

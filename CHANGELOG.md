@@ -1,5 +1,10 @@
 # Changelog
 
+## 8.50.3 — 11 novembre 2026
+
+- Rubriques par site : trois étapes calées sur « Déploiement AC 2027 », choisies site par site — 1 · Démarrage (TOP 5 et plan d’actions), 2 · Socle commun (+ signaux, Gemba, A3 · 8D · QRQC, 5S, réunions), 3 · Atelier modèle (+ TRS, standards, OPL, kaizen, formation), puis tout. Une installation neuve démarre à l’étape 1.
+- Le masquage vaut pour les profils du site ; le Responsable Lean et la direction générale voient toutes les rubriques.
+
 ## 8.50.2 — 11 novembre 2026
 
 - Exemple Marzin : l’escalade de la machine MIC est redite au TOP 5 du mardi ; la cascade de Réunions compte cette boucle fermée et son délai.

@@ -172,16 +172,29 @@ const PP_RUBRIQUES = [
   ["Agir", [["actions", "Plan d’actions"]]],
   ["Pérenniser", [["documents", "Standards"], ["ech", "Échantillothèque"], ["practices", "Bonnes pratiques"], ["opl", "OPL"], ["training", "Formation"], ["polyvalence", "Polyvalence"], ["deployment", "Déploiement"]]],
 ];
-const PP_BASE = ["top5", "actions", "signals", "gemba", "micro"];
+// 8.50.3 — Étapes calées sur « Déploiement AC 2027 » : démarrage (cadrage, diagnostic), socle commun, atelier modèle (BU pilotes), tout.
+const PP_STEPS = [
+  { id: 1, label: "Étape 1 · Démarrage", keys: ["top5", "actions"] },
+  { id: 2, label: "Étape 2 · Socle commun", keys: ["top5", "actions", "signals", "gemba", "resolution", "5s", "meetings"] },
+  { id: 3, label: "Étape 3 · Atelier modèle", keys: ["top5", "actions", "signals", "gemba", "resolution", "5s", "meetings", "micro", "documents", "opl", "kaizen", "training"] },
+];
+const PP_BASE = PP_STEPS[0].keys;
 const PP_ALWAYS = new Set(["pilotage", "daily"]);
 function ppRubOn(siteId, key) { const m = data.settings?.siteRubriques?.[siteId]; if (!m) return true; return key in m ? m[key] !== false : m._default !== false; }
 function ppRubVisible(key) {
   if (PP_ALWAYS.has(key)) return true;
+  if (["lean", "dg"].includes(state.role)) return true; // le Responsable Lean et la direction générale voient tout (diagnostics, Gemba sur tous les sites)
   if (state.site && state.site !== "group") return ppRubOn(state.site, key);
   const sites = OPERATIONAL_SITES.filter((s) => allowedSite(s.id));
   return !sites.length || sites.some((s) => ppRubOn(s.id, key));
 }
-function ppBaseMap() { return { _default: false, ...Object.fromEntries(PP_BASE.map((k) => [k, true])) }; }
+function ppBaseMap(step = 1) { const s = PP_STEPS.find((x) => x.id === step) || PP_STEPS[0]; return { _default: false, ...Object.fromEntries(s.keys.map((k) => [k, true])) }; }
+function ppStepOf(siteId) {
+  const all = PP_RUBRIQUES.flatMap(([, l]) => l).map(([k]) => k), on = all.filter((k) => ppRubOn(siteId, k));
+  if (on.length === all.length) return "Tout";
+  const s = PP_STEPS.find((x) => x.keys.length === on.length && x.keys.every((k) => on.includes(k)));
+  return s ? s.label.split(" · ")[0] : "Sur mesure";
+}
 
 if (typeof PM_TABS !== "undefined") PM_TABS.splice(4, 0, ["targets", "Cibles par usine"], ["rubriques", "Rubriques par site"]);
 function ppTargetsTab() {
@@ -211,9 +224,9 @@ function ppSaveTargets(form) {
 function ppRubriquesTab() {
   const admin = osIsAdmin() && !role().readonly, sites = OPERATIONAL_SITES;
   const count = (s) => PP_RUBRIQUES.flatMap(([, l]) => l).filter(([k]) => ppRubOn(s.id, k)).length, total = PP_RUBRIQUES.flatMap(([, l]) => l).length;
-  const head = sites.map((s) => `<th scope="col"><span>${esc(s.name)}</span><small>${count(s)}/${total}</small>${admin ? `<span class="pp-col-act"><button type="button" class="md-link" data-pp-rub-site="${esc(s.id)}" data-pp-rub-set="base">Base</button> · <button type="button" class="md-link" data-pp-rub-site="${esc(s.id)}" data-pp-rub-set="all">Tout</button></span>` : ""}</th>`).join("");
+  const head = sites.map((s) => `<th scope="col"><span>${esc(s.name)}</span><small>${count(s)}/${total}</small>${admin ? `<select class="pp-step" data-pp-rub-step="${esc(s.id)}" aria-label="${esc(`Étape de ${s.name}`)}"><option value="">${esc(ppStepOf(s.id))}</option>${PP_STEPS.map((x) => `<option value="${x.id}">${esc(x.label)}</option>`).join("")}<option value="all">Tout</option></select>` : `<em class="pp-step-ro">${esc(ppStepOf(s.id))}</em>`}</th>`).join("");
   const body = PP_RUBRIQUES.map(([stage, list]) => `<tr class="pp-stage"><th scope="rowgroup" colspan="${sites.length + 1}">${esc(stage)}</th></tr>${list.map(([k, l]) => `<tr><th scope="row">${esc(l)}${PP_BASE.includes(k) ? ' <small class="pp-base">base</small>' : ""}</th>${sites.map((s) => `<td><input type="checkbox" data-pp-rub="${esc(s.id)}|${esc(k)}" ${ppRubOn(s.id, k) ? "checked" : ""} ${admin ? "" : "disabled"} aria-label="${esc(`${l} visible pour ${s.name}`)}"></td>`).join("")}</tr>`).join("")}`).join("");
-  return `<div class="pp-rub"><p class="hint pm-note">Une case cochée : la rubrique est visible pour ce site. On démarre avec la base (TOP 5, plan d’actions, signaux, Gemba et TRS) et on coche le reste quand le site est prêt. Toujours visibles : Accueil, Pilotage, Aujourd’hui et Paramètres. La vue Groupe montre une rubrique dès qu’un site l’a.</p>${admin ? '<div class="pm-head"><button type="button" class="btn secondary small" data-pp-rub-all="base">Base partout</button><button type="button" class="btn secondary small" data-pp-rub-all="all">Tout afficher partout</button></div>' : ""}<div class="pp-scroll"><table class="pp-table pp-rub-table"><thead><tr><th scope="col">Rubrique</th>${head}</tr></thead><tbody>${body}</tbody></table></div>${admin ? "" : '<p class="hint">Réservé au Responsable Lean.</p>'}</div>`;
+  return `<div class="pp-rub"><p class="hint pm-note">Une case cochée : la rubrique est visible pour ce site. Les étapes suivent le déploiement 2027 : <b>1 · Démarrage</b> (TOP 5 et plan d’actions), <b>2 · Socle commun</b> (+ signaux, Gemba, A3 · 8D · QRQC, 5S, réunions), <b>3 · Atelier modèle</b> (+ TRS, standards, OPL, kaizen, formation), puis tout. On peut aussi cocher case par case. Toujours visibles : Accueil, Pilotage, Aujourd’hui et Paramètres. Le masquage vaut pour les profils du site (directeur, chef d’équipe, opérateur) ; le Responsable Lean et la direction générale voient tout.</p>${admin ? '<div class="pm-head"><button type="button" class="btn secondary small" data-pp-rub-all="base">Étape 1 partout</button><button type="button" class="btn secondary small" data-pp-rub-all="all">Tout afficher partout</button></div>' : ""}<div class="pp-scroll"><table class="pp-table pp-rub-table"><thead><tr><th scope="col">Rubrique</th>${head}</tr></thead><tbody>${body}</tbody></table></div>${admin ? "" : '<p class="hint">Réservé au Responsable Lean.</p>'}</div>`;
 }
 function ppSetRub(fn, msg) {
   if (!osIsAdmin()) return;
@@ -323,8 +336,9 @@ function ppBind(root = document) {
   const f = root.querySelector("#ppTargets");
   if (f) f.onsubmit = (e) => { e.preventDefault(); ppSaveTargets(f); };
   root.querySelectorAll("[data-pp-rub]").forEach((c) => (c.onchange = () => { const [s, k] = c.dataset.ppRub.split("|"), on = c.checked; ppSetRub((map) => { map[s] ||= { _default: true }; map[s][k] = on; }); }));
+  root.querySelectorAll("[data-pp-rub-step]").forEach((sel) => (sel.onchange = () => { const s = sel.dataset.ppRubStep, v = sel.value; if (!v) return; const step = PP_STEPS.find((x) => String(x.id) === v); ppSetRub((map) => { map[s] = v === "all" ? { _default: true } : ppBaseMap(step.id); }, `${getSiteName(s)} : ${v === "all" ? "toutes les rubriques" : step.label}.`); }));
   root.querySelectorAll("[data-pp-rub-site]").forEach((b) => (b.onclick = () => { const s = b.dataset.ppRubSite, all = b.dataset.ppRubSet === "all"; ppSetRub((map) => { map[s] = all ? { _default: true } : ppBaseMap(); }, `${getSiteName(s)} : ${all ? "toutes les rubriques" : "rubriques de base"}.`); }));
-  root.querySelectorAll("[data-pp-rub-all]").forEach((b) => (b.onclick = () => { const all = b.dataset.ppRubAll === "all"; ppSetRub((map) => { for (const s of OPERATIONAL_SITES) map[s.id] = all ? { _default: true } : ppBaseMap(); }, all ? "Toutes les rubriques visibles partout." : "Rubriques de base sur tous les sites."); }));
+  root.querySelectorAll("[data-pp-rub-all]").forEach((b) => (b.onclick = () => { const all = b.dataset.ppRubAll === "all"; ppSetRub((map) => { for (const s of OPERATIONAL_SITES) map[s.id] = all ? { _default: true } : ppBaseMap(); }, all ? "Toutes les rubriques visibles partout." : "Étape 1 (TOP 5 et plan d’actions) sur tous les sites."); }));
   root.querySelectorAll("[data-pp-board]").forEach((b) => (b.onclick = () => {
     const s = b.dataset.ppBoard;
     if (canGroup() || s === state.site) { state.site = s; try { localStorage.setItem("biaSite", s); } catch { /* */ } }

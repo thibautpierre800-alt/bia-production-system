@@ -326,3 +326,7 @@ Aucun changement.
 ## Extension 8.50.2 (additive)
 
 `meta.demo_revision` 12.
+
+## Extension 8.50.3 (additive)
+
+Inchangé : `settings.siteRubriques`.
