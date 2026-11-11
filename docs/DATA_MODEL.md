@@ -306,3 +306,7 @@ Aucune nouvelle collection. Photos d’exemple : références `photo:DEMO-<nom>`
 ## Extension 8.48.1 (additive)
 
 Mesures issues du panneau : `period` = lundi de la semaine. `meta.demo_revision` 8.
+
+## Extension 8.48.2 (additive)
+
+Aucun changement.

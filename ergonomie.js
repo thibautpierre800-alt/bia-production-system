@@ -31,7 +31,9 @@ function erGo(n) { if (!role().nav.includes(n.nav)) return; switchView(n.nav); O
 const erTabRowBase = uxTabRow;
 uxTabRow = function () {
   const html = erTabRowBase.apply(this, arguments);
-  if (!html || !erPhone() || state.view === "home") return html;
+  // 8.48.2 : plus de bouton « Plus » ; tous les onglets restent visibles et la barre défile au doigt.
+  return html;
+  // eslint-disable-next-line no-unreachable
   const stage = uxStageOf(state.view), tabs = uxTabs(stage);
   if (tabs.length <= ER_TABS) return html;
   const act = tabs.findIndex((t) => uxTabActive(t));
@@ -92,6 +94,15 @@ function erBind(root = document) {
   erTopButton();
 }
 const erOsBindBase = osBind;
-osBind = function () { const out = erOsBindBase.apply(this, arguments); erBind(document); return out; };
+osBind = function () { const out = erOsBindBase.apply(this, arguments); erBind(document); erTabsReveal(); setTimeout(() => erTabsReveal(), 0); return out; };
+// L’onglet actif reste visible ; un dégradé indique qu’il y a d’autres onglets à faire défiler.
+function erTabsReveal(root = document) {
+  root.querySelectorAll(".ux-tabs").forEach((n) => {
+    const a = n.querySelector(".ux-tab.active");
+    if (a && n.scrollWidth > n.clientWidth) n.scrollLeft = Math.max(0, a.offsetLeft - n.offsetLeft - 24);
+    const mark = () => { const more = n.scrollWidth - n.clientWidth > 4; n.classList.toggle("er-scroll-right", more && n.scrollLeft + n.clientWidth < n.scrollWidth - 4); n.classList.toggle("er-scroll-left", more && n.scrollLeft > 4); };
+    mark(); n.onscroll = mark; if (typeof requestAnimationFrame === "function") requestAnimationFrame(mark);
+  });
+}
 /* La rangée d'onglets est posée après le rendu de la page : le bouton « Plus » est écouté au niveau du document. */
 document.addEventListener("click", (e) => { const b = e.target.closest?.("[data-er-tabmore]"); if (b) { e.preventDefault(); erTabSheet(); } });

@@ -2407,8 +2407,8 @@ test("Ergonomie 8.42 · nouveautés à l’accueil, onglets « Plus » sur tél�
   // Onglets sur téléphone
   a.run('window.innerWidth=390;state.role="lean";state.site="group";state.pilotTab="";switchView("pilotage")');
   const row = a.run('uxTabRow()');
-  assert.match(row, /Plus · \d/);
-  assert.equal((row.match(/data-ux-tab=/g) || []).length, 4);
+  assert.doesNotMatch(row, /Plus ·/, "8.48.2 : tous les onglets, la barre défile");
+  assert.equal((row.match(/data-ux-tab=/g) || []).length, a.run('uxTabs(uxStageOf(state.view)).length'));
   a.run('window.innerWidth=1366');
   assert.doesNotMatch(a.run('uxTabRow()'), /Plus ·/);
 });
