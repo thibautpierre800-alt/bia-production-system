@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.48.0 — 11 novembre 2026
+
+- Exemple de démonstration complet : les sept sites et toutes les rubriques, tout fictif. Chaque site a son panneau TOP 5 reporté six semaines, ses indicateurs (TRS, rebut, service, couverture, sécurité), ses feuilles de poste et micro-arrêts, ses non-conformités, signaux, idées, gains, son Gemba et son rapport d’étonnement, son OPL, son standard, son chantier, son audit terrain, sa matrice de polyvalence, son étude SMED, sa roadmap, son objectif et ses escalades.
+- Rubriques transverses remplies : 5S (zones, audits, étiquettes rouges), TPM (machines critiques, standard CIL, tournées, étiquettes, pannes), équilibrage (Marzin, Oraison, Le Moine), échantillothèque, environnement sur douze mois, relève, lettres du jour, bonnes pratiques et déploiement entre sites, Hoshin (matrice de priorité des sites), 8D, QRQC, Ishikawa, PDCA et A3 sur plusieurs sites, avant / après.
+- Photos d’illustration (dessinées, fictives) dans les signaux, idées, OPL, Gemba, standards, échantillothèque, 5S, TPM, avant / après et le panneau de Marzin (photo du panneau après la réunion). Elles sont livrées avec l’application (`demo/`) et fonctionnent hors ligne.
+- Correction : la valorisation d’un gain exprimé en minutes.
+
 ## 8.47.0 — 11 novembre 2026
 
 - Exemple de démonstration réécrit, repartant de zéro : l’atelier de Marzin sur six semaines, tout fictif, autour du plan d’action du panneau TOP 5 repris tel quel (Quick win à qualifier, Aspiration déligneuse en cours, Masterwood résolu, Machine MIC bloqué).

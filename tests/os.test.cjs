@@ -2555,9 +2555,12 @@ test("Panneau TOP 5 8.46 · exemple Marzin repartant de zéro, copie du panneau,
   const a = app(t);
   // L’exemple de démonstration : rien d’autre que le panneau de Marzin et ce qu’il a produit
   a.run('pnUseClean=true;data=osFreshData(true);osInit();state.role="teamlead";state.site="marzin";state.workshop=null;render()');
-  assert.equal(a.run("data.meta.demo_revision"), 6);
-  assert.equal(a.run('data.signals.filter(s=>s.site_id!=="marzin").length'), 0, "on repart de zéro : Marzin seulement");
-  assert.equal(a.run("data.boardWeeks.length"), 6);
+  assert.equal(a.run("data.meta.demo_revision"), 7);
+  assert.equal(a.run("data.boards.length"), 7, "un panneau TOP 5 par site");
+  assert.ok(a.run('OPERATIONAL_SITES.every(s=>data.measures.some(m=>m.site_id===s.id&&m.code==="trs"))'), "les sept sites ont leurs indicateurs");
+  assert.ok(a.run('["zones","machines","smed","balances","samples","skillsMatrix","envMonths","projects"].every(k=>(data[k]||[]).length)'), "toutes les rubriques remplies");
+  assert.ok(a.run('data.signals.some(s=>String(s.photo||"").startsWith("photo:DEMO-"))'), "photos d’exemple");
+  assert.equal(a.run('data.boardWeeks.filter(w=>w.board_id==="PN-MARZIN").length'), 6);
   assert.equal(a.run('data.actions.filter(x=>x.board_id==="PN-MARZIN").length'), 4);
   assert.ok(a.run('data.measures.some(m=>m.code==="service"&&m.value===91)'), "livrées à temps → service client");
   assert.deepEqual(a.run("osIntegrity(data)"), [], "aucune relation cassée");
@@ -2597,7 +2600,7 @@ test("Panneau TOP 5 8.46 · exemple Marzin repartant de zéro, copie du panneau,
   a.fill(`#pnForm [name="pn-s${n - 1}-owner"]`, "Maintenance");
   a.fill('#pnForm [name="pn-s0-st"]', "resolu");
   a.submit("#pnForm");
-  assert.equal(a.run("data.boardWeeks.length"), 6);
+  assert.equal(a.run('data.boardWeeks.filter(w=>w.board_id==="PN-MARZIN").length'), 6);
   assert.match(a.q(".pn-state").textContent, /Reporté le/);
   assert.ok(a.q(".pn-arrow.bad"), "absentéisme en hausse : en recul");
   assert.equal(a.run('data.actions.find(x=>x.title==="Éclairage zone contrôle").board_id'), "PN-MARZIN", "nouveau sujet au plan d’actions");

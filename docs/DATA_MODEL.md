@@ -298,3 +298,7 @@ Aucune nouvelle donnée.
 ## Extension 8.47.0 (additive)
 
 Aucune nouvelle donnée. `meta.demo_revision` 6.
+
+## Extension 8.48.0 (additive)
+
+Aucune nouvelle collection. Photos d’exemple : références `photo:DEMO-<nom>`, fichiers `demo/<nom>.jpg`. `boardWeeks[].photo` (facultatif). `meta.demo_revision` 7.
