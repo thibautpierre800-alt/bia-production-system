@@ -285,3 +285,7 @@ La branche `backup/before-8.50.1-2026-11-11` conserve la version 8.50.0.
 ## Retour à 8.50.1
 
 La branche `backup/before-8.50.2-2026-11-11` conserve la version 8.50.1.
+
+## Retour à 8.50.2
+
+La branche `backup/before-8.50.3-2026-11-11` conserve la version 8.50.2.

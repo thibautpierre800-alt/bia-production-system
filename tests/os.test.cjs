@@ -2673,18 +2673,25 @@ test("Pilotage 8.50 · indicateurs du panneau, cibles par usine, rubriques par s
   assert.deepEqual(a.run("osIntegrity(data)"), []);
   // Rubriques par site : seule la base pour Le Moine
   a.run('state.adminTab="rubriques";render()');
-  a.click('[data-pp-rub-site="le-moine"][data-pp-rub-set="base"]');
-  a.run('state.site="le-moine";render()');
-  const keys = a.run('uxStages().flatMap(s=>uxTabs(s).map(t=>t.key))');
-  assert.ok(["top5", "actions", "signals", "gemba", "micro", "pilotage"].every((k) => keys.includes(k)));
-  assert.ok(!keys.includes("hoshin") && !keys.includes("smed"), "rubriques non cochées masquées");
+  a.run('const s=document.querySelector(\'[data-pp-rub-step="le-moine"]\');s.value="2";s.onchange()');
+  assert.match(a.q('[data-pp-rub-step="le-moine"]').textContent, /^Étape 2/);
+  a.run('state.role="director";state.site="le-moine";render()');
+  let keys = a.run('uxStages().flatMap(s=>uxTabs(s).map(t=>t.key))');
+  assert.ok(["top5", "actions", "signals", "gemba", "resolution", "pilotage"].every((k) => keys.includes(k)), "étape 2 : socle commun");
+  assert.ok(!keys.includes("micro") && !keys.includes("smed"), "rubriques non cochées masquées");
   assert.ok(!a.run('uxStages().some(s=>s.id==="perenniser")'), "étape vide masquée");
-  a.run('state.site="marzin";render()');
+  a.run('state.role="lean";render()');
+  assert.ok(a.run('uxStages().flatMap(s=>uxTabs(s).map(t=>t.key)).includes("smed")'), "le Responsable Lean voit tout");
+  a.run('state.adminTab="rubriques";switchView("settings");const s=document.querySelector(\'[data-pp-rub-step="le-moine"]\');s.value="1";s.onchange()');
+  a.run('state.role="director";state.site="le-moine";render()');
+  keys = a.run('uxStages().flatMap(s=>uxTabs(s).map(t=>t.key))');
+  assert.ok(keys.includes("top5") && keys.includes("actions") && !keys.includes("signals") && !keys.includes("gemba"), "étape 1 : TOP 5 et plan d’actions");
+  a.run('state.role="lean";state.site="marzin";render()');
   assert.ok(a.run('uxStages().flatMap(s=>uxTabs(s).map(t=>t.key)).includes("hoshin")'), "Marzin garde tout");
   a.run('data.settings.siteRubriques={};const c=document.createElement("div");c.innerHTML=\'<input type="checkbox" data-pp-rub="marzin|hoshin">\';document.body.append(c);ppBind(c);c.querySelector("input").checked=false;c.querySelector("input").onchange()');
   assert.equal(a.run('data.settings.siteRubriques.marzin.hoshin'), false);
   // Installation neuve : la base seulement
-  assert.deepEqual(a.run('(()=>{const b=osFreshData(false);return Object.entries(b.settings.siteRubriques.marzin).filter(([k,v])=>v===true).map(([k])=>k).sort()})()'), ["actions", "gemba", "micro", "signals", "top5"]);
+  assert.deepEqual(a.run('(()=>{const b=osFreshData(false);return Object.entries(b.settings.siteRubriques.marzin).filter(([k,v])=>v===true).map(([k])=>k).sort()})()'), ["actions", "top5"]);
   // Réunions : le TOP 5 au jour du panneau
   a.run('state.site="group";data.settings.siteRubriques={};render();uxGo(uxTabs(uxStages().find(s=>s.id==="voir")).find(t=>t.key==="meetings"))');
   assert.match(a.q(".cg-steps").textContent, /TOP 5Atelier · chaque semaine · devant le panneau7\/7 panneaux reportés/);
