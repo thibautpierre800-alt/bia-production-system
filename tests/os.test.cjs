@@ -2555,7 +2555,7 @@ test("Panneau TOP 5 8.46 · exemple Marzin repartant de zéro, copie du panneau,
   const a = app(t);
   // L’exemple de démonstration : rien d’autre que le panneau de Marzin et ce qu’il a produit
   a.run('pnUseClean=true;data=osFreshData(true);osInit();state.role="teamlead";state.site="marzin";state.workshop=null;render()');
-  assert.equal(a.run("data.meta.demo_revision"), 8);
+  assert.equal(a.run("data.meta.demo_revision"), 9);
   assert.equal(a.run("data.boards.length"), 7, "un panneau TOP 5 par site");
   assert.ok(a.run('OPERATIONAL_SITES.every(s=>data.measures.some(m=>m.site_id===s.id&&m.code==="trs"))'), "les sept sites ont leurs indicateurs");
   assert.ok(a.run('["zones","machines","smed","balances","samples","skillsMatrix","envMonths","projects"].every(k=>(data[k]||[]).length)'), "toutes les rubriques remplies");
@@ -2615,4 +2615,28 @@ test("Panneau TOP 5 8.46 · exemple Marzin repartant de zéro, copie du panneau,
   assert.match(a.q(".pn-sec").textContent, /TOP 5 Marzin[\s\S]*Reporté par/);
   assert.ok(a.run('RE_TYPES.top15.agenda.some(([k])=>k==="panneau")'));
   assert.equal(a.run('RE_TYPES.top15.agenda.reduce((n,x)=>n+x[1],0)'), 15, "le TOP 15 reste à 15 minutes");
+});
+
+test("Plan d’actions 8.49 · historique des points dans la revue et la fiche, revues conservées", (t) => {
+  const a = app(t);
+  a.run('pnUseClean=true;data=osFreshData(true);osInit();state.role="director";state.site="marzin";state.workshop=null;switchView("actions")');
+  // Les revues passées sont listées
+  assert.match(a.q(".ap-reviews").textContent, /Historique des points[\s\S]*revue/);
+  assert.ok(a.run('data.actionReviews.filter(r=>r.site_id==="marzin").length>=3'));
+  // La fiche d’une action montre tout son historique (points, report, statuts)
+  a.run('apOpen("A-PN41")');
+  const sheet = a.q("#modalContent").textContent;
+  assert.match(sheet, /Second fournisseur retenu[\s\S]*Échéance déplacée[\s\S]*Commande passée/);
+  assert.match(sheet, /Statut : En cours/);
+  a.run("closeModal()");
+  // Faire le point : chaque action montre son historique, et la revue est conservée
+  a.click("[data-ap-review]");
+  assert.match(a.q(".ap-rv-hist").textContent, /Historique · \d+ point/);
+  const before = a.run('data.actionReviews.length');
+  a.fill("#apRvNote", "Relance faite ce matin");
+  a.click('[data-ap-rv="note"]');
+  a.click("[data-ap-rv-quit]");
+  assert.equal(a.run('data.actionReviews.length'), before + 1, "revue interrompue conservée");
+  assert.match(a.run('data.actionReviews[0].report'), /Relance faite ce matin/);
+  assert.match(a.q(".ap-reviews").textContent, /interrompue/);
 });

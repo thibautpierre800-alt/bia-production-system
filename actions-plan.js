@@ -26,6 +26,23 @@ function apShiftDay(day, n) { const d = new Date(day + "T12:00:00"); d.setDate(d
 function apEndOfMonth(day) { const d = new Date(day + "T12:00:00"); return new Date(Date.UTC(d.getFullYear(), d.getMonth() + 1, 0)).toISOString().slice(0, 10); }
 function apAgo(value) { const n = Math.max(0, -daysUntil(apDay(value) || today())); return n === 0 ? "aujourd’hui" : n === 1 ? "hier" : `il y a ${n} j`; }
 function apPromised(a) { return a.due_date_initial || a.due_date || ""; }
+// Historique d’une action, du plus récent au plus ancien : points, reports, changements de statut.
+function apJournal(a) {
+  const out = [
+    ...(a.updates || []).map((u) => ({ at: u.at, text: u.text, by: u.by, kind: "point" })),
+    ...(a.reschedules || []).map((r) => ({ at: r.at, text: `Échéance déplacée du ${shortDate(r.from)} au ${shortDate(r.to)}${r.reason ? " : " + r.reason : ""}`, by: r.by, kind: "report" })),
+  ];
+  let last = null;
+  for (const h of [...(a.history || [])].sort((x, y) => String(x.at).localeCompare(String(y.at)))) {
+    if (h.status && h.status !== last) { const note = String(h.note || ""); out.push({ at: h.at, text: `Statut : ${h.status}${note && !/^Point :|^Échéance/.test(note) ? ` · ${note}` : ""}`, by: h.by || "", kind: "statut" }); }
+    last = h.status || last;
+  }
+  return out.filter((x) => x.at).sort((x, y) => String(y.at).localeCompare(String(x.at)));
+}
+function apJournalHtml(rows, max = 6) {
+  if (!rows.length) return '<p class="hint">Aucun point enregistré pour l’instant.</p>';
+  return `<ol class="ap-hist">${rows.slice(0, max).map((x) => `<li class="ap-hist-${x.kind}"><span class="ap-hist-date">${esc(shortDate(String(x.at).slice(0, 10)))}</span><span>${esc(x.text)}${x.by ? ` <small>· ${esc(x.by)}</small>` : ""}</span></li>`).join("")}</ol>${rows.length > max ? `<p class="hint">${rows.length - max} point${rows.length - max > 1 ? "s" : ""} plus ancien${rows.length - max > 1 ? "s" : ""} dans la fiche de l’action.</p>` : ""}`;
+}
 function apLastUpdate(a) { return (a.updates || []).at(-1) || null; }
 function apSilence(a) { const ref = apDay(apLastUpdate(a)?.at || a.created_at) || today(); return Math.max(0, -daysUntil(ref)); }
 function apOwnerless(a) { return !a.owner || a.owner === "À désigner"; }
@@ -328,10 +345,7 @@ function apOpen(id, ask = "") {
   const a = data.actions.find((x) => x.id === id);
   if (!a || !allowedSite(a.site_id)) return;
   const edit = apCanEdit(a) && a.status !== "Clôturée", i = apInfo(a), due = apDueBadge(a, i);
-  const journal = [
-    ...(a.updates || []).map((u) => ({ at: u.at, text: u.text, by: u.by })),
-    ...(a.reschedules || []).map((r) => ({ at: r.at, text: `Échéance déplacée du ${shortDate(r.from)} au ${shortDate(r.to)}${r.reason ? " : " + r.reason : ""}`, by: r.by })),
-  ].sort((x, y) => String(y.at).localeCompare(String(x.at)));
+  const journal = apJournal(a);
   const slip = (a.reschedules || []).length ? `Reportée ${(a.reschedules || []).length} fois · date promise au départ : ${shortDate(apPromised(a))}` : a.due_date ? "Date promise au départ, jamais reportée." : "";
   const owners = apOwners().slice(0, 8);
   const askBox = ask === "hold"
@@ -442,11 +456,18 @@ function apStartReview() {
   state.apReview = { queue, i: 0, step: "card", log: [], started: now() };
   apReviewRender();
 }
+function apReviewSave(r, partial = false) {
+  if (!r || r.saved || !r.log.length) return;
+  r.saved = true;
+  const report = apReviewReport(r);
+  commitData(() => { (data.actionReviews ||= []).unshift({ id: uid("REV"), site_id: state.site, at: now(), started: r.started, by: osActor(), partial, log: r.log.map((l) => ({ ...l })), report }); });
+}
 function apReviewNext(entry) {
   const r = state.apReview;
   if (!r) return;
   if (entry) r.log.push(entry);
   r.i += 1; r.step = r.i >= r.queue.length ? "end" : "card";
+  if (r.step === "end") apReviewSave(r);
   render(); apReviewRender();
 }
 function apReviewReport(r) {
@@ -474,7 +495,7 @@ function apReviewRender() {
     const head = `<div class="ap-rv-tags">${pill(entry.reason, entry.tone)}<span class="ap-prio p${p}">P${p}</span><span class="hint">${esc(a.id)} · ${esc(getSiteName(a.site_id))} · ${esc(actionFamily(a))}</span></div>
       <h2 class="ap-rv-title">${esc(a.title)}</h2>
       <div class="ap-rv-facts"><span><b>Pilote :</b> ${esc(a.owner || "À désigner")}</span><span><b>Échéance :</b> <span class="ap-due ${due.cls}">${esc(due.label)}</span></span><span><b>Statut :</b> ${esc(a.status)}</span></div>
-      ${u ? `<p class="ap-rv-news"><b>Dernier point</b> (${apAgo(u.at)}) : ${esc(u.text)}</p>` : ""}
+      ${(() => { const j = apJournal(a); return `<details class="ap-rv-hist" ${j.length ? "open" : ""}><summary>Historique${j.length ? ` · ${j.length} point${j.length > 1 ? "s" : ""}` : ""}${u ? ` · dernier ${apAgo(u.at)}` : ""}</summary>${apJournalHtml(j, 5)}</details>`; })()}
       ${warn.length ? `<div class="ap-warns">${warn.map((w) => `<span class="ap-warn">${esc(w)}</span>`).join("")}</div>` : ""}`;
     const t = today(), base = a.due_date && a.due_date > t ? a.due_date : t;
     if (r.step === "postpone") {
@@ -512,7 +533,7 @@ function apReviewRender() {
 function apReviewBind() {
   const r = state.apReview, root = $("modalContent");
   const q = (sel) => root.querySelectorAll(sel);
-  q("[data-ap-rv-quit]").forEach((b) => (b.onclick = () => { closeModal(); render(); }));
+  q("[data-ap-rv-quit]").forEach((b) => (b.onclick = () => { apReviewSave(state.apReview, true); closeModal(); render(); }));
   q("[data-ap-copy]").forEach((b) => (b.onclick = () => {
     const text = $("apReport").value;
     try { navigator.clipboard.writeText(text).then(() => toast("Compte rendu copié."), () => { $("apReport").select(); toast("Sélectionnez le texte pour le copier."); }); }
@@ -563,7 +584,14 @@ const apLaunchActionBase = launchAction;
 launchAction = function (button) { if (!button?.dataset?.originId && !button?.dataset?.originType && !role().readonly) return apQuickForm(); return apLaunchActionBase(button); };
 
 const apRenderActionsBase = renderActions;
-renderActions = function () { return apRenderActionsBase() + (typeof osReviewAgenda === "function" ? osReviewAgenda() : ""); };
+renderActions = function () { return apRenderActionsBase() + apReviewsHistory() + (typeof osReviewAgenda === "function" ? osReviewAgenda() : ""); };
+// Les revues passées : date, qui, ce qui a bougé, compte rendu.
+function apReviewsHistory() {
+  const rows = (data.actionReviews || []).filter((r) => (state.site === "group" ? allowedSite(r.site_id) || r.site_id === "group" : r.site_id === state.site)).sort((x, y) => String(y.at).localeCompare(String(x.at)));
+  if (!rows.length) return "";
+  const n = (r, ...k) => r.log.filter((l) => k.includes(l.kind)).length;
+  return `<section class="panel section ap-reviews"><div class="section-title"><h2>Historique des points</h2><span class="hint">${rows.length} revue${rows.length > 1 ? "s" : ""}</span></div><ul class="ap-rev-list">${rows.slice(0, 12).map((r) => `<li><details><summary><b>${esc(new Date(r.at).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }))}</b> <span class="hint">· ${esc(r.by || "—")}${state.site === "group" ? ` · ${esc(getSiteName(r.site_id))}` : ""}${r.partial ? " · interrompue" : ""}</span><span class="ap-rev-counts">${r.log.length} action${r.log.length > 1 ? "s" : ""} · ${n(r, "done", "closed")} faite${n(r, "done", "closed") > 1 ? "s" : ""} · ${n(r, "postponed")} reportée${n(r, "postponed") > 1 ? "s" : ""} · ${n(r, "hold")} bloquée${n(r, "hold") > 1 ? "s" : ""}</span></summary><ul class="ap-rev-log">${r.log.map((l) => `<li><button type="button" class="md-link" data-ap-open="${esc(l.id)}">${esc(l.title)}</button> <span class="hint">· ${esc(l.owner || "")}</span> : ${esc(l.text)}</li>`).join("")}</ul></details></li>`).join("")}</ul></section>`;
+}
 
 function apBind() {
   if (state.view !== "actions") return;

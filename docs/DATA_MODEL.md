@@ -310,3 +310,7 @@ Mesures issues du panneau : `period` = lundi de la semaine. `meta.demo_revision`
 ## Extension 8.48.2 (additive)
 
 Aucun changement.
+
+## Extension 8.49.0 (additive)
+
+`actionReviews[]` : {id, site_id, at, started, by, partial, log[{kind, id, title, owner, text}], report}. `meta.demo_revision` 9.

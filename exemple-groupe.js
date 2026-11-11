@@ -351,6 +351,54 @@ function exAllSites(base) {
     }
   } catch (e) { console.warn("A3 des sites non créés", e); } finally { data = keep; }
 
+  /* Plan d’actions : l’historique de chaque action (points, reports, statuts) et les revues passées */
+  const POINTS = {
+    "A-PN1": [[30, "Cinq idées des opérateurs remontées au TOP 5"], [14, "Bac à chutes en place au débit"], [3, "Deux idées restent à qualifier : éclairage et chariot"]],
+    "A-PN2": [[34, "Sujet remonté au TOP 5 : 3 h d’arrêt par semaine"], [28, "A3 ouvert, pilote maintenance"], [22, "Débit mesuré à 40 % de la normale"], [12, "Filtre et gaine changés : arrêts divisés par 4"], [5, "OPL validée, 2 opérateurs formés sur 4"]],
+    "A-PN3": [[33, "Ventouse 3 commandée, usinage sur 3 ventouses"], [24, "Ventouse changée, essai sur 20 panneaux conforme"], [8, "Contrôle des ventouses ajouté chaque lundi"], [1, "Trois semaines sans rebut : résolu"]],
+    "A-PN4": [[22, "Réglages chronométrés : 45 min par changement"], [15, "Vis de butée commandée"], [9, "Délai fournisseur dépassé : escaladé au TOP 15"], [6, "Second fournisseur décidé, livraison sous 10 jours"]],
+    "A-PN41": [[20, "Commande passée chez le fournisseur habituel"], [10, "Le fournisseur annonce deux semaines de retard"], [6, "Second fournisseur retenu au TOP 15, commande passée"]],
+    "A-PN11": [[14, "Peinture de marquage commandée"], [6, "Marquage jaune fait au bout des allées"], [2, "Faite : à vérifier une semaine"]],
+    "A-PN22": [[21, "Filtre et gaine commandés"], [16, "Intervention planifiée vendredi après-midi"], [12, "Fait : arrêts divisés par 4 dès la semaine suivante"]],
+    "A-PN23": [[11, "Brouillon d’OPL écrit avec Mathis P."], [7, "OPL validée par le directeur"], [5, "Mathis P. et Lucas F. formés"]],
+    "A-PN24": [[10, "Suivi lancé sur les feuilles de poste"], [3, "Deux semaines : 7 min d’arrêt par jour en moyenne"]],
+  };
+  const sinceDays = (iso) => Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 864e5));
+  for (const a of base.actions) {
+    if (a.updates?.length) continue;
+    const age = sinceDays(a.created_at), who = a.owner || "Pilote";
+    let pts = POINTS[a.id];
+    if (!pts) {
+      const mid = Math.max(1, Math.round(age / 2)), late = Math.max(1, Math.round(age / 5));
+      pts = { Ouverte: [[Math.max(1, age - 1), "Action lancée, pilote prévenu"]], "En cours": [[Math.max(1, age - 2), "Démarrée"], [late, "Avancement : la moitié est faite"]], "À vérifier": [[Math.max(1, age - 2), "Démarrée"], [mid, "Avancement : presque terminée"], [late, "Faite, preuve à apporter"]], Clôturée: [[Math.max(1, age - 2), "Démarrée"], [mid, "Faite, preuve à apporter"], [late, `Clôturée : ${a.effectiveness || "efficacité vérifiée"}`]], Standby: [[Math.max(1, age - 2), "Démarrée"], [late, `Bloquée : ${a.description || "en attente"}`]] }[a.status] || [[late, "Point fait"]];
+    }
+    a.updates = pts.filter(([k]) => k < age + 1).map(([k, text]) => ({ at: at(k, "11:05"), text, by: who }));
+    const steps = { Ouverte: ["Ouverte"], "En cours": ["Ouverte", "En cours"], "À vérifier": ["Ouverte", "En cours", "À vérifier"], Clôturée: ["Ouverte", "En cours", "À vérifier", "Clôturée"], Standby: ["Ouverte", "En cours", "Standby"] }[a.status] || [a.status];
+    a.history = steps.map((st, i) => ({ status: st, note: i === 0 ? "Action créée" : "", at: at(Math.max(0, Math.round(age - (age * i) / steps.length)), "11:00") }));
+  }
+  const pn41 = base.actions.find((x) => x.id === "A-PN41");
+  if (pn41) pn41.reschedules = [{ from: d(17), to: pn41.due_date, reason: "Retard du fournisseur", at: at(10, "11:10"), by: PN_PEOPLE.meth }];
+  // Une revue du plan d’actions après chaque TOP 5 : Marzin sur cinq semaines, les autres sites sur deux
+  base.actionReviews = [];
+  for (const s of SITES) {
+    const b = base.boards.find((x) => x.site_id === s);
+    const nWeeks = s === "marzin" ? 5 : 2;
+    for (let k = nWeeks - 1; k >= 0; k--) {
+      const day = pnMeetingDay(b, pnDate(pnCurrentWeek(b), -7 * k)), end = new Date(`${day}T11:30:00`).getTime(), start = end - 7 * 864e5;
+      const log = [];
+      for (const a of base.actions.filter((x) => x.site_id === s)) for (const u of a.updates || []) {
+        const t = new Date(u.at).getTime();
+        if (t <= start || t > end) continue;
+        const kind = /^Clôturée|résolu/i.test(u.text) ? "closed" : /^Faite|^Fait/.test(u.text) ? "done" : /^Bloquée|retard/i.test(u.text) ? "hold" : "note";
+        log.push({ kind, id: a.id, title: a.title, owner: a.owner || "À désigner", text: kind === "closed" ? `clôturée, ${u.text}` : kind === "done" ? `faite, ${u.text}` : `point noté, ${u.text}` });
+      }
+      if (!log.length) continue;
+      const nm = typeof getSiteName === "function" ? getSiteName(s) : s;
+      const report = [`Revue du plan d’actions du ${new Date(day + "T12:00:00").toLocaleDateString("fr-FR")} · ${nm}`, `${log.length} action(s) passée(s) en revue.`, "", ...log.map((l) => `- ${l.id} ${l.title} (${l.owner}) : ${l.text}`)].join("\n");
+      base.actionReviews.push({ id: `REV-${code(s)}-${k}`, site_id: s, at: new Date(`${day}T11:30:00`).toISOString(), started: new Date(`${day}T11:10:00`).toISOString(), by: lead(s), partial: false, log, report });
+    }
+  }
+
   /* Hoshin : la matrice de priorité des sites */
   const crit = [["c1", "Enjeu sécurité", 3], ["c2", "Pertes de production", 3], ["c3", "Qualité et réclamations", 2], ["c4", "Maturité Lean", 1], ["c5", "Envie de l’équipe de direction", 2]];
   const scores = { marzin: [3, 4, 3, 2, 5], sodeplax: [4, 4, 3, 2, 4], "ag-deco": [2, 3, 4, 2, 3], europlacage: [2, 2, 3, 3, 3], "le-moine": [4, 3, 3, 1, 4], "oraison-menuiserie": [3, 4, 2, 2, 3], profiline: [1, 2, 2, 4, 4] };
@@ -364,7 +412,7 @@ function exAllSites(base) {
 const exCleanBase = pnCleanDemo;
 pnCleanDemo = function () {
   const base = exCleanBase.apply(this, arguments);
-  base.meta.demo_revision = 8;
+  base.meta.demo_revision = 9;
   base.meta.demo_story = "Exemple fictif : les sept sites du Groupe sur six semaines, toutes les rubriques renseignées. Marzin raconte l’histoire en détail, autour du plan d’action de son panneau TOP 5.";
   // Les rubriques stratégiques reprennent le scénario de formation (maturité, roadmap, objectifs)
   try {

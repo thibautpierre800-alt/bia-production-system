@@ -3069,3 +3069,13 @@ button.t5-time{background:none;border:0;color:inherit;font:inherit;cursor:pointe
 .ux .ux-tabs.er-scroll-right{-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent);mask-image:linear-gradient(90deg,#000 82%,transparent)}
 .ux .ux-tabs.er-scroll-left{-webkit-mask-image:linear-gradient(90deg,transparent,#000 18%);mask-image:linear-gradient(90deg,transparent,#000 18%)}
 .ux .ux-tabs.er-scroll-left.er-scroll-right{-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent)}
+
+/* 8.49 — Plan d'actions : historique des points et des revues */
+.ap-hist{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;border-left:2px solid var(--line);padding-left:10px}
+.ap-hist li{display:flex;gap:8px;font-size:.88rem;line-height:1.35}.ap-hist small{color:#6b675e}
+.ap-hist-date{flex:0 0 auto;font-weight:600;color:#4a4740;min-width:74px}
+.ap-hist-statut span:last-child{color:#1d3a6b}.ap-hist-report span:last-child{color:#7a4b00}
+.ap-rv-hist{margin:8px 0;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#faf9f5}.ap-rv-hist summary{cursor:pointer;font-weight:600}
+.ap-rev-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ap-rev-list>li{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff}.ap-rev-list summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.ap-rev-counts{margin-left:auto;font-size:.82rem;color:#4a4740}.ap-rev-log{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:.88rem}
