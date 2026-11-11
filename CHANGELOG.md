@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.49.0 — 11 novembre 2026
+
+- Plan d’actions › Faire le point : chaque action montre son historique (points, reports d’échéance, changements de statut), et non plus le seul dernier point.
+- La fiche d’une action réunit tout son journal, changements de statut compris.
+- Chaque revue est conservée, même interrompue : date, qui l’a faite, ce qui a bougé et le compte rendu. Elles sont listées sous « Historique des points » dans le plan d’actions, par site ou pour tout le Groupe.
+- Exemple : chaque action a son historique ; Marzin a cinq revues après ses TOP 5, les autres sites deux.
+
 ## 8.48.2 — 11 novembre 2026
 
 - Téléphone : le bouton « Plus » qui regroupait les onglets au-delà du quatrième disparaît. Tous les onglets d’une étape restent visibles dans une barre qui défile au doigt ; l’onglet ouvert reste à l’écran, et un dégradé sur le bord indique qu’il y a d’autres onglets.

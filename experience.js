@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared interaction rules. All records remain local; roles are UI profiles, not authentication.
-const APP_VERSION="8.48.2";
+const APP_VERSION="8.49.0";
 let modalSaver = null, modalDirty = false, modalOpener = null, modalTimer = null;
 let lastStored = localStorage.getItem(STORAGE_KEY);
 let storageConflict = false;
@@ -220,7 +220,7 @@ function initExperience() {
   const rawBeforeOS=localStorage.getItem(STORAGE_KEY);
   try{if(rawBeforeOS&&JSON.parse(rawBeforeOS)?.meta?.schema===6&&!localStorage.getItem(STORAGE_KEY+"-before-lean-os"))localStorage.setItem(STORAGE_KEY+"-before-lean-os",rawBeforeOS);}catch{storageConflict=true;}
   data=upgradeData(data);
-  if(data.meta.demo&&Number(data.meta.demo_revision||0)<(typeof pnUseClean!=="undefined"&&pnUseClean?8:4)&&!storageConflict){
+  if(data.meta.demo&&Number(data.meta.demo_revision||0)<(typeof pnUseClean!=="undefined"&&pnUseClean?9:4)&&!storageConflict){
     const previous=clone(data);
     try{
       if(rawBeforeOS&&!localStorage.getItem(STORAGE_KEY+"-before-demo-refresh"))localStorage.setItem(STORAGE_KEY+"-before-demo-refresh",rawBeforeOS);
