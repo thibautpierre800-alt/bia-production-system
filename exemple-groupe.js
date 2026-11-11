@@ -41,7 +41,7 @@ const EX_SITES = {
     ideas: [["Humidité des feuilles affichée", "On ne sait pas si les feuilles sont trop sèches.", "Un hygromètre au stock de feuilles."], ["Ronde au silence mensuelle", "Les fuites d’air reviennent.", "Une ronde le premier vendredi du mois."]],
     ncs: [["Placage", 6, "Interne"], ["Placage", 13, "Interne"], ["Collage, décollement", 21, "Client"]],
     gains: [["Air comprimé : fuites réparées", "env", "reel", "kWh", 14200, 11500, 12100, 12, "À valider", 0.19], ["Fentes de placage divisées par 2", "qual", "evite", "pièces", 40, 15, 22, 12, "Estimé"]] },
-  "le-moine": { code: "LMO", line: "Ligne de montage portes", photo: "ligne-montage", slot: "Jeudi 9 h", weekday: 3, teams: ["Journée"], rate: 24, trs: [0.69, 0.72], scrap: [4.2, 3.9], otd: 87, abs: 6.1, jsa: [0, 0, 0, 12, 19, 26], record: 140, ca: 152, lead: "Gilles F. (chef d’atelier)", maint: "Rémi S. (maintenance)", start: 3,
+  "le-moine": { code: "LMO", line: "Ligne de montage portes", photo: "ligne-montage", slot: "Lundi 14 h", weekday: 0, teams: ["Journée"], rate: 24, trs: [0.69, 0.72], scrap: [4.2, 3.9], otd: 87, abs: 6.1, jsa: [0, 0, 0, 12, 19, 26], record: 140, ca: 152, lead: "Gilles F. (chef d’atelier)", maint: "Rémi S. (maintenance)", start: 3,
     losses: ["Attente quincaillerie : 2 h 20", "Retouches de montage : 1 h 40", "Recherche d’outils : 45 min"],
     subjects: [["Lancer le TOP 5 chaque jeudi", "Direction", 45, "cours", "Nouveau site du Groupe : premier panneau en place il y a trois semaines."], ["Gabarit de perçage des paumelles", "Méthodes", 75, "qualifier", "Perçages refaits à la main sur un tiers des portes."]],
     signals: [["Poste de montage 2", "Production", "Il manque des paumelles : la porte attend en bout de ligne.", "Mineure"], ["Allée de sortie", "Sécurité", "Portes stockées debout sans cale dans l’allée.", "Majeure"]],
@@ -103,7 +103,7 @@ function exSiteInto(base, siteId, X) {
     base.meetings.push({ id: `PNM-${board.id}-${w}`, kind: "top5", source: "panneau", board_id: board.id, site_id: siteId, workshop_id: null, date: pnMeetingDay(board, w), letters, notes, infos: [], answers: [], questions: [], present: [], ended_at: atW, by: X.lead });
     pnMeasuresFor(base, board, w, v);
     const safety = kpi("safety_signal");
-    if (safety) base.measures.push({ id: uid("MES"), site_id: siteId, kpi_id: safety.id, code: safety.code, axis: safety.axis, unit: safety.unit, period: pnMeetingDay(board, w), value: X.jsa[k] < 7 && k > 0 && X.jsa[k] <= X.jsa[k - 1] ? 1 : 0, target: safety.target, definition: safety.definition, source: `${board.name} · jours sans accident`, entry_mode: "panneau", board_id: board.id, synced_at: now() });
+    if (safety) base.measures.push({ id: uid("MES"), site_id: siteId, kpi_id: safety.id, code: safety.code, axis: safety.axis, unit: safety.unit, period: w, value: X.jsa[k] < 7 && k > 0 && X.jsa[k] <= X.jsa[k - 1] ? 1 : 0, target: safety.target, definition: safety.definition, source: `${board.name} · jours sans accident`, entry_mode: "panneau", board_id: board.id, synced_at: now() });
   });
   X.subjects.forEach(([title, owner, due, st, desc], i) => base.actions.push({ id: `A-${C}${i + 1}`, site_id: siteId, workshop_id: null, title, owner, pilot: i === 0 ? X.lead.split(" (")[0] : "", priority: st === "bloque" ? "Haute" : "Normale", due_date: d(-due), status: PN_STATUS.find((s) => s.key === st).action, board_status: st, origin_type: "TOP 5", board_id: board.id, description: desc, effectiveness: st === "resolu" ? "Vérifié au panneau" : null, progress: { qualifier: 0, cours: 50, resolu: 100, bloque: 25 }[st], contributors: [], created_at: at(20 + i * 6), ...(st === "resolu" ? { board_closed_week: cur, closed_at: at(3) } : {}) }));
   base.actions.push({ id: `A-${C}9`, site_id: siteId, workshop_id: null, title: `Point d’avancement : ${X.subjects[0][0].toLowerCase()}`, owner: X.lead, priority: "Normale", status: "En cours", due_date: d(-2), origin_type: "TOP 5", parent_id: `A-${C}1`, description: "Retour attendu au prochain panneau.", effectiveness: null, progress: 40, contributors: [], created_at: at(8) });
@@ -129,8 +129,8 @@ function exSiteInto(base, siteId, X) {
     const day = pnMeetingDay(board, w), from = pnDate(day, -7), sh = base.trsShifts.filter((s) => s.line_id === lid && s.date > from && s.date <= day);
     if (!sh.length) continue;
     const req = sh.reduce((s, x) => s + (x.rate_ph * (x.shift_min - x.planned_min)) / 60, 0);
-    if (t) base.measures.push({ id: uid("MES"), site_id: siteId, kpi_id: t.id, code: t.code, axis: t.axis, unit: t.unit, period: day, value: +((100 * sh.reduce((s, x) => s + x.good, 0)) / req).toFixed(1), target: t.target, definition: t.definition, source: `Feuilles de poste ${X.line}`, entry_mode: "panneau", board_id: board.id, synced_at: now() });
-    if (sc) base.measures.push({ id: uid("MES"), site_id: siteId, kpi_id: sc.id, code: sc.code, axis: sc.axis, unit: sc.unit, period: day, value: +((100 * sh.reduce((s, x) => s + x.scrap, 0)) / sh.reduce((s, x) => s + x.good + x.scrap, 0)).toFixed(1), target: sc.target, definition: sc.definition, source: `Feuilles de poste ${X.line}`, entry_mode: "panneau", board_id: board.id, synced_at: now() });
+    if (t) base.measures.push({ id: uid("MES"), site_id: siteId, kpi_id: t.id, code: t.code, axis: t.axis, unit: t.unit, period: w, value: +((100 * sh.reduce((s, x) => s + x.good, 0)) / req).toFixed(1), target: t.target, definition: t.definition, source: `Feuilles de poste ${X.line}`, entry_mode: "panneau", board_id: board.id, synced_at: now() });
+    if (sc) base.measures.push({ id: uid("MES"), site_id: siteId, kpi_id: sc.id, code: sc.code, axis: sc.axis, unit: sc.unit, period: w, value: +((100 * sh.reduce((s, x) => s + x.scrap, 0)) / sh.reduce((s, x) => s + x.good + x.scrap, 0)).toFixed(1), target: sc.target, definition: sc.definition, source: `Feuilles de poste ${X.line}`, entry_mode: "panneau", board_id: board.id, synced_at: now() });
   }
   return board;
 }
@@ -364,7 +364,7 @@ function exAllSites(base) {
 const exCleanBase = pnCleanDemo;
 pnCleanDemo = function () {
   const base = exCleanBase.apply(this, arguments);
-  base.meta.demo_revision = 7;
+  base.meta.demo_revision = 8;
   base.meta.demo_story = "Exemple fictif : les sept sites du Groupe sur six semaines, toutes les rubriques renseignées. Marzin raconte l’histoire en détail, autour du plan d’action de son panneau TOP 5.";
   // Les rubriques stratégiques reprennent le scénario de formation (maturité, roadmap, objectifs)
   try {

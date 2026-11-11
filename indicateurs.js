@@ -194,7 +194,7 @@ renderUnifiedPilotage = function () {
 // Décider : la période commune se parcourt aussi avec ‹ ›.
 const inGroupSqcdpBase = renderGroupSqcdp;
 renderGroupSqcdp = function (embedded = false) {
-  const periods = benchmarkPeriods(), period = periods.includes(state.benchmarkPeriod) ? state.benchmarkPeriod : periods[0] || "";
+  const periods = benchmarkPeriods(), period = periods.includes(state.benchmarkPeriod) ? state.benchmarkPeriod : benchmarkDefaultPeriod(periods);
   return inGroupSqcdpBase(embedded).replace(/<label class="sqcdp-period">[\s\S]*?<\/label>/, `<div class="sqcdp-period">${inBenchStepper(periods, period)}</div>`);
 };
 

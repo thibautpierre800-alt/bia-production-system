@@ -1,5 +1,11 @@
 # Changelog
 
+## 8.48.1 — 11 novembre 2026
+
+- Pilotage › Décider : les sept sites sont comparés sur une même semaine. Les indicateurs reportés du panneau sont datés du lundi de la semaine, quel que soit le jour de réunion du site.
+- Pilotage › Décider s’ouvre sur la semaine la plus récente parmi les plus complètes : un site qui n’a pas encore reporté son panneau ne vide plus la revue Groupe. Les flèches ‹ › permettent toujours de revenir à la dernière date.
+- Exemple : le TOP 5 de Le Moine passe au lundi 14 h.
+
 ## 8.48.0 — 11 novembre 2026
 
 - Exemple de démonstration complet : les sept sites et toutes les rubriques, tout fictif. Chaque site a son panneau TOP 5 reporté six semaines, ses indicateurs (TRS, rebut, service, couverture, sécurité), ses feuilles de poste et micro-arrêts, ses non-conformités, signaux, idées, gains, son Gemba et son rapport d’étonnement, son OPL, son standard, son chantier, son audit terrain, sa matrice de polyvalence, son étude SMED, sa roadmap, son objectif et ses escalades.
