@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.50.2 — 11 novembre 2026
+
+- Exemple Marzin : l’escalade de la machine MIC est redite au TOP 5 du mardi ; la cascade de Réunions compte cette boucle fermée et son délai.
+
 ## 8.50.1 — 11 novembre 2026
 
 - Exemple : chaque site a un directeur (noms fictifs) et ses personnes déclarées (chef d’équipe, maintenance ; à Marzin toute l’équipe du panneau). Les ateliers ont un responsable. L’état du paramétrage est complet (9/9).

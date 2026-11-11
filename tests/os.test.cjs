@@ -2555,7 +2555,7 @@ test("Panneau TOP 5 8.46 · exemple Marzin repartant de zéro, copie du panneau,
   const a = app(t);
   // L’exemple de démonstration : rien d’autre que le panneau de Marzin et ce qu’il a produit
   a.run('pnUseClean=true;data=osFreshData(true);osInit();state.role="teamlead";state.site="marzin";state.workshop=null;render()');
-  assert.equal(a.run("data.meta.demo_revision"), 11);
+  assert.equal(a.run("data.meta.demo_revision"), 12);
   assert.equal(a.run("data.boards.length"), 7, "un panneau TOP 5 par site");
   assert.ok(a.run('OPERATIONAL_SITES.every(s=>data.measures.some(m=>m.site_id===s.id&&m.code==="trs"))'), "les sept sites ont leurs indicateurs");
   assert.ok(a.run('["zones","machines","smed","balances","samples","skillsMatrix","envMonths","projects"].every(k=>(data[k]||[]).length)'), "toutes les rubriques remplies");

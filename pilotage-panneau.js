@@ -303,7 +303,7 @@ function ppDemoPeople(base) {
 const ppCleanBase = pnCleanDemo;
 pnCleanDemo = function () {
   const base = ppCleanBase.apply(this, arguments);
-  base.meta.demo_revision = 11;
+  base.meta.demo_revision = 12;
   ppEnsureKpis(base);
   ppDemoPeople(base);
   base.settings.siteRubriques = {};
