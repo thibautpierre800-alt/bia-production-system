@@ -318,3 +318,7 @@ Aucun changement.
 ## Extension 8.50.0 (additive)
 
 `kpis[]` : huit indicateurs `pn_jsa`, `pn_nc`, `pn_sav`, `pn_err`, `pn_ca`, `pn_otd`, `pn_retard`, `pn_abs` ; les cinq précédents sont archivés (`archived_at`). `settings.siteTargets` : { site: { code: cible } }. `settings.siteRubriques` : { site: { _default, clé d’onglet: bool } }. `meta.demo_revision` 10.
+
+## Extension 8.50.1 (additive)
+
+`users[]` rempli dans l’exemple ; `sites[].owner` renseigné. `meta.demo_revision` 11.

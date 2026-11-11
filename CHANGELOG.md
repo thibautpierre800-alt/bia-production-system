@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.50.1 — 11 novembre 2026
+
+- Exemple : chaque site a un directeur (noms fictifs) et ses personnes déclarées (chef d’équipe, maintenance ; à Marzin toute l’équipe du panneau). Les ateliers ont un responsable. L’état du paramétrage est complet (9/9).
+
 ## 8.50.0 — 11 novembre 2026
 
 - Pilotage : les indicateurs du panneau TOP 5 remplacent les cinq indicateurs précédents (jours sans accident, NC, SAV, erreurs internes, CA, commandes livrées à temps, commandes en retard, absentéisme). Le TRS reste suivi dans Observer › TRS.

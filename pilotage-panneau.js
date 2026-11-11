@@ -276,11 +276,36 @@ if (typeof cgBlock === "function") {
 
 /* ---------- Exemple et installation neuve ---------- */
 
+// 8.50.1 — L’exemple a ses gens : un responsable par site et les personnes de chaque site (noms fictifs).
+const PP_DIRECTORS = { "ag-deco": "Christine L.", europlacage: "Olivier M.", "le-moine": "Bruno C.", marzin: "Thomas G.", "oraison-menuiserie": "Stéphane R.", profiline: "Hélène D.", sodeplax: "Frédéric V." };
+function ppDemoPeople(base) {
+  const bare = (x) => String(x || "").replace(/\s*\(.*\)\s*$/, "").trim();
+  const users = [], seen = new Set(), at = new Date().toISOString();
+  const add = (name, site_id, role, title) => { const n = bare(name), key = `${site_id}|${n}`; if (!n || seen.has(key)) return; seen.add(key); users.push({ id: `USR-${String(users.length + 1).padStart(3, "0")}`, name: n, site_id, role, title, email: "", active: true, created_at: at, updated_at: at }); };
+  add("Responsable Lean Groupe", "group", "lean", "Responsable Lean multisite");
+  add("Direction générale", "group", "dg", "Direction générale");
+  for (const s of (base.sites || []).filter((x) => x.kind === "site" && !x.archived_at)) {
+    const dir = PP_DIRECTORS[s.id] || "Directeur de site";
+    s.owner = dir;
+    add(dir, s.id, "director", "Directeur de site");
+    if (s.id === "marzin" && typeof PN_PEOPLE !== "undefined") {
+      const P = PN_PEOPLE;
+      [[P.lead, "teamlead"], [P.lead2, "teamlead"], [P.meth, "teamlead"], [P.qual, "teamlead"], [P.maint, "operator"], [P.op1, "operator"], [P.op2, "operator"], [P.op3, "operator"], [P.op4, "operator"]].forEach(([n, r]) => add(n, s.id, r, String(n).match(/\((.*)\)/)?.[1] || ""));
+    } else if (typeof EX_SITES !== "undefined" && EX_SITES[s.id]) {
+      const X = EX_SITES[s.id];
+      add(X.lead, s.id, "teamlead", String(X.lead).match(/\((.*)\)/)?.[1] || "Chef d’équipe");
+      add(X.maint, s.id, "operator", "maintenance");
+    }
+  }
+  for (const w of base.workshops || []) if (!w.owner || /^à /i.test(w.owner)) { const s = w.site_id; w.owner = s === "marzin" && typeof PN_PEOPLE !== "undefined" ? bare(PN_PEOPLE.lead) : typeof EX_SITES !== "undefined" && EX_SITES[s] ? bare(EX_SITES[s].lead) : w.owner; }
+  base.users = users;
+}
 const ppCleanBase = pnCleanDemo;
 pnCleanDemo = function () {
   const base = ppCleanBase.apply(this, arguments);
-  base.meta.demo_revision = 10;
+  base.meta.demo_revision = 11;
   ppEnsureKpis(base);
+  ppDemoPeople(base);
   base.settings.siteRubriques = {};
   ppRebuildMeasures(base);
   return base;
