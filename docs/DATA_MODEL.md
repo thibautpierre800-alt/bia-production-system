@@ -330,3 +330,7 @@ Aucun changement.
 ## Extension 8.50.3 (additive)
 
 Inchangé : `settings.siteRubriques`.
+
+## Extension 8.50.4 (additive)
+
+Inchangé.

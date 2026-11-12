@@ -34,6 +34,13 @@ for (const file of assets) {
     new vm.Script(fs.readFileSync(source, "utf8"), { filename: file });
   fs.copyFileSync(source, path.join(out, file));
 }
+// 8.50.4 — Les photos de l’exemple en un script, pour l’appli ouverte depuis un partage réseau (file://)
+{
+  const dir = path.join(root, "demo"), map = {};
+  if (fs.existsSync(dir)) for (const f of fs.readdirSync(dir).sort()) if (/^[a-z0-9-]+\.jpg$/.test(f)) map[f.replace(/\.jpg$/, "")] = "data:image/jpeg;base64," + fs.readFileSync(path.join(dir, f)).toString("base64");
+  fs.writeFileSync(path.join(out, "demo", "photos.js"), `"use strict";\nwindow.EX_PHOTO_DATA = ${JSON.stringify(map)};\n`);
+  assets.add("demo/photos.js");
+}
 fs.copyFileSync(path.join(out, "index.html"), path.join(out, "404.html"));
 fs.writeFileSync(path.join(out, ".nojekyll"), "");
 const bytes = [...assets].reduce(
