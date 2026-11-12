@@ -1,5 +1,9 @@
 # Changelog
 
+## 8.50.4 — 12 novembre 2026
+
+- L’appli s’ouvre aussi depuis un partage réseau (double-clic sur index.html) : les photos de l’exemple s’affichent grâce à `demo/photos.js`, généré à la construction. Hors ligne et installation sur téléphone restent réservés au HTTPS.
+
 ## 8.50.3 — 11 novembre 2026
 
 - Rubriques par site : trois étapes calées sur « Déploiement AC 2027 », choisies site par site — 1 · Démarrage (TOP 5 et plan d’actions), 2 · Socle commun (+ signaux, Gemba, A3 · 8D · QRQC, 5S, réunions), 3 · Atelier modèle (+ TRS, standards, OPL, kaizen, formation), puis tout. Une installation neuve démarre à l’étape 1.

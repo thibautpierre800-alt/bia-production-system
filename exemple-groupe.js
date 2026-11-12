@@ -10,8 +10,19 @@ const exPh = (name) => `photo:DEMO-${name}`;
 
 /* ---------- Les photos d’exemple : chargées depuis demo/ dans le cache des photos ---------- */
 
+// 8.50.4 — Ouverte depuis un partage réseau (file://), l’appli ne peut pas lire les images par fetch : elle charge demo/photos.js.
+function exLoadPhotosFile() {
+  const apply = () => { const map = window.EX_PHOTO_DATA || {}; for (const name of EX_PHOTOS) if (map[name] && !PH_CACHE.has(`DEMO-${name}`)) PH_CACHE.set(`DEMO-${name}`, map[name]); if (typeof phFill === "function") phFill(); };
+  if (window.EX_PHOTO_DATA) return apply();
+  if (document.getElementById("exPhotoData")) return;
+  const s = document.createElement("script");
+  s.id = "exPhotoData"; s.src = "demo/photos.js"; s.onload = apply; s.onerror = () => { /* photos absentes : l’exemple reste lisible */ };
+  document.head.append(s);
+}
 function exLoadPhotos() {
-  if (typeof PH_CACHE === "undefined" || typeof fetch !== "function" || !data?.meta?.demo) return;
+  if (typeof PH_CACHE === "undefined" || !data?.meta?.demo) return;
+  if (location.protocol === "file:") return exLoadPhotosFile();
+  if (typeof fetch !== "function") return;
   for (const name of EX_PHOTOS) {
     const id = `DEMO-${name}`;
     if (PH_CACHE.has(id)) continue;

@@ -1,7 +1,7 @@
 {
   "name": "bia-production-system",
   "private": true,
-  "version": "8.50.3",
+  "version": "8.50.4",
   "scripts": {
     "test": "node --test tests/*.test.cjs",
     "build": "node scripts/build.cjs",
