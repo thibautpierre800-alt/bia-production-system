@@ -8,7 +8,7 @@ Ce dossier sert au service informatique. L'étape 1 publie l'application telle q
 node scripts/build.cjs        # Node.js 20 ou plus, aucune dépendance à installer
 ```
 
-Le dossier `dist/` contient une quarantaine de fichiers et pèse environ 1,2 Mo. C'est tout ce qu'il faut copier sur le serveur. `dist/release.json` donne le nom et la version publiés. Pierre peut aussi fournir `dist/` sous forme d'archive.
+Le dossier `dist/` contient une centaine de fichiers et pèse environ 3 Mo (1,2 Mo compressé). C'est tout ce qu'il faut copier sur le serveur. `dist/release.json` donne le nom et la version publiés. Pierre peut aussi fournir `dist/` sous forme d'archive.
 
 ## 2. Publier
 
