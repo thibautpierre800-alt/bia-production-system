@@ -1,13 +1,13 @@
 {
-  "name": "BIA Lean Operating System",
-  "short_name": "BIA Lean OS",
+  "name": "AMCO BIA · Amélioration continue du Groupe BIA",
+  "short_name": "AMCO BIA",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f4f4f1",
-  "theme_color": "#202020",
+  "theme_color": "#3B2A20",
   "lang": "fr",
   "icons": [
     {
@@ -29,5 +29,5 @@
       "purpose": "any"
     }
   ],
-  "description": "Management visuel, pilotage de la performance et amélioration continue du Groupe BIA"
+  "description": "AMélioration COntinue du Groupe BIA : management visuel, pilotage de la performance, résolution de problèmes. D\u2019artisan industriel à industriel artisan."
 }

@@ -291,8 +291,8 @@ function reIcs(id) {
   const rule = { "Chaque jour ouvré": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", Hebdomadaire: "FREQ=WEEKLY", "Toutes les 2 semaines": "FREQ=WEEKLY;INTERVAL=2", Mensuel: "FREQ=MONTHLY", "Toutes les 6 semaines": "FREQ=WEEKLY;INTERVAL=6", Trimestriel: "FREQ=MONTHLY;INTERVAL=3" }[r.cadence] || "FREQ=WEEKLY";
   const d = String(r.next_date || today()).replace(/-/g, ""), tm = String(r.time || "09:00").replace(":", "") + "00", t = RE_TYPES[r.type] || RE_TYPES.hebdo;
   const txt = (s) => String(s || "").replace(/\\/g, "\\\\").replace(/[,;]/g, (m) => "\\" + m).replace(/\n/g, "\\n");
-  const desc = `${t.purpose}\nOrdre du jour : ${t.agenda.map(([k, m]) => `${RE_BLOCKS[k]} (${m} min)`).join(", ")}.\nDossier préparé dans BIA Lean OS › Voir › Réunions.`;
-  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//BIA Lean OS//Réunions//FR", "CALSCALE:GREGORIAN", "BEGIN:VEVENT", `UID:${r.id}@bia-lean-os`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`, `DTSTART:${d}T${tm}`, `DURATION:PT${r.duration || t.duration}M`, `RRULE:${rule}`, `SUMMARY:${txt(reTitle(r))}`, `DESCRIPTION:${txt(desc)}`, "END:VEVENT", "END:VCALENDAR"].join("\r\n") + "\r\n";
+  const desc = `${t.purpose}\nOrdre du jour : ${t.agenda.map(([k, m]) => `${RE_BLOCKS[k]} (${m} min)`).join(", ")}.\nDossier préparé dans AMCO BIA › Voir › Réunions.`;
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//AMCO BIA//Réunions//FR", "CALSCALE:GREGORIAN", "BEGIN:VEVENT", `UID:${r.id}@amco-bia`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`, `DTSTART:${d}T${tm}`, `DURATION:PT${r.duration || t.duration}M`, `RRULE:${rule}`, `SUMMARY:${txt(reTitle(r))}`, `DESCRIPTION:${txt(desc)}`, "END:VEVENT", "END:VCALENDAR"].join("\r\n") + "\r\n";
   const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" })), a = document.createElement("a");
   a.href = url; a.download = `${reTitle(r).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.ics`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   return ics;

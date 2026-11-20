@@ -334,3 +334,7 @@ Inchangé : `settings.siteRubriques`.
 ## Extension 8.50.4 (additive)
 
 Inchangé.
+
+## Extension 8.51.0 (additive)
+
+Aucun champ ajouté ni modifié. Le renommage en AMCO BIA ne touche que des libellés d'interface ; `STORAGE_KEY`, `meta.schema` et les clés dérivées restent inchangés.

@@ -1,7 +1,7 @@
 "use strict";
 
 // Shared interaction rules. All records remain local; roles are UI profiles, not authentication.
-const APP_VERSION="8.50.4";
+const APP_VERSION="8.51.0";
 let modalSaver = null, modalDirty = false, modalOpener = null, modalTimer = null;
 let lastStored = localStorage.getItem(STORAGE_KEY);
 let storageConflict = false;
@@ -269,7 +269,7 @@ async function copyTerrainAccess(){
 }
 async function shareTerrainAccess(){
   const url=terrainAccessUrl();
-  if(navigator.share)try{await navigator.share({title:"BIA Lean OS · Accès terrain",text:`${getSiteName(state.site==="group"?(state.pilotSite||OPERATIONAL_SITES[0].id):state.site)} · Signal Terrain`,url});return;}catch(error){if(error?.name==="AbortError")return;}
+  if(navigator.share)try{await navigator.share({title:"AMCO BIA · Accès terrain",text:`${getSiteName(state.site==="group"?(state.pilotSite||OPERATIONAL_SITES[0].id):state.site)} · Signal Terrain`,url});return;}catch(error){if(error?.name==="AbortError")return;}
   return copyTerrainAccess();
 }
 function exportSyncBundle(){

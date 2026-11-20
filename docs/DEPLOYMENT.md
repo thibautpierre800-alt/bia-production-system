@@ -293,3 +293,7 @@ La branche `backup/before-8.50.3-2026-11-11` conserve la version 8.50.2.
 ## Retour à 8.50.3
 
 La branche `backup/before-8.50.4-2026-11-12` conserve la version 8.50.3.
+
+## Retour à 8.50.4
+
+Le renommage ne touche ni les clés de stockage ni le schéma : republier `dist/` suffit, les données de chaque appareil sont conservées. Les appareils qui ont installé l'application sur leur écran d'accueil gardent l'ancienne icône tant qu'ils ne la réinstallent pas : désinstaller puis réinstaller depuis le navigateur pour voir le nouveau nom et la nouvelle icône.

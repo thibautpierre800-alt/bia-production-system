@@ -124,7 +124,7 @@ function cnSystems() {
 function cnSheet(c) {
   const kpis = osActive(data.kpis), ws = osActive(data.workshops), i = cnStepIndex(c);
   const tr = (cells) => `<tr>${cells.map((x) => `<td>${esc(x ?? "")}</td>`).join("")}</tr>`;
-  return `<article class="id-sheet cn-sheet"><header><div><small>FICHE DE RACCORDEMENT · CONTRAT D’ENTRÉE V1</small><h3>${esc(c.name)} → BIA Lean OS</h3><p>${esc(c.kind || "")} · étape : ${esc(CN_STEPS[i][1])} · ${shortDate(today())}</p></div></header>
+  return `<article class="id-sheet cn-sheet"><header><div><small>FICHE DE RACCORDEMENT · CONTRAT D’ENTRÉE V1</small><h3>${esc(c.name)} → AMCO BIA</h3><p>${esc(c.kind || "")} · étape : ${esc(CN_STEPS[i][1])} · ${shortDate(today())}</p></div></header>
     <h4>Objet</h4><p>Recevoir les relevés des indicateurs de chaque site sans ressaisie. Une ligne par site, indicateur, atelier éventuel et date. L’application contrôle chaque fichier avant de l’enregistrer.</p>
     <dl class="pm-dl"><div><dt>Contact technique</dt><dd>${esc(c.owner || "À nommer")}</dd></div><div><dt>Fréquence</dt><dd>${esc(c.frequency || "À définir")}</dd></div>${c.endpoint ? `<div><dt>Adresse</dt><dd>${esc(c.endpoint)}</dd></div>` : ""}</dl>
     <h4>Colonnes du fichier</h4><table class="cn-t"><thead><tr><th>Colonne</th><th>Obligatoire</th><th>Format</th><th>Exemple fictif</th></tr></thead><tbody>${CN_COLS.map(tr).join("")}</tbody></table>
