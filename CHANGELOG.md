@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.51.2 — Habillage AMCO BIA
+
+- Polices embarquées : l'application demandait Inter et Space Grotesk sans les fournir. Aucun PC Windows ne les ayant, tout s'affichait en Arial — l'habillage validé n'aurait jamais été celui vu en atelier. Inter est maintenant livrée avec l'application (sous-ensemble latin + français, 246 glyphes par graisse, six graisses, 123 Ko au total, OFL-1.1) ; Space Grotesk, utilisée à un seul endroit, est remplacée par Inter. Aucun appel réseau externe : la règle `default-src 'self'` du web.config reste valable.
+
+- Bandeau de marque : « LEAN OPERATING SYSTEM » sous le logo du groupe remplacé par « AMCO · AMÉLIORATION CONTINUE », et « AMCO BIA » dans l'en-tête téléphone. Le mantra reste en dessous.
+- Palette alignée sur le logo : chêne #3B2A20, orange #E8890C, crème #F6F2EC, y compris les titres qui restaient vert-bleu sur un écran devenu chaud.
+- Les couleurs écrites en dur dans les trois feuilles (#ff8c00, #202020, #f4f4f1, #183a3b, #14776e) passent en variables ; `ux.css`, chargée en dernier, ne reprend plus la main sur `--paper` et `--line`.
+- Nouvelle variable `--orange-ink` #A35200 pour les libellés cliquables : l'orange de marque ne donne que 2,6:1 sur blanc, celui-ci 5,6:1. L'orange de marque reste pour les traits, fonds, icônes et graphiques. Contraste vérifié sur les onze paires réellement utilisées, la plus basse à 5,5:1.
+- Version et nom du cache du service worker remis en phase : sans cela, un navigateur ayant déjà ouvert la 8.51.0 aurait continué à servir l'ancienne feuille de style et n'aurait jamais vu le nouvel habillage.
+
 ## 8.51.0 — AMCO BIA
 
 L'application prend son nom : **AMCO BIA**, pour AMélioration COntinue, avec le mantra du groupe « D'artisan industriel à industriel artisan ».

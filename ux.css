@@ -2926,7 +2926,7 @@ body.t5-on{overflow:hidden}
 .t5-time{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}.t5-time b{font-size:1.4em;font-variant-numeric:tabular-nums}.t5-time small{font-size:.55em;color:#a9a597}.t5-time.over b{color:#f29a2e}
 .t5-page{flex:1;padding:clamp(14px,2.4vw,40px)}
 .t5-letter .t5-l-head{display:flex;align-items:center;gap:24px;margin-bottom:20px}
-.t5-L{font-size:clamp(70px,9vw,160px);line-height:.9;color:var(--axis);font-family:"Space Grotesk",Arial,sans-serif}
+.t5-L{font-size:clamp(70px,9vw,160px);line-height:.9;color:var(--axis);font-family:Inter,Arial,sans-serif}
 .t5-l-head h2{margin:0;font-size:1.9em;color:#fff}.t5-l-head p{margin:4px 0 0;color:#a9a597}
 .t5-l-body{display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(16px,2.4vw,40px)}
 .t5-bignum{display:flex;align-items:baseline;gap:16px;margin:0 0 12px;flex-wrap:wrap}.t5-bignum b{font-size:clamp(56px,6vw,120px);line-height:1;color:#fff;font-variant-numeric:tabular-nums}.t5-bignum span{color:#d9d6cc}

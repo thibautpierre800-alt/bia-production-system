@@ -21,12 +21,17 @@ for (const match of html.matchAll(/(?:src|href)="([^"?#]+)(?:\?[^"#]*)?"/g)) {
     throw Error("Chemin de ressource invalide");
   assets.add(file.replace(/^\.\//, ""));
 }
+// Polices embarquées : référencées depuis les feuilles de style, pas depuis index.html
+if (fs.existsSync(path.join(root, "fonts")))
+  for (const f of fs.readdirSync(path.join(root, "fonts")))
+    if (/^[a-z0-9-]+\.woff2?$/.test(f) || f === "LICENSE.txt") assets.add(`fonts/${f}`);
 // Photos d’illustration de l’exemple de démonstration
 if (fs.existsSync(path.join(root, "demo")))
   for (const f of fs.readdirSync(path.join(root, "demo")))
     if (/^[a-z0-9-]+\.jpg$/.test(f)) assets.add(`demo/${f}`);
 fs.mkdirSync(out, { recursive: true });
 fs.mkdirSync(path.join(out, "demo"), { recursive: true });
+fs.mkdirSync(path.join(out, "fonts"), { recursive: true });
 for (const file of assets) {
   const source = path.join(root, file);
   if (!fs.existsSync(source)) throw Error("Ressource absente : " + file);

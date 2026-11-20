@@ -338,3 +338,7 @@ Inchangé.
 ## Extension 8.51.0 (additive)
 
 Aucun champ ajouté ni modifié. Le renommage en AMCO BIA ne touche que des libellés d'interface ; `STORAGE_KEY`, `meta.schema` et les clés dérivées restent inchangés.
+
+## Extension 8.51.2 (additive)
+
+Aucun champ ajouté ni modifié : l'habillage ne touche que des feuilles de style.
