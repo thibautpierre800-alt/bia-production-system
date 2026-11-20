@@ -1,10 +1,10 @@
 :root {
-  --os-ink: #183a3b;
-  --os-teal: #14776e;
-  --os-line: #d9e4e0;
-  --os-muted: #667c79;
-  --os-surface: #f4f8f6;
-  --os-amber: #966017;
+  --os-ink: #2B211A;
+  --os-teal: #8A5A1E;
+  --os-line: #E2D9CD;
+  --os-muted: #6E5F52;
+  --os-surface: #FBF8F3;
+  --os-amber: #A35200;
   --os-red: #a32d40;
 }
 body {
