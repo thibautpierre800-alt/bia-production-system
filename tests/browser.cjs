@@ -96,7 +96,7 @@ async function main() {
     const start = Date.now();
     await page.addInitScript(() => { window.__biaTests = true; }); // scénario de formation six sites
     await page.goto(url);
-    assert.equal(await page.title(), "BIA Lean Operating System");
+    assert.equal(await page.title(), "AMCO BIA · Amélioration continue");
     await page.evaluate(() => {
       data = osFreshData(true);
       osInit();
@@ -510,7 +510,7 @@ async function main() {
     );
     await page.context().setOffline(true);
     await page.reload();
-    assert.equal(await page.title(), "BIA Lean Operating System");
+    assert.equal(await page.title(), "AMCO BIA · Amélioration continue");
     assert.equal(
       await page.evaluate(
         (id) => data.gembas.some((g) => g.id === id),

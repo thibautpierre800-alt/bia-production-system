@@ -1,4 +1,4 @@
-# Mettre BIA Lean OS sur le serveur du Groupe
+# Mettre AMCO BIA sur le serveur du Groupe
 
 Ce dossier sert au service informatique. L'étape 1 publie l'application telle qu'elle est, en site web statique HTTPS. Elle ne demande ni base de données, ni code serveur, ni compte de service. L'étape 2, avec des données partagées et la connexion par le compte de l'entreprise, est décrite dans [docs/API.md](../docs/API.md).
 
@@ -23,7 +23,7 @@ L'application fonctionne à la racine d'un nom d'hôte comme dans un sous-dossie
 Les trois fichiers appliquent les mêmes règles :
 
 - **HTTPS obligatoire.** Le fonctionnement hors ligne, l'installation sur téléphone et l'appareil photo n'existent qu'en HTTPS.
-- **`index.html`, `service-worker.js` et `manifest.json` en `no-cache`.** Chaque nouvelle version est ainsi prise à l'ouverture suivante. Les autres fichiers portent un numéro de version (`?v=8.50.4`) et peuvent rester une semaine en cache.
+- **`index.html`, `service-worker.js` et `manifest.json` en `no-cache`.** Chaque nouvelle version est ainsi prise à l'ouverture suivante. Les autres fichiers portent un numéro de version (`?v=8.51.0`) et peuvent rester une semaine en cache.
 - **Politique de sécurité stricte :**
 
   ```

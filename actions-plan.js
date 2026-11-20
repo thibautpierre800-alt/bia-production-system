@@ -683,11 +683,11 @@ function apIcsFold(line) {
 }
 function apIcs(actions) {
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z"), link = location.href.split("#")[0] + "#actions";
-  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//BIA Lean OS//Plan d'actions//FR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:BIA · Plan d’actions"];
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//AMCO BIA//Plan d'actions//FR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:BIA · Plan d’actions"];
   for (const a of actions.filter((x) => x.due_date && isOpenAction(x))) {
     const start = a.due_date.replace(/-/g, ""), end = apShiftDay(a.due_date, 1).replace(/-/g, ""), p = apPrioRank(a);
     const desc = [`Pilote : ${a.owner || "À désigner"}`, `Site : ${getSiteName(a.site_id)}`, `Priorité : P${p} · ${a.priority || "Normale"}`, `Statut : ${a.status}`, a.finding ? `Constat : ${a.finding}` : "", apPromised(a) !== a.due_date ? `Date promise au départ : ${shortDate(apPromised(a))}` : "", `Ouvrir le plan d’actions : ${link}`].filter(Boolean).join("\n");
-    lines.push("BEGIN:VEVENT", `UID:${a.id}-${a.site_id}@bia-lean-os`, `DTSTAMP:${stamp}`, `SEQUENCE:${(a.reschedules || []).length}`,
+    lines.push("BEGIN:VEVENT", `UID:${a.id}-${a.site_id}@amco-bia`, `DTSTAMP:${stamp}`, `SEQUENCE:${(a.reschedules || []).length}`,
       `DTSTART;VALUE=DATE:${start}`, `DTEND;VALUE=DATE:${end}`, `SUMMARY:${apIcsText(`[BIA] ${a.id} · ${a.title}`)}`, `DESCRIPTION:${apIcsText(desc)}`,
       `CATEGORIES:${apIcsText("Plan d’actions BIA")}`, "TRANSP:TRANSPARENT", `URL:${link}`,
       "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${apIcsText(`Échéance demain : ${a.title}`)}`, "TRIGGER:-PT15H", "END:VALARM", "END:VEVENT");

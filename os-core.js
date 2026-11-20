@@ -564,7 +564,7 @@ function osIntegrity(source = data) {
   return issues;
 }
 function osValidate(source) {
-  if (source.meta?.schema !== 7) throw Error("Schéma Lean OS incompatible.");
+  if (source.meta?.schema !== 7) throw Error("Schéma AMCO BIA incompatible.");
   const globalIds = new Set();
   for (const key of Object.keys(OS_COLLECTIONS)) {
     if (!Array.isArray(source[key])) throw Error(`Collection absente : ${key}`);

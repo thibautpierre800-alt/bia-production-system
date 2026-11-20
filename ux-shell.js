@@ -131,7 +131,7 @@ function uxDecorate() {
   const summary = $("contextSummary");
   if (summary) summary.textContent = uxContextSummary();
   const foot = document.querySelector(".sidebar-foot > span:last-child");
-  if (foot) foot.innerHTML = `<b>BIA LEAN OS ${esc(APP_VERSION)}</b><small>${data.meta?.demo ? "Exemples fictifs · " : ""}données sur cet appareil</small>`;
+  if (foot) foot.innerHTML = `<b>AMCO BIA ${esc(APP_VERSION)}</b><small>${data.meta?.demo ? "Exemples fictifs · " : ""}données sur cet appareil</small>`;
 }
 /*
  * Sous-onglets propres à l'écran :

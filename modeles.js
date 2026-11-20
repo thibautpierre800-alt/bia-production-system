@@ -273,7 +273,7 @@ function mdHead(o) {
 }
 function mdFoot(o) {
   const pr = documentProgress(o.type, o.values), d = o.doc;
-  return `<footer class="md-foot"><span>Groupe BIA · Lean Operating System</span><span><span data-md-progress>${pr.done}/${pr.total} cases renseignées</span>${d ? ` · ${esc(d.id)} · version ${esc(d.version || 1)}${d.updated_at ? ` · mis à jour le ${shortDate(d.updated_at)}` : ""}` : ""}</span></footer>`;
+  return `<footer class="md-foot"><span>Groupe BIA · AMCO</span><span><span data-md-progress>${pr.done}/${pr.total} cases renseignées</span>${d ? ` · ${esc(d.id)} · version ${esc(d.version || 1)}${d.updated_at ? ` · mis à jour le ${shortDate(d.updated_at)}` : ""}` : ""}</span></footer>`;
 }
 
 // A3 (Toyota) : à gauche comprendre (PLAN), à droite agir, vérifier, pérenniser (DO · CHECK · ACT).

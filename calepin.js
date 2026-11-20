@@ -639,7 +639,7 @@ function cpScreen() {
   return [nav, open && !/^Créer/.test(open) ? open : ""].filter(Boolean).join(" · ");
 }
 function cpNotesText(list) {
-  return [`Remarques sur BIA Lean OS ${typeof APP_VERSION !== "undefined" ? APP_VERSION : ""}`.trim(), ...list.map((n) => `- ${shortDate(n.at)} · ${n.type} · ${n.where || "écran non précisé"} : ${n.text}`)].join("\n");
+  return [`Remarques sur AMCO BIA ${typeof APP_VERSION !== "undefined" ? APP_VERSION : ""}`.trim(), ...list.map((n) => `- ${shortDate(n.at)} · ${n.type} · ${n.where || "écran non précisé"} : ${n.text}`)].join("\n");
 }
 function cpNoteForm(where = cpNoteWhere || cpScreen()) {
   const list = cpNotes();

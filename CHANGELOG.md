@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.51.0 — AMCO BIA
+
+L'application prend son nom : **AMCO BIA**, pour AMélioration COntinue, avec le mantra du groupe « D'artisan industriel à industriel artisan ».
+
+- Nom affiché partout où l'utilisateur le voit : titre de l'onglet, nom sur l'écran d'accueil du téléphone, pied de page, bandeau d'état, écran de mise à jour, partage de l'accès terrain, fiches de raccordement, invitations de réunion, export du plan d'actions, livret de formation.
+- Icône refaite : le carré chêne portant BIA, posé sur le trait orange de l'établi, aux quatre tailles (SVG, 180, 192, 512).
+- Couleur de thème alignée sur le chêne du logo.
+- Les clés de stockage et le schéma de données ne changent pas : aucune donnée n'est touchée, aucune ressaisie.
+
 ## 8.50.4 — 12 novembre 2026
 
 - L’appli s’ouvre aussi depuis un partage réseau (double-clic sur index.html) : les photos de l’exemple s’affichent grâce à `demo/photos.js`, généré à la construction. Hors ligne et installation sur téléphone restent réservés au HTTPS.
