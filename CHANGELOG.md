@@ -1,5 +1,20 @@
 # Changelog
 
+## 8.52.0
+
+### Ce que coûtent les actions, suivi par site
+
+Une action peut maintenant porter son montant. Jusqu'ici le seul montant de l'application était le « coût de mise en œuvre » d'un gain : une action de sécurité, qui coûte sans rien rapporter, n'avait nulle part pour l'écrire, et personne ne pouvait dire ce que l'amélioration continue engageait sur un site.
+
+- Sur la fiche d'une action, un bloc « Coût » : le montant en euros, sa nature (Dépense pour les pièces, la prestation, le consommable ; Investissement pour une machine ou un équipement) et son engagement, dans l'ordre réel : **Estimé** tant que rien n'est commandé, **Engagé** au devis signé ou à la commande passée, **Payé** à la facture réglée. Chaque changement est inscrit au journal de l'action.
+- Dans la liste du plan d'actions, une action chiffrée porte son montant en pastille, orange tant qu'il est estimé, verte quand il est payé.
+- Dans Voir › Gains, un tableau « Investissements par site » : estimé, engagé, payé et total par usine, face au budget annuel du site, avec le reste à engager. Le reste se compte sur l'engagé et le payé, jamais sur l'estimé. Le groupe est totalisé en bas.
+- Le budget annuel se fixe site par site, ou pour le groupe, par les profils de direction ; il sert de repère et ne bloque aucune action.
+- Le tableau indique la part des montants portée par un gain déclaré. Une action chiffrée sans gain n'est pas une anomalie : la sécurité ne se rentabilise pas.
+- Export CSV des actions chiffrées, pour le contrôle de gestion.
+
+Rien n'est obligatoire : une action sans montant se comporte exactement comme avant, et aucune donnée existante n'est touchée.
+
 ## 8.51.2 — Habillage AMCO BIA
 
 - Polices embarquées : l'application demandait Inter et Space Grotesk sans les fournir. Aucun PC Windows ne les ayant, tout s'affichait en Arial — l'habillage validé n'aurait jamais été celui vu en atelier. Inter est maintenant livrée avec l'application (sous-ensemble latin + français, 246 glyphes par graisse, six graisses, 123 Ko au total, OFL-1.1) ; Space Grotesk, utilisée à un seul endroit, est remplacée par Inter. Aucun appel réseau externe : la règle `default-src 'self'` du web.config reste valable.

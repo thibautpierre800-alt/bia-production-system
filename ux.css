@@ -3142,3 +3142,21 @@ button.t5-time{background:none;border:0;color:inherit;font:inherit;cursor:pointe
 .ux a:not(.btn),.ux .link,.ux .er-news-item small,.ux .ap-more,
 .ux summary,.ux .inline-link,.ux .row-link{color:var(--orange-ink)}
 .ux a:not(.btn):hover,.ux .link:hover{color:#8A4600}
+
+/* AMCO BIA 8.52 · Le coût des actions et les investissements par site. */
+.iv-pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:13px;font-weight:600;
+  background:var(--orange-soft);color:var(--orange-ink);white-space:nowrap}
+.iv-pill.warn{background:#FDF0D8;color:#8A4600}
+.iv-pill.ok{background:#E4F1E6;color:#1E6B2E}
+.iv-field .filters{margin-top:8px}
+.iv-card{margin-top:18px}
+.iv-sub{display:block;font-size:13px;color:var(--muted)}
+.iv-scroll{overflow-x:auto;margin-top:12px}
+.iv-table{width:100%;border-collapse:collapse;font-size:14px}
+.iv-table th,.iv-table td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.iv-table th{font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
+.iv-table .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.iv-table tfoot td{border-bottom:0;border-top:2px solid var(--line);font-weight:600}
+.iv-over{color:#B3261E;font-weight:600}
+.iv-bar{display:block;width:120px;height:10px;border-radius:99px;background:#ECEAE4;overflow:hidden}
+.iv-bar i{display:block;height:100%;background:var(--orange);border-radius:99px}
