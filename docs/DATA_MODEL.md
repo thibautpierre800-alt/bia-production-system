@@ -342,3 +342,9 @@ Aucun champ ajouté ni modifié. Le renommage en AMCO BIA ne touche que des libe
 ## Extension 8.51.2 (additive)
 
 Aucun champ ajouté ni modifié : l'habillage ne touche que des feuilles de style.
+
+## Extension 8.52.0 (additive)
+
+- `actions[]` accueille trois champs facultatifs : `amount` (nombre, euros), `amount_kind` (`depense` ou `invest`, `depense` par défaut) et `amount_state` (`Estimé`, `Engagé` ou `Payé`, `Estimé` par défaut). Une action sans `amount` n'est pas chiffrée.
+- `investTargets[]` : `{ scope, euros, by, updated_at }`, une ligne par site plus une ligne `group` éventuelle — budget annuel des actions chiffrées, sur le même modèle que `gainTargets`.
+- Le lien entre un montant et son retour reste `gains[].source_id`, qui porte déjà l'identifiant de l'action d'origine.

@@ -2695,5 +2695,6 @@ test("Pilotage 8.50 · indicateurs du panneau, cibles par usine, rubriques par s
   // Réunions : le TOP 5 au jour du panneau
   a.run('state.site="group";data.settings.siteRubriques={};render();uxGo(uxTabs(uxStages().find(s=>s.id==="voir")).find(t=>t.key==="meetings"))');
   assert.match(a.q(".cg-steps").textContent, /TOP 5Atelier · chaque semaine · devant le panneau7\/7 panneaux reportés/);
-  assert.match(a.q(".pp-top5-week").textContent, /Marzin[\s\S]*mardi[\s\S]*10 h[\s\S]*Karim B\./);
+  // Le jour s'écrit « Aujourd’hui » ou « Demain » quand c'est le cas : le test ne doit pas dépendre du jour où il tourne.
+  assert.match(a.q(".pp-top5-week").textContent, /Marzin[\s\S]*(mardi|Aujourd’hui|Demain)[\s\S]*10 h[\s\S]*Karim B\./);
 });

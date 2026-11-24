@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','pratiques.js','bibliotheque.js','signaux.js','releve.js','chantiers.js','formation.js','roadmap-revue.js','avant-apres.js','ecarts.js','journal.js','parametres.js','connecteurs.js','reunions.js','cascade.js','microarrets.js','trs.js','gains.js','environnement.js','nc.js','echantillotheque.js','tour.js','ergonomie.js','top5.js','panneau.js','exemple-groupe.js','pilotage-panneau.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','pratiques.js','bibliotheque.js','signaux.js','releve.js','chantiers.js','formation.js','roadmap-revue.js','avant-apres.js','ecarts.js','journal.js','parametres.js','connecteurs.js','reunions.js','cascade.js','microarrets.js','trs.js','gains.js','environnement.js','nc.js','echantillotheque.js','tour.js','ergonomie.js','top5.js','panneau.js','exemple-groupe.js','pilotage-panneau.js','investissements.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-51-2/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.51.2'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-52-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.52.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -655,4 +655,37 @@ test('Photos : format invalide refusé, dernière sélection prioritaire',async 
   const input=q('#testPhoto');Object.defineProperty(input,'files',{value:[new w.File(['x'],'a.jpg',{type:'image/jpeg'})],configurable:true});input.dispatchEvent(new w.Event('change'));
   Object.defineProperty(input,'files',{value:[new w.File(['y'],'b.jpg',{type:'image/jpeg'})],configurable:true});input.dispatchEvent(new w.Event('change'));
   run('photoResolvers[1]("data:image/jpeg;base64,Yg==")');await new Promise(r=>setImmediate(r));run('photoResolvers[0]("data:image/jpeg;base64,YQ==")');await new Promise(r=>setImmediate(r));for(let i=0;i<100&&run('testPicker.busy');i++)await new Promise(r=>setTimeout(r,20));assert.equal(run('safePhoto(testPicker.value)'),'data:image/jpeg;base64,Yg==');
+});
+
+test('Investissements : le coût sur l’action et le suivi par site',t=>{
+  const a=app(t),{run,q}=a;
+  run('state.role="lean";state.site="marzin";closeModal()');
+  const id=run('data.actions.find(x=>x.site_id==="marzin").id');
+  // Rien de chiffré : l’écran invite à saisir, sans tableau.
+  run('state.view="pilotage";state.pilotTab="gains";render()');
+  assert.match(q('.iv-card').textContent,/Aucune action chiffrée/);
+  // Un montant se pose sur l’action, avec sa nature et son engagement.
+  assert.equal(run(`ivSetAmount(${JSON.stringify(id)},"4200")`),true);
+  assert.equal(run(`ivSetField(${JSON.stringify(id)},"amount_kind","invest")`),true);
+  assert.equal(run(`ivSetField(${JSON.stringify(id)},"amount_state","Engagé")`),true);
+  assert.equal(run(`ivAmount(data.actions.find(x=>x.id===${JSON.stringify(id)}))`),4200);
+  assert.equal(run(`ivState(data.actions.find(x=>x.id===${JSON.stringify(id)}))`),'Engagé');
+  // Le journal de l’action garde la trace du chiffrage.
+  assert.match(run(`JSON.stringify(data.actions.find(x=>x.id===${JSON.stringify(id)}).history||[])`),/Coût|Engagement|Nature du coût/);
+  // Le suivi par site additionne, compare au budget et calcule le reste.
+  run('data.investTargets=[{scope:"marzin",euros:10000}];state.view="pilotage";state.pilotTab="gains";render()');
+  const tbl=q('.iv-table').textContent;
+  assert.match(tbl,/Marzin/);assert.match(tbl,/4\u202f200|4 200|4200/);
+  assert.equal(run('ivTotals(data.actions.filter(x=>x.site_id==="marzin")).total'),4200);
+  assert.equal(run('ivTotals(data.actions.filter(x=>x.site_id==="marzin")).invest'),4200);
+  assert.equal(run('ivBudget("marzin")'),10000);
+  // Une action chiffrée porte sa pastille dans la liste.
+  assert.match(run(`apRow(data.actions.find(x=>x.id===${JSON.stringify(id)}))`),/iv-pill/);
+  // Un montant négatif ou illisible est refusé ; vider le champ déchiffre l’action.
+  assert.equal(run(`ivSetAmount(${JSON.stringify(id)},"-5")`),false);
+  assert.equal(run(`ivSetAmount(${JSON.stringify(id)},"")`),true);
+  assert.equal(run(`ivAmount(data.actions.find(x=>x.id===${JSON.stringify(id)}))`),null);
+  // Le DG, en lecture seule, voit le suivi sans pouvoir fixer de budget.
+  run('state.role="dg";state.site="group";state.view="pilotage";state.pilotTab="gains";render()');
+  assert.equal(q('[data-iv-budget]'),null,'Lecture seule : pas de bouton budget');
 });

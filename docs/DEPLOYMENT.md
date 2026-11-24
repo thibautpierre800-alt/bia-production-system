@@ -301,3 +301,7 @@ Le renommage ne touche ni les clés de stockage ni le schéma : republier `dist/
 ## Retour à 8.51.0
 
 Republier `dist/`. Le nom du cache du service worker change avec la version : chaque appareil reprend la nouvelle feuille de style à la deuxième ouverture. Les appareils ayant installé l'application sur leur écran d'accueil gardent l'ancienne icône tant qu'ils ne la réinstallent pas.
+
+## Retour à 8.51.2
+
+Rien à faire : la 8.52.0 n'ajoute que des champs facultatifs sur les actions et une liste de budgets. Pour revenir à la 8.51.2, republier le dossier `dist` de cette version ; les montants déjà saisis restent dans les fiches, simplement invisibles.
