@@ -305,3 +305,7 @@ Republier `dist/`. Le nom du cache du service worker change avec la version : ch
 ## Retour à 8.51.2
 
 Rien à faire : la 8.52.0 n'ajoute que des champs facultatifs sur les actions et une liste de budgets. Pour revenir à la 8.51.2, republier le dossier `dist` de cette version ; les montants déjà saisis restent dans les fiches, simplement invisibles.
+
+## Retour à 8.52.0
+
+Rien à faire : la 8.53.0 n'ajoute qu'un drapeau facultatif sur les actions. Pour revenir à la 8.52.0, republier le dossier `dist` de cette version ; les actions marquées confidentielles redeviennent visibles de tous.

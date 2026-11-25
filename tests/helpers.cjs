@@ -62,6 +62,7 @@ const scripts = [
   "exemple-groupe.js",
   "pilotage-panneau.js",
   "investissements.js",
+  "confidentiel.js",
   "boot.js",
 ];
 function app(t, stored, url = "https://bia.example/bia-production-system/") {

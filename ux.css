@@ -3160,3 +3160,11 @@ button.t5-time{background:none;border:0;color:inherit;font:inherit;cursor:pointe
 .iv-over{color:#B3261E;font-weight:600}
 .iv-bar{display:block;width:120px;height:10px;border-radius:99px;background:#ECEAE4;overflow:hidden}
 .iv-bar i{display:block;height:100%;background:var(--orange);border-radius:99px}
+
+/* AMCO BIA 8.53 · Actions confidentielles. */
+.cf-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;
+  color:#5A4A3D;background:transparent;border:1px dashed #B5A28F;white-space:nowrap}
+.cf-pill::before{content:"◐";font-size:11px}
+.cf-field{border-left:3px solid #B5A28F;padding-left:14px}
+.cf-field.on{border-left-color:var(--orange)}
+.cf-warn{color:#8A4600;background:#FDF0D8;border-radius:8px;padding:9px 12px;margin-top:8px}
