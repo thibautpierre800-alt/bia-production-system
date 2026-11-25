@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','pratiques.js','bibliotheque.js','signaux.js','releve.js','chantiers.js','formation.js','roadmap-revue.js','avant-apres.js','ecarts.js','journal.js','parametres.js','connecteurs.js','reunions.js','cascade.js','microarrets.js','trs.js','gains.js','environnement.js','nc.js','echantillotheque.js','tour.js','ergonomie.js','top5.js','panneau.js','exemple-groupe.js','pilotage-panneau.js','investissements.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','pratiques.js','bibliotheque.js','signaux.js','releve.js','chantiers.js','formation.js','roadmap-revue.js','avant-apres.js','ecarts.js','journal.js','parametres.js','connecteurs.js','reunions.js','cascade.js','microarrets.js','trs.js','gains.js','environnement.js','nc.js','echantillotheque.js','tour.js','ergonomie.js','top5.js','panneau.js','exemple-groupe.js','pilotage-panneau.js','investissements.js','confidentiel.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-52-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.52.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-53-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.53.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -688,4 +688,66 @@ test('Investissements : le coût sur l’action et le suivi par site',t=>{
   // Le DG, en lecture seule, voit le suivi sans pouvoir fixer de budget.
   run('state.role="dg";state.site="group";state.view="pilotage";state.pilotTab="gains";render()');
   assert.equal(q('[data-iv-budget]'),null,'Lecture seule : pas de bouton budget');
+});
+
+test('Actions confidentielles : invisibles pour l’atelier, visibles du Lean, du directeur et du pilote',t=>{
+  const a=app(t),{run,q}=a;
+  run('state.role="lean";state.site="marzin";closeModal()');
+  const id=run('data.actions.find(x=>x.site_id==="marzin"&&x.owner).id');
+  const owner=run(`data.actions.find(x=>x.id===${JSON.stringify(id)}).owner`);
+  const visible=i=>run(`scoped(data.actions).some(x=>x.id===${JSON.stringify(i)})`);
+  assert.equal(visible(id),true,'visible avant');
+  // Le responsable Lean la rend confidentielle ; elle reste dans SA liste.
+  assert.equal(run(`cfSet(${JSON.stringify(id)},true)`),true);
+  assert.equal(run(`data.actions.find(x=>x.id===${JSON.stringify(id)}).confidential`),true);
+  assert.equal(visible(id),true,'le Lean la voit encore');
+  assert.match(run(`apRow(data.actions.find(x=>x.id===${JSON.stringify(id)}))`),/cf-pill/);
+  // Le directeur du site la voit ; celui d’un autre site, non.
+  run('state.role="director";state.site="marzin"');
+  assert.equal(visible(id),true,'le directeur du site la voit');
+  run('state.role="director";state.site="sodeplax"');
+  assert.equal(visible(id),false,'le directeur d’un autre site ne la voit pas');
+  // Le chef d’équipe et l’opérateur ne la voient pas, et ne peuvent pas l’ouvrir.
+  run(`state.role="teamlead";state.site="marzin";apSetMe("")`);
+  assert.equal(visible(id),false,'le chef d’équipe ne la voit pas');
+  assert.equal(run(`osScope(data.actions).some(x=>x.id===${JSON.stringify(id)})`),false,'absente d’osScope');
+  run(`apOpen(${JSON.stringify(id)})`);
+  assert.equal(run('document.querySelector("#modalContent .ap-fiche")'),null,'la fiche ne s’ouvre pas');
+  // Sauf s’il en est le pilote.
+  run(`apSetMe(${JSON.stringify(owner)})`);
+  assert.equal(visible(id),true,'le pilote la voit');
+  // Et il ne peut pas la rendre visible de tous : seuls le Lean et le directeur le peuvent.
+  assert.equal(run(`cfCanToggle(data.actions.find(x=>x.id===${JSON.stringify(id)}))`),false);
+  assert.equal(run(`cfSet(${JSON.stringify(id)},false)`),false);
+  assert.equal(run(`data.actions.find(x=>x.id===${JSON.stringify(id)}).confidential`),true);
+  // Le Lean la rend à tout le monde : le drapeau disparaît.
+  run('state.role="lean";state.site="marzin";apSetMe("")');
+  assert.equal(run(`cfSet(${JSON.stringify(id)},false)`),true);
+  assert.equal(run(`data.actions.find(x=>x.id===${JSON.stringify(id)}).confidential`),undefined);
+  run('state.role="operator";state.site="marzin"');
+  assert.equal(visible(id),true,'redevenue visible de tous');
+});
+
+test('Actions confidentielles : aucun autre dossier n’en cite le titre',t=>{
+  const a=app(t),{run}=a;
+  run('state.role="lean";state.site="marzin";closeModal()');
+  // Une action rattachée à un signal : c'est le cas qui fait fuiter un titre ailleurs.
+  const id=run('(data.signals.find(s=>s.action_id&&data.actions.some(a=>a.id===s.action_id))||{}).action_id||data.actions.find(x=>x.site_id==="marzin").id');
+  const titre=run(`data.actions.find(x=>x.id===${JSON.stringify(id)}).title`);
+  run(`cfSet(${JSON.stringify(id)},true)`);
+  // Le lien par identifiant, les actions rattachées à un dossier et le statut d’un signal.
+  run('state.role="teamlead";state.site="marzin";apSetMe("")');
+  assert.equal(run(`recordMeta(${JSON.stringify(id)})`),null,'recordMeta ne la résout plus');
+  assert.equal(run(`recordLink(${JSON.stringify(id)})`),'','aucun lien « Ouvrir »');
+  assert.equal(run(`data.signals.filter(s=>s.action_id===${JSON.stringify(id)}).map(sgStatus).some(x=>x.includes(${JSON.stringify(titre)}))`),false,
+    'le signal dit qu’une action est en cours sans la nommer');
+  // Balayage : le titre n’apparaît sur aucun écran ouvert au chef d’équipe.
+  const vues=run('JSON.stringify(role().nav)');
+  JSON.parse(vues).forEach(v=>{
+    run(`state.view=${JSON.stringify(v)};render()`);
+    assert.equal(run(`document.body.textContent.includes(${JSON.stringify(titre)})`),false,`titre visible sur l’écran ${v}`);
+  });
+  // Le responsable Lean, lui, la retrouve partout.
+  run('state.role="lean";state.site="marzin"');
+  assert.equal(run(`recordMeta(${JSON.stringify(id)}).key`),'actions');
 });

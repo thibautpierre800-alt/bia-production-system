@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.53.0
+
+### Actions confidentielles
+
+Une action peut être rendue confidentielle, pour un sujet qui n'a pas à s'afficher devant l'atelier. Elle disparaît alors de tous les écrans partagés : liste du plan d'actions, TOP 5, panneau d'atelier, compteurs de pilotage, tableau par famille, exports, choix de pilote, et jusqu'aux dossiers qui la citaient — le signal dont elle est issue dit qu'une action est en cours sans la nommer, le chantier ne la liste plus, l'historique des points la retire de son journal.
+
+Trois profils continuent de la voir : le responsable Lean, le directeur du site concerné, et la personne nommée pilote de l'action (reconnue par le sélecteur « Je suis »). Seuls les deux premiers peuvent poser ou retirer le drapeau.
+
+**Ce que ce n'est pas.** Tant que l'application n'a ni comptes ni authentification, le rôle se choisit librement dans le menu. Une action confidentielle est invisible, pas protégée : elle reste dans les données de l'appareil et dans les sauvegardes. L'encart de la fiche le dit noir sur blanc. Le vrai verrou viendra avec l'étape 2 (données partagées et comptes utilisateurs).
+
 ## 8.52.0
 
 ### Ce que coûtent les actions, suivi par site
