@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-54-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.54.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-55-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.55.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -817,4 +817,33 @@ test('Retour sur investissement d’une action : coût, gain, retour en mois',t=
   assert.equal(run(`avSetGain(${JSON.stringify(id)},"")`),true);
   assert.equal(run(`${A}.gain_year`),undefined);
   assert.equal(run(`avSetGain(${JSON.stringify(id)},"-3")`),false,'gain négatif refusé');
+});
+
+test('Faire le point : l’avancée se bouge dans la revue, et le compte rendu la porte',t=>{
+  const a=app(t),{run,q}=a;
+  run('state.role="lean";state.site="marzin";closeModal()');
+  const id=run('apReviewQueue()[0].id');
+  const A=`data.actions.find(x=>x.id===${JSON.stringify(id)})`;
+  run(`ivSetAmount(${JSON.stringify(id)},"6000");avSetGain(${JSON.stringify(id)},"24000")`);
+  // La revue s’ouvre sur la première action : barre, paliers et bilan d’argent y sont.
+  run('apStartReview()');
+  assert.ok(q('.av-rv'),'le bloc est dans la carte de revue');
+  assert.ok(q('.av-rv .av-bar'),'barre d’avancée');
+  assert.ok(q('.av-rv .av-line'),'coût, gain et retour sur une ligne');
+  assert.match(q('.av-rv .av-line').textContent,/3 mois/,'le retour est calculé');
+  assert.ok(q('.ap-rv-card').innerHTML.indexOf('av-rv')<q('.ap-rv-card').innerHTML.indexOf('ap-rv-hist'),
+    'l’avancée passe avant l’historique');
+  assert.ok(q('#apRvNote'),'le champ du point reste là');
+  // Les paliers agissent sans sortir de la revue, et le point en cours de frappe n’est pas perdu.
+  run('document.getElementById("apRvNote").value="pièce reçue"');
+  run('document.querySelector(".av-rv [data-av-set=\'60\']").click()');
+  assert.equal(run(`avProgress(${A})`),60,'avancée posée depuis la revue');
+  assert.ok(q('.av-rv'),'on est toujours dans la revue');
+  assert.equal(run('document.getElementById("apRvNote").value'),'pièce reçue','le point saisi est conservé');
+  // Le compte rendu final porte l’avancée et le bilan d’argent.
+  run('document.querySelector("[data-ap-rv=\'note\']").click()');
+  run('while(state.apReview&&state.apReview.step!=="end"){document.querySelector("[data-ap-rv=\'skip\']").click()}');
+  const rapport=run('document.getElementById("apReport").value');
+  assert.match(rapport,/avancée 60 %/,'l’avancée est dans le compte rendu');
+  assert.match(rapport,/Argent engagé/,'le bilan d’argent est dans le compte rendu');
 });

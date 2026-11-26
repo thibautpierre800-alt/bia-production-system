@@ -3188,3 +3188,12 @@ button.t5-time{background:none;border:0;color:inherit;font:inherit;cursor:pointe
 .av-roi b{font-size:17px;font-variant-numeric:tabular-nums}
 .av-roi .good b{color:#1E6B2E}
 .av-roi .bad b{color:#B3261E}
+.av-rv{margin:14px 0 4px}
+.av-rv .ap-field{margin:0 0 12px}
+.av-rv .av-field{border-left:3px solid var(--line);padding-left:14px}
+.av-line{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--white)}
+.av-line span{display:inline-flex;align-items:baseline;gap:6px}
+.av-line small{font-size:12px;color:var(--muted)}
+.av-line b{font-size:15px;font-variant-numeric:tabular-nums}
+.av-line .good b{color:#1E6B2E}
+.av-line .bad b{color:#B3261E}

@@ -313,3 +313,7 @@ Rien à faire : la 8.53.0 n'ajoute qu'un drapeau facultatif sur les actions. Pou
 ## Retour à 8.53.0
 
 Rien à faire : la 8.54.0 n'ajoute que des champs facultatifs sur les actions. Pour revenir à la 8.53.0, republier le dossier `dist` de cette version ; les avancées et les gains saisis restent dans les fiches, simplement invisibles.
+
+## Retour à 8.54.0
+
+Rien à faire : la 8.55.0 ne change que l'affichage de la revue et le texte du compte rendu.

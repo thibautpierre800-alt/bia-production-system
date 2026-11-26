@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.55.0
+
+### L'avancée et l'argent dans « Faire le point »
+
+La revue hebdomadaire est le moment où le pilote dit où il en est : l'avancée s'y pose directement, sans ouvrir la fiche au milieu du tour de table. La barre et les paliers de 10 % sont dans la carte de revue, avec le coût, le gain attendu, le retour et le résultat de la première année sur une ligne au-dessous. Le point de la semaine déjà tapé n'est pas perdu quand on déplace l'avancée.
+
+L'avancée et l'argent passent **avant** l'historique : où on en est se dit avant le détail de ce qui s'est passé, et sur un téléphone l'historique déplié repoussait tout hors de l'écran.
+
+Le compte rendu de fin de revue, celui qu'on copie dans un mail, porte maintenant l'avancée de chaque action revue, le total engagé sur les actions chiffrées avec le retour attendu, et le nombre d'actions dont l'avancée n'a pas bougé depuis plus de trois semaines.
+
 ## 8.54.0
 
 ### L'avancée d'une action, et son retour sur investissement
