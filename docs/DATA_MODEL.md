@@ -357,3 +357,7 @@ Aucun champ ajouté ni modifié : l'habillage ne touche que des feuilles de styl
 
 - `actions[]` accueille trois champs facultatifs de plus : `progress` (0 à 100, posé par le pilote ; sans saisie, le statut l'implique), `progress_at` (date du dernier mouvement de l'avancée, qui sert à repérer les actions figées) et `gain_year` (estimation du gain annuel en euros).
 - Le gain déclaré dans `gains[]` pour cette action (`source_id`) prime sur `gain_year` dès qu'il existe.
+
+## Extension 8.55.0 (additive)
+
+- Aucun champ nouveau : la 8.55 n'affiche et ne résume que ce que la 8.54 enregistrait déjà.

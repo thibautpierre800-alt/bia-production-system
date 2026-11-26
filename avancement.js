@@ -127,6 +127,21 @@ function avMoneyBlock(a, edit) {
     <p class="hint">Une action de sécurité ou de conformité n’a pas à rapporter : laisser vide est une réponse valable, et le coût seul reste suivi dans Voir › Gains, par site.</p></div>`;
 }
 
+/* Pendant la revue, les quatre chiffres tiennent sur une ligne : on y passe quinze actions à la suite. */
+function avMoneyLine(a) {
+  const cost = typeof ivAmount === "function" ? ivAmount(a) : null;
+  const real = avGain(a), est = avEstimate(a), perYear = real ? real.euros : est;
+  if (cost === null && !perYear) return "";
+  const months = avPayback(cost, perYear), an1 = cost !== null && perYear ? perYear - cost : null;
+  const bit = (l, v, cls = "") => `<span class="${cls}"><small>${l}</small> <b>${esc(v)}</b></span>`;
+  return `<p class="av-line">
+    ${cost === null ? "" : bit("Coût", ivEuro(cost))}
+    ${perYear ? bit(`Gain ${real ? "déclaré" : "attendu"}`, ivEuro(perYear) + "/an") : ""}
+    ${months === null ? "" : bit("Retour", avMonths(months), months <= 12 ? "good" : "")}
+    ${an1 === null ? "" : bit("1<sup>re</sup> année", (an1 > 0 ? "+" : "") + ivEuro(an1), an1 < 0 ? "bad" : "")}
+  </p>`;
+}
+
 /* ---------- Greffes ---------- */
 
 {
@@ -190,4 +205,53 @@ function avMoneyBlock(a, edit) {
       if (save) save.onclick = () => again(avSetGain(id, $("avGain") ? $("avGain").value : ""));
     }
   };
+
+  /* ---------- « Faire le point » : l'avancée se bouge là où on en parle ---------- */
+
+  /* La revue est le moment où le pilote dit où il en est : la barre et les paliers y sont, avec le
+     coût et le retour sous les yeux, pour ne pas avoir à ouvrir la fiche au milieu du tour de table. */
+  const baseReview = apReviewRender;
+  apReviewRender = function () {
+    baseReview.apply(this, arguments);
+    const r = state.apReview;
+    if (!r || r.step !== "card") return;
+    const card = $("modalContent") && $("modalContent").querySelector(".ap-rv-card");
+    const note = card && card.querySelector("#apRvNote");
+    if (!card || !note) return;
+    const a = data.actions.find((x) => x.id === r.queue[r.i].id);
+    if (!a) return;
+    // Au-dessus de l'historique : « où on en est » se dit avant le détail de ce qui s'est passé,
+    // et sur un téléphone l'historique déplié repousserait l'avancée hors de l'écran.
+    const before = card.querySelector(".ap-rv-hist") || card.querySelector(".ap-warns") || note.closest(".field") || note;
+    const wrap = document.createElement("div");
+    wrap.className = "av-rv";
+    wrap.innerHTML = `${avProgressBlock(a, apCanEdit(a))}${avMoneyLine(a)}`;
+    card.insertBefore(wrap, before);
+    wrap.querySelectorAll("[data-av-set]").forEach((b) => (b.onclick = () => {
+      const kept = note.value;
+      if (avSetProgress(a.id, b.dataset.avSet)) { apReviewRender(); const n = $("apRvNote"); if (n) { n.value = kept; n.focus(); } }
+    }));
+  };
+
+  /* Le compte rendu porte l'avancée de chaque action revue, et le bilan d'argent du périmètre. */
+  const baseReport = apReviewReport;
+  apReviewReport = function (r) {
+    const text = baseReport.apply(this, arguments);
+    const byId = new Map((data.actions || []).map((x) => [x.id, x]));
+    const withPct = text.split("\n").map((line) => {
+      const m = /^- ([A-Z0-9-]+) /.exec(line);
+      const a = m && byId.get(m[1]);
+      return a && isOpenAction(a) && avProgress(a) > 0 ? `${line} [avancée ${avProgress(a)} %]` : line;
+    });
+    const rows = scoped(data.actions).filter((x) => ivAmount(x) !== null);
+    if (rows.length) {
+      const cost = rows.reduce((n, x) => n + ivAmount(x), 0);
+      const gain = rows.reduce((n, x) => n + ((avGain(x) || {}).euros || avEstimate(x) || 0), 0);
+      withPct.push(`Argent engagé sur les actions chiffrées : ${ivEuro(cost)}${gain ? `, pour ${ivEuro(gain)}/an attendus, retour ${avMonths(avPayback(cost, gain))}` : ", sans gain chiffré"}.`);
+    }
+    const figees = scoped(data.actions).filter(avFrozen);
+    if (figees.length) withPct.push(`${figees.length} action(s) dont l’avancée n’a pas bougé depuis plus de ${AV_STALE_DAYS} jours.`);
+    return withPct.join("\n");
+  };
+
 }
