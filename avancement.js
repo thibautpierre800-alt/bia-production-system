@@ -247,8 +247,27 @@ function avMoneyLine(a) {
        écran, et la revue se faisait à l'aveugle. Il reste là, sa ligne de résumé dit l'essentiel
        (combien de points, le dernier quand), et il s'ouvre d'un geste — qui tient jusqu'à la fin de
        la revue, pour qui préfère le garder sous les yeux. */
+    /* Le champ du point et les boutons forment un seul bloc collé en bas : on tape puis on décide,
+       et sur un téléphone le champ n'est plus masqué par les boutons. */
+    const buttons = card.querySelector(".ap-rv-buttons");
+    const field = note.closest(".field");
+    if (buttons && field && !card.querySelector(".av-act")) {
+      const act = document.createElement("div");
+      act.className = "av-act";
+      card.insertBefore(act, field);
+      act.appendChild(field);
+      act.appendChild(buttons);
+    }
+    /* Les alertes (« reportée 2 fois », « sans pilote ») remontent près des faits : elles disent où
+       on en est, pas ce qui s'est passé, et en bas de carte elles passaient sous le bloc de décision. */
+    const warns = card.querySelector(".ap-warns"), facts = card.querySelector(".ap-rv-facts");
+    if (warns && facts && warns.compareDocumentPosition(facts) & Node.DOCUMENT_POSITION_PRECEDING) {
+      facts.after(warns);
+    }
     const hist = card.querySelector(".ap-rv-hist");
     if (hist) {
+      // Premier passage : ouvert là où il y a la place (plein écran sur PC), replié sur téléphone.
+      if (state.apRvHist === undefined) state.apRvHist = window.innerHeight >= 900;
       if (state.apRvHist) hist.setAttribute("open", ""); else hist.removeAttribute("open");
       hist.ontoggle = () => { state.apRvHist = hist.open; };
     }

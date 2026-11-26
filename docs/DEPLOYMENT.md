@@ -321,3 +321,7 @@ Rien à faire : la 8.55.0 ne change que l'affichage de la revue et le texte du c
 ## Retour à 8.55.0
 
 Rien à faire : la 8.56.0 ne change que l'affichage.
+
+## Retour à 8.56.0
+
+Rien à faire : la 8.57.0 ne change que l'affichage de la revue.

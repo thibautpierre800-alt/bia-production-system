@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.57.0
+
+### « Faire le point » en plein écran
+
+La revue est un moment à part : on y passe quinze actions à la suite, souvent debout près de la ligne. L'écran entier lui est maintenant donné. Le contenu défile et le bloc de décision — le champ « Point de la semaine » et les boutons — reste collé en bas, toujours à portée du pouce quelle que soit la longueur de la carte. Les boutons ne bougent plus d'une action à l'autre : la main retrouve le même endroit quinze fois de suite.
+
+Sur PC, le contenu reste centré sur 1 100 px pour rester lisible sur un grand écran, et l'historique s'ouvre de nouveau par défaut puisque la place est là. Sur téléphone il reste replié, et les cinq boutons passent à deux par ligne, la décision principale en tête : ils ne masquent plus le champ de saisie.
+
+Les alertes d'une action (« reportée 2 fois », « sans pilote ») remontent près des faits : elles disent où on en est, pas ce qui s'est passé.
+
 ## 8.56.0
 
 ### La charge par personne, un curseur pour l'avancée, une revue qui tient dans l'écran
