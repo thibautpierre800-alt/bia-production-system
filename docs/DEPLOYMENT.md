@@ -317,3 +317,7 @@ Rien à faire : la 8.54.0 n'ajoute que des champs facultatifs sur les actions. P
 ## Retour à 8.54.0
 
 Rien à faire : la 8.55.0 ne change que l'affichage de la revue et le texte du compte rendu.
+
+## Retour à 8.55.0
+
+Rien à faire : la 8.56.0 ne change que l'affichage.

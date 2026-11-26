@@ -1,5 +1,17 @@
 # Changelog
 
+## 8.56.0
+
+### La charge par personne, un curseur pour l'avancée, une revue qui tient dans l'écran
+
+**Charge par personne.** Au bas du plan d'actions, un tableau qui répond à une seule question : à qui faut-il enlever quelque chose ? Par pilote, les actions en retard d'abord, puis ce qui tombe cette semaine, les avancées figées, les actions sans date, celles de sécurité, le total, la part du plan et l'argent engagé. Les actions sans pilote forment leur propre ligne, en dernier. Trois constats s'écrivent au-dessus quand ils se vérifient : les actions que personne ne porte, la personne qui porte plus d'un tiers du plan, celles qui cumulent trois retards ou plus. « Voir » filtre la liste sur cette personne.
+
+Ce tableau compte des actions, pas des heures : une action peut valoir dix minutes ou trois jours, et aucun champ ne le dit aujourd'hui. Il sert à repérer une surcharge, pas à bâtir un plan de charge — c'est écrit sous le tableau.
+
+**Un curseur pour l'avancée.** Les onze pastilles de 0 à 100 prenaient deux lignes sur un téléphone. Elles laissent la place à un curseur, prenable au doigt, qui n'écrit qu'une ligne de journal par geste : l'étiquette suit le doigt, l'enregistrement a lieu au relâcher.
+
+**« Faire le point » tient de nouveau dans un écran.** L'historique s'ouvrait déplié et pesait 400 px sur un téléphone : les boutons de décision tombaient hors de l'écran et la revue se faisait à l'aveugle. Il est maintenant replié, sa ligne de résumé dit l'essentiel (combien de points, le dernier quand), et il s'ouvre d'un geste — qui tient jusqu'à la fin de la revue. L'avancée et l'argent se partagent une seule boîte. La carte passe de 1 210 à 843 px sur téléphone, de 835 à 638 px sur PC : « Noter et suivante » est visible sans défiler.
+
 ## 8.55.0
 
 ### L'avancée et l'argent dans « Faire le point »
