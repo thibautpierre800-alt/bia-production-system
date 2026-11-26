@@ -1,5 +1,21 @@
 # Changelog
 
+## 8.54.0
+
+### L'avancée d'une action, et son retour sur investissement
+
+**Avancée.** Jusqu'ici l'avancement était déduit du seul statut (0 à l'ouverture, 50 en cours, 90 à vérifier) et n'était affiché nulle part : une action « En cours » depuis six semaines et une commencée hier se ressemblaient. Le pilote la pose maintenant à la main, par pas de 10 %, et elle s'affiche en barre sur chaque ligne du plan d'actions.
+
+Une avancée saisie n'est plus rabaissée par un changement de statut ; seule la clôture l'emporte, en la portant à 100 %.
+
+Garde-fou contre le syndrome des 90 % : la date du dernier mouvement est enregistrée, et une action ouverte dont l'avancée n'a pas bougé depuis trois semaines le dit dans ses alertes, à côté de « Sans pilote » et « Reportée 2 fois ». La barre se raye alors en jaune. Une avancée qui ne bouge plus est une information, pas un détail d'affichage.
+
+**Retour sur investissement.** Le coût est arrivé en 8.52 ; il lui manquait l'autre moitié. L'action porte maintenant une estimation de gain annuel, et la fiche affiche les quatre chiffres côte à côte : coût, gain par an, retour en mois, résultat de la première année. Le retour sous douze mois s'affiche en vert, une première année négative en rouge.
+
+Dès qu'un gain est déclaré dans Voir › Gains pour cette action, c'est lui qui s'affiche — chiffre mesuré et validé — et l'estimation portée par l'action n'est plus utilisée : une seule vérité par action.
+
+Le tableau « Investissements par site » gagne deux colonnes, gain attendu et retour, par site et pour le groupe ; l'export CSV gagne l'avancement, le gain annuel et le retour en mois.
+
 ## 8.53.0
 
 ### Actions confidentielles

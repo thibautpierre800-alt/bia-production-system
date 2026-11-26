@@ -101,7 +101,10 @@ function ivSiteRows() {
   const sites = OPERATIONAL_SITES.filter((s) => allowedSite(s.id));
   return sites.map((s) => {
     const rows = (data.actions || []).filter((a) => a.site_id === s.id);
-    return { site: s, t: ivTotals(rows), budget: ivBudget(s.id) };
+    // Le gain attendu du site : le gain déclaré dans Gains quand il existe, sinon l'estimation du pilote.
+    const gain = typeof avGain === "function"
+      ? ivChiffrees(rows).reduce((n, a) => n + ((avGain(a) || {}).euros || avEstimate(a) || 0), 0) : 0;
+    return { site: s, t: ivTotals(rows), budget: ivBudget(s.id), gain };
   }).filter((r) => r.t.n > 0 || r.budget !== null);
 }
 
@@ -115,8 +118,9 @@ function ivBlock() {
   const tot = rows.reduce((o, r) => {
     IV_STATES.forEach((s) => (o[s] += r.t[s]));
     o.total += r.t.total; o.n += r.t.n; o.invest += r.t.invest; o.avecGain += r.t.avecGain;
-    o.budget += r.budget || 0; return o;
-  }, { n: 0, total: 0, "Estimé": 0, "Engagé": 0, "Payé": 0, invest: 0, avecGain: 0, budget: 0 });
+    o.budget += r.budget || 0; o.gain += r.gain || 0; return o;
+  }, { n: 0, total: 0, "Estimé": 0, "Engagé": 0, "Payé": 0, invest: 0, avecGain: 0, budget: 0, gain: 0 });
+  const roi = (cost, gain) => typeof avPayback === "function" ? avMonths(avPayback(cost, gain)) : "—";
   const cell = (n) => `<td class="num">${n ? esc(ivEuro(n)) : "—"}</td>`;
   const line = (r) => {
     const pris = r.t["Engagé"] + r.t["Payé"], reste = r.budget === null ? null : r.budget - pris;
@@ -127,6 +131,8 @@ function ivBlock() {
       <td class="num ${r.budget !== null && r.t.total > r.budget ? "iv-over" : ""}" ${r.budget !== null && r.t.total > r.budget ? `title="Le chiffrage dépasse déjà le budget du site"` : ""}>${r.t.total ? esc(ivEuro(r.t.total)) : "—"}</td>
       <td class="num">${r.budget === null ? '<span class="hint">à saisir</span>' : esc(ivEuro(r.budget))}</td>
       <td class="num ${reste !== null && reste < 0 ? "iv-over" : ""}">${reste === null ? "—" : esc(ivEuro(reste))}</td>
+      <td class="num">${r.gain ? esc(ivEuro(r.gain)) + " /an" : "—"}</td>
+      <td class="num">${esc(roi(r.t.total, r.gain))}</td>
       <td>${part === null ? "—" : `<span class="iv-bar"><i style="width:${Math.round(part * 100)}%"></i></span>`}</td>
     </tr>`;
   };
@@ -139,11 +145,13 @@ function ivBlock() {
       Le reste se compte sur l’engagé et le payé, pas sur l’estimé.</p>
     <div class="iv-scroll"><table class="iv-table"><thead><tr>
       <th>Site</th><th class="num">Estimé</th><th class="num">Engagé</th><th class="num">Payé</th><th class="num">Total</th>
-      <th class="num">Budget</th><th class="num">Reste</th><th>Engagé / budget</th></tr></thead>
+      <th class="num">Budget</th><th class="num">Reste</th><th class="num">Gain attendu</th><th class="num">Retour</th><th>Engagé / budget</th></tr></thead>
       <tbody>${rows.map(line).join("")}</tbody>
       <tfoot><tr><td><b>Groupe</b></td>${cell(tot["Estimé"])}${cell(tot["Engagé"])}${cell(tot["Payé"])}${cell(tot.total)}
         <td class="num">${budTot ? esc(ivEuro(budTot)) : "—"}</td>
-        <td class="num ${budTot && budTot - prisTot < 0 ? "iv-over" : ""}">${budTot ? esc(ivEuro(budTot - prisTot)) : "—"}</td><td></td></tr></tfoot>
+        <td class="num ${budTot && budTot - prisTot < 0 ? "iv-over" : ""}">${budTot ? esc(ivEuro(budTot - prisTot)) : "—"}</td>
+        <td class="num">${tot.gain ? esc(ivEuro(tot.gain)) + " /an" : "—"}</td>
+        <td class="num">${esc(roi(tot.total, tot.gain))}</td><td></td></tr></tfoot>
     </table></div>
     <p class="hint">Sur ${esc(ivEuro(tot.total))} chiffrés, ${esc(ivEuro(tot.invest))} en investissement et ${esc(ivEuro(tot.total - tot.invest))} en dépense ;
       ${gainLine}. Une action sans gain n’est pas une anomalie : la sécurité ne se rentabilise pas.</p>
@@ -173,10 +181,17 @@ function ivBudgetModal() {
 }
 
 function ivCsv() {
-  const head = ["id", "site", "titre", "famille", "montant_euros", "nature", "engagement", "statut_action", "pilote", "echeance", "gain_declare"];
+  const head = ["id", "site", "titre", "famille", "montant_euros", "nature", "engagement", "statut_action", "avancement_pct", "pilote", "echeance", "gain_annuel_euros", "retour_mois", "gain_declare"];
   const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const rows = ivChiffrees(osScope(data.actions || [])).map((a) => [a.id, getSiteName(a.site_id), a.title, actionFamily(a),
-    ivAmount(a), ivKindLabel(a), ivState(a), a.status, a.owner || "À désigner", a.due_date || "", ivHasGain(a) ? "oui" : "non"].map(q).join(";"));
+    ivAmount(a), ivKindLabel(a), ivState(a), a.status,
+    typeof avProgress === "function" ? avProgress(a) : "",
+    a.owner || "À désigner", a.due_date || "",
+    (typeof avGain === "function" && ((avGain(a) || {}).euros || avEstimate(a))) || "",
+    (() => { const g = typeof avGain === "function" ? ((avGain(a) || {}).euros || avEstimate(a)) : 0;
+             const m = typeof avPayback === "function" ? avPayback(ivAmount(a), g) : null;
+             return m === null ? "" : Math.round(m); })(),
+    ivHasGain(a) ? "oui" : "non"].map(q).join(";"));
   const blob = new Blob(["﻿" + [head.join(";"), ...rows].join("\r\n")], { type: "text/csv;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = `amco-bia-investissements-${today()}.csv`;
