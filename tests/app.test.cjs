@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-56-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.56.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-57-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.57.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -835,6 +835,12 @@ test('Faire le point : l’avancée se bouge dans la revue, et le compte rendu l
   assert.ok(q('.ap-rv-card').innerHTML.indexOf('av-rv')<q('.ap-rv-card').innerHTML.indexOf('ap-rv-hist'),
     'l’avancée passe avant l’historique');
   assert.ok(q('#apRvNote'),'le champ du point reste là');
+  // Le champ et les boutons forment un bloc : sur téléphone, les boutons ne masquent plus la saisie.
+  assert.ok(q('.av-act #apRvNote'),'le champ est dans le bloc de décision');
+  assert.ok(q('.av-act .ap-rv-buttons'),'les boutons aussi');
+  // Les alertes remontent près des faits, au-dessus de l’historique.
+  const h=q('.ap-rv-card').innerHTML;
+  if(q('.ap-warns')) assert.ok(h.indexOf('ap-warns')<h.indexOf('ap-rv-hist'),'les alertes passent avant l’historique');
   // Les paliers agissent sans sortir de la revue, et le point en cours de frappe n’est pas perdu.
   run('document.getElementById("apRvNote").value="pièce reçue"');
   run('(()=>{const r=document.querySelector(".av-rv input[type=range]");r.value="60";r.dispatchEvent(new Event("change"))})()');

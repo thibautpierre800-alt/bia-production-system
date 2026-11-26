@@ -365,3 +365,7 @@ Aucun champ ajouté ni modifié : l'habillage ne touche que des feuilles de styl
 ## Extension 8.56.0 (additive)
 
 - Aucun champ nouveau : la charge se calcule à partir du pilote, de l'échéance, du statut et de l'avancée déjà enregistrés.
+
+## Extension 8.57.0 (additive)
+
+- Aucun champ nouveau.
