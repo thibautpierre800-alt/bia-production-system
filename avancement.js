@@ -17,7 +17,6 @@
  *  s'affiche — chiffre mesuré et validé — et l'estimation s'efface : une seule vérité par action.
  */
 
-const AV_STEPS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 const AV_STALE_DAYS = 21;
 
 function avNum(v) { return v === "" || v === null || v === undefined ? null : Number.isFinite(Number(v)) ? Number(v) : null; }
@@ -92,16 +91,33 @@ function avSetGain(id, value) {
 
 /* ---------- Les blocs de la fiche ---------- */
 
-function avProgressBlock(a, edit) {
+function avSlider(a, id = "avRange") {
+  const p = avProgress(a);
+  return `<span class="av-slide"><input type="range" min="0" max="100" step="10" value="${p}" id="${id}" style="--av-fill:${p}%" aria-label="Avancée en pourcentage"><output for="${id}">${p} %</output></span>`;
+}
+
+function avProgressBlock(a, edit, compact = false) {
   const p = avProgress(a), frozen = avFrozen(a);
   if (!edit) return `<div class="ap-field"><span class="metric-label">Avancée</span><p>${avBar(a)}</p></div>`;
+  if (compact) {
+    /* Dans la revue, une seule ligne : on enchaîne quinze actions, chaque pixel compte. */
+    return `<div class="av-row${frozen ? " frozen" : ""}"><span class="av-row-label">Avancée</span>${avSlider(a)}
+      ${frozen ? `<span class="av-row-warn">figée depuis ${frozen} j</span>` : ""}</div>`;
+  }
   return `<div class="ap-field av-field"><span class="metric-label">Avancée</span>
-    ${avBar(a, "big")}
-    <div class="filters av-steps">${AV_STEPS.map((s) =>
-      `<button type="button" class="chip${s === p ? " active" : ""}" data-av-set="${s}" aria-pressed="${s === p}">${s}</button>`).join("")}</div>
+    ${avSlider(a)}
     <p class="hint">${frozen
       ? `<b>Annoncée à ${p} % depuis ${frozen} jours.</b> Une avancée qui ne bouge plus veut souvent dire que l’action est bloquée : un point dans le journal, ou le statut « En attente », vaut mieux qu’un pourcentage figé.`
-      : "Posée par le pilote. Sans saisie, elle suit le statut : 0 à l’ouverture, 50 en cours, 90 à vérifier."}</p></div>`;
+      : "Posée par le pilote, par pas de 10 %. Sans saisie, elle suit le statut : 0 à l’ouverture, 50 en cours, 90 à vérifier."}</p></div>`;
+}
+
+/* Le curseur : l’étiquette suit le doigt, l’enregistrement n’a lieu qu’au relâcher — une ligne de journal par geste. */
+function avBindSlider(node, id, onCommit) {
+  const r = node.querySelector(`#${id}`);
+  if (!r) return;
+  const out = node.querySelector(`output[for="${id}"]`);
+  r.oninput = () => { r.style.setProperty("--av-fill", `${r.value}%`); if (out) out.textContent = `${r.value} %`; };
+  r.onchange = () => onCommit(r.value);
 }
 
 function avMoneyBlock(a, edit) {
@@ -198,7 +214,7 @@ function avMoneyLine(a) {
     };
     const again = (ok) => { if (ok) { render(); apOpen(id); } };
     const prog = put(avProgressBlock(a, edit));
-    if (prog) prog.querySelectorAll("[data-av-set]").forEach((b) => (b.onclick = () => again(avSetProgress(id, b.dataset.avSet))));
+    if (prog) avBindSlider(prog, "avRange", (v) => again(avSetProgress(id, v)));
     const money = put(avMoneyBlock(a, edit));
     if (money) {
       const save = money.querySelector("[data-av-gain]");
@@ -225,12 +241,21 @@ function avMoneyLine(a) {
     const before = card.querySelector(".ap-rv-hist") || card.querySelector(".ap-warns") || note.closest(".field") || note;
     const wrap = document.createElement("div");
     wrap.className = "av-rv";
-    wrap.innerHTML = `${avProgressBlock(a, apCanEdit(a))}${avMoneyLine(a)}`;
+    wrap.innerHTML = `${avProgressBlock(a, apCanEdit(a), true)}${avMoneyLine(a)}`;
     card.insertBefore(wrap, before);
-    wrap.querySelectorAll("[data-av-set]").forEach((b) => (b.onclick = () => {
+    /* L'historique déplié occupait 400 px sur un téléphone : les boutons de décision tombaient hors
+       écran, et la revue se faisait à l'aveugle. Il reste là, sa ligne de résumé dit l'essentiel
+       (combien de points, le dernier quand), et il s'ouvre d'un geste — qui tient jusqu'à la fin de
+       la revue, pour qui préfère le garder sous les yeux. */
+    const hist = card.querySelector(".ap-rv-hist");
+    if (hist) {
+      if (state.apRvHist) hist.setAttribute("open", ""); else hist.removeAttribute("open");
+      hist.ontoggle = () => { state.apRvHist = hist.open; };
+    }
+    avBindSlider(wrap, "avRange", (v) => {
       const kept = note.value;
-      if (avSetProgress(a.id, b.dataset.avSet)) { apReviewRender(); const n = $("apRvNote"); if (n) { n.value = kept; n.focus(); } }
-    }));
+      if (avSetProgress(a.id, v)) { apReviewRender(); const n = $("apRvNote"); if (n) { n.value = kept; } }
+    });
   };
 
   /* Le compte rendu porte l'avancée de chaque action revue, et le bilan d'argent du périmètre. */

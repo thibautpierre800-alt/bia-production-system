@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','pratiques.js','bibliotheque.js','signaux.js','releve.js','chantiers.js','formation.js','roadmap-revue.js','avant-apres.js','ecarts.js','journal.js','parametres.js','connecteurs.js','reunions.js','cascade.js','microarrets.js','trs.js','gains.js','environnement.js','nc.js','echantillotheque.js','tour.js','ergonomie.js','top5.js','panneau.js','exemple-groupe.js','pilotage-panneau.js','investissements.js','confidentiel.js','avancement.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','pratiques.js','bibliotheque.js','signaux.js','releve.js','chantiers.js','formation.js','roadmap-revue.js','avant-apres.js','ecarts.js','journal.js','parametres.js','connecteurs.js','reunions.js','cascade.js','microarrets.js','trs.js','gains.js','environnement.js','nc.js','echantillotheque.js','tour.js','ergonomie.js','top5.js','panneau.js','exemple-groupe.js','pilotage-panneau.js','investissements.js','confidentiel.js','avancement.js','charge.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-55-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.55.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-56-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.56.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -828,7 +828,8 @@ test('Faire le point : l’avancée se bouge dans la revue, et le compte rendu l
   // La revue s’ouvre sur la première action : barre, paliers et bilan d’argent y sont.
   run('apStartReview()');
   assert.ok(q('.av-rv'),'le bloc est dans la carte de revue');
-  assert.ok(q('.av-rv .av-bar'),'barre d’avancée');
+  assert.ok(q('.av-rv input[type=range]'),'curseur d’avancée');
+  assert.ok(!q('.av-rv .chip'),'pas de pastilles : une ligne suffit');
   assert.ok(q('.av-rv .av-line'),'coût, gain et retour sur une ligne');
   assert.match(q('.av-rv .av-line').textContent,/3 mois/,'le retour est calculé');
   assert.ok(q('.ap-rv-card').innerHTML.indexOf('av-rv')<q('.ap-rv-card').innerHTML.indexOf('ap-rv-hist'),
@@ -836,7 +837,7 @@ test('Faire le point : l’avancée se bouge dans la revue, et le compte rendu l
   assert.ok(q('#apRvNote'),'le champ du point reste là');
   // Les paliers agissent sans sortir de la revue, et le point en cours de frappe n’est pas perdu.
   run('document.getElementById("apRvNote").value="pièce reçue"');
-  run('document.querySelector(".av-rv [data-av-set=\'60\']").click()');
+  run('(()=>{const r=document.querySelector(".av-rv input[type=range]");r.value="60";r.dispatchEvent(new Event("change"))})()');
   assert.equal(run(`avProgress(${A})`),60,'avancée posée depuis la revue');
   assert.ok(q('.av-rv'),'on est toujours dans la revue');
   assert.equal(run('document.getElementById("apRvNote").value'),'pièce reçue','le point saisi est conservé');
@@ -846,4 +847,38 @@ test('Faire le point : l’avancée se bouge dans la revue, et le compte rendu l
   const rapport=run('document.getElementById("apReport").value');
   assert.match(rapport,/avancée 60 %/,'l’avancée est dans le compte rendu');
   assert.match(rapport,/Argent engagé/,'le bilan d’argent est dans le compte rendu');
+});
+
+test('Charge par personne : qui porte quoi, et qui est en surcharge',t=>{
+  const a=app(t),{run,q}=a;
+  run('state.role="lean";state.site="marzin";state.view="actions";state.actionOwner="all";render()');
+  assert.ok(q('.wl-card'),'le tableau est au bas du plan d’actions');
+  // Les totaux collent au plan ouvert du périmètre.
+  const total=run('scoped(data.actions).filter(isOpenAction).length');
+  assert.equal(run('wlPeople().total'),total);
+  assert.equal(run('wlPeople().list.reduce((n,p)=>n+p.rows.length,0)'),total,'chaque action ouverte est comptée une fois');
+  // Les actions sans pilote forment leur propre ligne, en dernier, et sont signalées.
+  run('data.actions.filter(x=>x.site_id==="marzin"&&isOpenAction(x)).slice(0,2).forEach(x=>{x.owner="À désigner"})');
+  run('render()');
+  const p=run('JSON.stringify(wlPeople().list.map(x=>x.name))');
+  assert.match(p,/À désigner/,'une ligne sans pilote');
+  assert.equal(JSON.parse(p).at(-1),'À désigner','elle passe en dernier');
+  assert.match(run('JSON.stringify(wlFindings(wlPeople().list,wlPeople().total))'),/sans pilote/);
+  // Trois retards sur une même personne : le constat le dit.
+  run(`for(let i=0;i<3;i++)data.actions.push({id:"A-TST"+i,site_id:"marzin",title:"Action d’essai "+i,
+       owner:"Testeur T.",status:"En cours",due_date:"2020-01-01",priority:"Normale",created_at:now()})`);
+  run('render()');
+  assert.equal(run('wlPeople().list.find(x=>x.name==="Testeur T.").late'),3);
+  assert.match(run('JSON.stringify(wlFindings(wlPeople().list,wlPeople().total))'),/Testeur T\. a 3 actions en retard/);
+  assert.match(q('.wl-card').textContent,/Testeur T\./);
+  // « Voir » filtre le plan sur cette personne.
+  run('document.querySelector(\'[data-wl-owner="Testeur T."]\').click()');
+  assert.equal(run('state.actionOwner'),'Testeur T.');
+  assert.equal(run('scoped(data.actions).filter(isOpenAction).filter(x=>x.owner==="Testeur T.").length'),3);
+  // Une action confidentielle ne compte pas pour qui ne la voit pas.
+  run('state.actionOwner="all";state.role="lean"');
+  const avant=run('wlPeople().total');
+  run('cfSet(data.actions.find(x=>x.owner==="Testeur T.").id,true)');
+  run('state.role="teamlead";apSetMe("")');
+  assert.equal(run('wlPeople().total'),avant-1,'la charge respecte la confidentialité');
 });
