@@ -3168,3 +3168,23 @@ button.t5-time{background:none;border:0;color:inherit;font:inherit;cursor:pointe
 .cf-field{border-left:3px solid #B5A28F;padding-left:14px}
 .cf-field.on{border-left-color:var(--orange)}
 .cf-warn{color:#8A4600;background:#FDF0D8;border-radius:8px;padding:9px 12px;margin-top:8px}
+
+/* AMCO BIA 8.54 · Avancée d'une action et retour sur investissement. */
+.av-bar{display:flex;align-items:center;gap:9px;margin:7px 0}
+.av-track{flex:1;height:8px;border-radius:99px;background:#ECEAE4;overflow:hidden}
+.av-track i{display:block;height:100%;border-radius:99px;background:var(--orange);transition:width .2s}
+.av-bar b{font-size:12px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;min-width:38px;text-align:right}
+.av-bar.inline{max-width:260px;margin:8px 0 7px}
+.av-bar.big{margin:12px 0 16px}
+.av-bar.big .av-track{height:12px}
+.av-bar.big b{font-size:14px;color:var(--ink)}
+.av-bar.frozen .av-track i{background:repeating-linear-gradient(135deg,#C9A227,#C9A227 5px,#E0C569 5px,#E0C569 10px)}
+.av-steps{flex-wrap:wrap;gap:4px}
+.av-steps .chip{min-width:44px;justify-content:center}
+.av-field{border-left:3px solid var(--line);padding-left:14px}
+.av-roi{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px;margin:10px 0 4px}
+.av-roi span{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--white)}
+.av-roi small{font-size:12px;color:var(--muted)}
+.av-roi b{font-size:17px;font-variant-numeric:tabular-nums}
+.av-roi .good b{color:#1E6B2E}
+.av-roi .bad b{color:#B3261E}

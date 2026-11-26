@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','pratiques.js','bibliotheque.js','signaux.js','releve.js','chantiers.js','formation.js','roadmap-revue.js','avant-apres.js','ecarts.js','journal.js','parametres.js','connecteurs.js','reunions.js','cascade.js','microarrets.js','trs.js','gains.js','environnement.js','nc.js','echantillotheque.js','tour.js','ergonomie.js','top5.js','panneau.js','exemple-groupe.js','pilotage-panneau.js','investissements.js','confidentiel.js','boot.js'];
+const scripts=['lean-library.js','v5.js','experience.js','workflows.js','fieldwork.js','documents-ui.js','dashboards.js','os-core.js','os-views.js','os-audits.js','os-vsm.js','os-app.js','os-improvements.js','actions-plan.js','ux-shell.js','journee.js','indicateurs.js','maturite.js','hoshin.js','modeles.js','calepin.js','etonnement.js','cinqs.js','audit50.js','standards.js','smed.js','causes.js','tpm.js','polyvalence.js','idees.js','equilibrage.js','sqcdp-jour.js','vsm-flux.js','pratiques.js','bibliotheque.js','signaux.js','releve.js','chantiers.js','formation.js','roadmap-revue.js','avant-apres.js','ecarts.js','journal.js','parametres.js','connecteurs.js','reunions.js','cascade.js','microarrets.js','trs.js','gains.js','environnement.js','nc.js','echantillotheque.js','tour.js','ergonomie.js','top5.js','panneau.js','exemple-groupe.js','pilotage-panneau.js','investissements.js','confidentiel.js','avancement.js','boot.js'];
 function app(t,stored,url='https://bia.example/bia-production-system/'){
   const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e));
   const html=fs.readFileSync('index.html','utf8').replace(/<script[\s\S]*?<\/script>/g,'').replace(/<link[^>]*>/g,'');
@@ -36,8 +36,8 @@ test('Référentiel, écrans, profils, outils existants et cache cohérent',t=>{
   run('closeModal();newSignalForm()');assert.equal(q('#signalSite').options.length,1);
   run('closeModal();gembaForm()');assert.ok(q('#jnStartForm'));assert.equal(q('[data-jn-site]'),null,'Un seul site autorisé : aucun choix de site');
   for(const file of scripts.concat(['index.html','service-worker.js'])){const s=fs.readFileSync(file,'utf8');assert.doesNotMatch(s,/\bSite [1-9]\b|PLAN DES 100 PREMIERS JOURS/);}
-  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-53-0/);
-  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.53.0'),'Toutes les ressources doivent porter la même version');
+  const sw=fs.readFileSync('service-worker.js','utf8');for(const file of scripts)assert.ok(sw.includes(file));assert.match(sw,/v8-54-0/);
+  const releaseTags=[...fs.readFileSync('index.html','utf8').matchAll(/(?:src|href)="[^"]+\?v=([0-9.]+)"/g)].map(x=>x[1]);assert.ok(releaseTags.length>=10);assert.ok(releaseTags.every(x=>x==='8.54.0'),'Toutes les ressources doivent porter la même version');
   assert.equal(run('TEMPLATES.every(t=>DOCUMENT_SCHEMAS[t.type])'),true);
   assert.equal(run('documentProgress("A3",documentValues(data.documents[0])).done'),run('documentProgress("A3",initialDocumentData("A3",data.problems.find(p=>p.id===data.documents[0].problem_id))).done'));
 });
@@ -750,4 +750,71 @@ test('Actions confidentielles : aucun autre dossier n’en cite le titre',t=>{
   // Le responsable Lean, lui, la retrouve partout.
   run('state.role="lean";state.site="marzin"');
   assert.equal(run(`recordMeta(${JSON.stringify(id)}).key`),'actions');
+});
+
+test('Avancée d’une action : posée à la main, affichée, et alertée quand elle ne bouge plus',t=>{
+  const a=app(t),{run}=a;
+  run('state.role="lean";state.site="marzin";closeModal()');
+  const id=run('data.actions.find(x=>x.site_id==="marzin"&&isOpenAction(x)).id');
+  const A=`data.actions.find(x=>x.id===${JSON.stringify(id)})`;
+  // Sans saisie, l’avancée suit le statut.
+  run(`${A}.progress=0;delete ${A}.progress_at`);
+  run(`apSetStatus(${JSON.stringify(id)},"Ouverte")`);
+  run(`apSetStatus(${JSON.stringify(id)},"En cours")`);
+  assert.equal(run(`avProgress(${A})`),50,'En cours → 50 %');
+  // Le pilote la pose, arrondie au pas de 10, et la date du mouvement est gardée.
+  assert.equal(run(`avSetProgress(${JSON.stringify(id)},"74")`),true);
+  assert.equal(run(`avProgress(${A})`),70,'arrondi au pas de 10');
+  assert.ok(run(`!!${A}.progress_at`),'date du mouvement enregistrée');
+  assert.match(run(`JSON.stringify(${A}.history||[])`),/Avanc/,'inscrit au journal');
+  assert.match(run(`apRow(${A})`),/av-bar/,'barre sur la ligne');
+  // Bornes.
+  run(`avSetProgress(${JSON.stringify(id)},"999")`); assert.equal(run(`avProgress(${A})`),100);
+  run(`avSetProgress(${JSON.stringify(id)},"-10")`); assert.equal(run(`avProgress(${A})`),0);
+  // Figée depuis plus de trois semaines : alerte sur la ligne.
+  run(`avSetProgress(${JSON.stringify(id)},"50")`);
+  assert.equal(run(`avFrozen(${A})`),0,'fraîche : pas d’alerte');
+  run(`${A}.progress_at=new Date(Date.now()-30*864e5).toISOString()`);
+  assert.ok(run(`avFrozen(${A})`)>=29,'figée depuis ~30 j');
+  assert.match(run(`JSON.stringify(apWarnings(${A}))`),/figée/,'alerte dans la ligne');
+  // Une avancée posée à la main n’est pas rabaissée par un changement de statut.
+  run(`avSetProgress(${JSON.stringify(id)},"70")`);
+  run(`apSetStatus(${JSON.stringify(id)},"Ouverte")`);
+  assert.equal(run(`avProgress(${A})`),70,'le statut ne rabaisse pas une avancée saisie');
+  // Clôturée : 100 %, et plus modifiable.
+  run(`${A}.status="Clôturée";${A}.progress=100`);
+  assert.equal(run(`avProgress(${A})`),100);
+  assert.equal(run(`avSetProgress(${JSON.stringify(id)},"20")`),false,'clôturée : avancée verrouillée');
+});
+
+test('Retour sur investissement d’une action : coût, gain, retour en mois',t=>{
+  const a=app(t),{run}=a;
+  run('state.role="lean";state.site="marzin";closeModal()');
+  const id=run('data.actions.find(x=>x.site_id==="marzin"&&isOpenAction(x)).id');
+  const A=`data.actions.find(x=>x.id===${JSON.stringify(id)})`;
+  // 6 000 € de coût, 24 000 €/an de gain → 3 mois de retour, +18 000 € la première année.
+  run(`ivSetAmount(${JSON.stringify(id)},"6000")`);
+  assert.equal(run(`avSetGain(${JSON.stringify(id)},"24000")`),true);
+  assert.equal(run(`avEstimate(${A})`),24000);
+  assert.equal(Math.round(run(`avPayback(6000,24000)`)),3);
+  assert.equal(run(`avMonths(avPayback(6000,24000))`),'3 mois');
+  assert.equal(run('avMonths(avPayback(60000,24000))'),'3 ans');
+  assert.equal(run('avPayback(6000,0)'),null,'pas de gain : pas de retour');
+  assert.equal(run('avPayback(0,24000)'),null,'pas de coût : pas de retour');
+  // Un gain déclaré dans le module Gains prime sur l’estimation portée par l’action.
+  assert.equal(run(`avGain(${A})`),null,'aucun gain déclaré au départ');
+  run(`data.gains=(data.gains||[]).concat([{id:"G-TEST",site_id:"marzin",source_id:${JSON.stringify(id)},status:"Validé",
+    unit:"€",direction:"high",before:0,target:36000,after:36000,recurring:true,per_year:1,cost:6000}])`);
+  assert.equal(run(`avGain(${A}).euros`),36000,'le gain déclaré fait foi');
+  assert.equal(run(`avGain(${A}).measured`),true);
+  // Le suivi par site additionne les gains attendus et calcule un retour.
+  run('state.view="pilotage";state.pilotTab="gains";render()');
+  const tbl=run('document.querySelector(".iv-table").textContent');
+  assert.match(tbl,/Gain attendu/);
+  assert.match(tbl,/Retour/);
+  // Un montant vide efface l’estimation.
+  run('data.gains=data.gains.filter(g=>g.id!=="G-TEST")');
+  assert.equal(run(`avSetGain(${JSON.stringify(id)},"")`),true);
+  assert.equal(run(`${A}.gain_year`),undefined);
+  assert.equal(run(`avSetGain(${JSON.stringify(id)},"-3")`),false,'gain négatif refusé');
 });

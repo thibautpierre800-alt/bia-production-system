@@ -352,3 +352,8 @@ Aucun champ ajouté ni modifié : l'habillage ne touche que des feuilles de styl
 ## Extension 8.53.0 (additive)
 
 - `actions[]` accueille un champ facultatif `confidential` (vrai ou absent). Une action qui le porte n'est rendue que pour le rôle `lean`, pour `director` sur son propre site, et pour la personne que `apIsMine` reconnaît comme pilote.
+
+## Extension 8.54.0 (additive)
+
+- `actions[]` accueille trois champs facultatifs de plus : `progress` (0 à 100, posé par le pilote ; sans saisie, le statut l'implique), `progress_at` (date du dernier mouvement de l'avancée, qui sert à repérer les actions figées) et `gain_year` (estimation du gain annuel en euros).
+- Le gain déclaré dans `gains[]` pour cette action (`source_id`) prime sur `gain_year` dès qu'il existe.
